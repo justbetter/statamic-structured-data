@@ -25,6 +25,14 @@ You can install this addon via Composer:
 composer require justbetter/statamic-structured-data
 ```
 
+After installation, you need to publish the configuration file:
+
+```bash
+php artisan vendor:publish --tag=justbetter-structured-data
+```
+
+You should configure the collections that should have structured data templates in the `config/justbetter/structured-data.php` file.
+
 ## Usage
 
 ### 1. Creating Structured Data Templates
