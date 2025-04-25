@@ -1,0 +1,56 @@
+{
+    "name": "justbetter/statamic-structured-data",
+    "autoload": {
+        "psr-4": {
+            "Justbetter\\StatamicStructuredData\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Justbetter\\StatamicStructuredData\\Tests\\": "tests"
+        }
+    },
+    "require": {
+        "php": "^8.2|^8.3",
+        "laravel/framework": "^11.0",
+        "statamic/cms": "^5.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.7",
+        "larastan/larastan": "^2.5",
+        "phpstan/phpstan-mockery": "^1.1",
+        "phpunit/phpunit": "^10.1",
+        "orchestra/testbench": "^9.0",
+        "pestphp/pest": "^2.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "pixelfear/composer-dist-plugin": true,
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "statamic": {
+            "name": "Statamic Structured Data",
+            "description": "Statamic Structured Data addon"
+        },
+        "laravel": {
+            "providers": [
+                "Justbetter\\StatamicStructuredData\\ServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "analyse": "phpstan",
+        "style": "pint --test",
+        "quality": [
+            "@test",
+            "@analyse",
+            "@style"
+        ],
+        "fix-style": "pint"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

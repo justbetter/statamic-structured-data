@@ -1,0 +1,50 @@
+title: 'Structured Data Template'
+tabs:
+  main:
+    display: Main
+    sections:
+      -
+        fields:
+          -
+            handle: title
+            field:
+              type: text
+              required: true
+              validate:
+                - required
+              localizable: true
+          -
+            handle: schema_data
+            field:
+              type: structured_data_builder
+              display: 'Schema Data'
+              instructions: 'Configure your structured data object'
+              base_url: '{{ config:app:url }}'
+              localizable: false
+  sidebar:
+    display: Sidebar
+    sections:
+      -
+        fields:
+          -
+            handle: slug
+            field:
+              type: slug
+              localizable: true
+              validate: 'max:200'
+          -
+            handle: use_for_collection
+            field:
+              max_items: 1
+              type: collections
+              display: 'Use for collection'
+              localizable: true
+              validate:
+                - required
+          -
+            handle: structured_data_available_variables
+            field:
+              type: structured_data_available_variables
+              display: 'Available Variables'
+              instructions: 'Variables that can be used in your schema data'
+              localizable: false

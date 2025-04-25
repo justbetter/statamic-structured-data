@@ -1,0 +1,45 @@
+tabs:
+  main:
+    display: Main
+    sections:
+      -
+        fields:
+          -
+            handle: title
+            field:
+              type: text
+              required: true
+              localizable: false
+              validate:
+                - required
+          -
+            handle: object_type
+            field:
+              type: text
+              display: '@Type'
+              required: true
+              localizable: false
+              validate:
+                - required
+          -
+            handle: object_data
+            field:
+              type: structured_data_object_builder
+              display: 'Object Data'
+              instructions: 'Configure your structured data object'
+              localizable: false
+  sidebar:
+    display: Sidebar
+    sections:
+      -
+        fields:
+          -
+            handle: slug
+            field:
+              type: slug
+              required: true
+              validate:
+                - required
+                - 'max:200'
+              localizable: false
+title: 'Structured Data Object'
