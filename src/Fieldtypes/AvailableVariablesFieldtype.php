@@ -120,11 +120,11 @@ class AvailableVariablesFieldtype extends Fieldtype
         return Collection::find($collectionHandle)?->entryBlueprints()?->first()?->fields()?->items()?->map(function ($entryField) use ($field) {
             $name = ($field['handle'] . ':' . ($entryField['handle'] ?? ''));
             $description = (($field['field']['display'] ?? '') . ': ' . ($entryField['field']['display'] ?? ($entryField['handle'] ?? '')));
-            return $this->setFieldData($entryField, $name, $description);
+            return $this->setFieldData($entryField, $name, $description, false);
         })->filter()->values()->all();
     }
 
-    protected function setFieldData(array $field, ?string $name = null, ?string $description = null): ?array
+    protected function setFieldData(array $field, ?string $name = null, ?string $description = null, bool $recursive = true): ?array
     {
         if(!($field['handle'] ?? false) || $field['handle'] === 'parent' || !($field['field']['type'] ?? false) || !$this->fieldTypeIsEligible($field['field']['type'])) {
             return null;
@@ -132,7 +132,7 @@ class AvailableVariablesFieldtype extends Fieldtype
 
         $children = [];
 
-        if($field['field']['type'] === 'entries') {
+        if($field['field']['type'] === 'entries' && $recursive) {
             if(!isset($field['field']['collections'][0])) {
                 return null;
             }
