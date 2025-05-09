@@ -58,7 +58,7 @@ class ServiceProvider extends AddonServiceProvider
 
     public function bootCollections()
     {
-        if(Collection::find('structured_data_templates')) {
+        if($this->app->runningInConsole() || Collection::find('structured_data_templates')) {
             return $this;
         }
 
@@ -80,7 +80,7 @@ class ServiceProvider extends AddonServiceProvider
 
     public function bootTaxonomies()
     {
-        if(Taxonomy::find('structured_data_objects')) {
+        if($this->app->runningInConsole() || Taxonomy::find('structured_data_objects')) {
             return $this;
         }
 
