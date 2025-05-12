@@ -2,10 +2,10 @@
 
 namespace Justbetter\StatamicStructuredData\Parser;
 
+use Justbetter\StatamicStructuredData\Services\StructuredDataService;
 use Statamic\Facades\Site;
 use Statamic\Facades\Term;
 use Statamic\View\Antlers\Antlers;
-use Justbetter\StatamicStructuredData\Services\StructuredDataService;
 
 class StructuredDataParser
 {
@@ -65,7 +65,7 @@ class StructuredDataParser
             ->where('slug', $objectSlug)
             ->first();
 
-        if (! $dataObject || !$dataObject->object_data) {
+        if (! $dataObject || ! $dataObject->object_data) {
             return [];
         }
 

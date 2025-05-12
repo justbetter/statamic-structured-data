@@ -5,8 +5,8 @@ namespace Justbetter\StatamicStructuredData\Services;
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Facades\Entry as EntryFacade;
-use Statamic\Taxonomies\LocalizedTerm;
 use Statamic\Structures\Page;
+use Statamic\Taxonomies\LocalizedTerm;
 
 class StructuredDataService
 {
@@ -21,7 +21,7 @@ class StructuredDataService
     {
         $templates = $this->getTemplates($item);
 
-        if (!($templates ?? false)) {
+        if (! $templates) {
             return [];
         }
 

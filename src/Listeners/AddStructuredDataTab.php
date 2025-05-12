@@ -4,7 +4,6 @@ namespace Justbetter\StatamicStructuredData\Listeners;
 
 use Statamic\Events\EntryBlueprintFound;
 use Statamic\Events\TermBlueprintFound;
-use Statamic\Facades\Collection;
 use Statamic\Fields\Blueprint;
 
 class AddStructuredDataTab
@@ -15,9 +14,11 @@ class AddStructuredDataTab
 
         if ($event instanceof EntryBlueprintFound && str_contains($blueprint->namespace(), 'collections')) {
             $this->handleCollectionBlueprintFound($blueprint);
+
             return;
         } elseif ($event instanceof TermBlueprintFound && str_contains($blueprint->namespace(), 'taxonomies')) {
             $this->handleTaxonomyBlueprintFound($blueprint);
+
             return;
         }
     }
@@ -26,7 +27,7 @@ class AddStructuredDataTab
     {
         $handle = str_replace('collections.', '', $blueprint->namespace());
         $enabledCollections = config('justbetter.structured-data.collections', []);
-        
+
         if (! in_array($handle, $enabledCollections)) {
             return;
         }

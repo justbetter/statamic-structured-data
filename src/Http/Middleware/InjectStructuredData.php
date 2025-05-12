@@ -6,12 +6,12 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Justbetter\StatamicStructuredData\Services\StructuredDataService;
-use Statamic\Facades\Entry as EntryFacade;
 use Statamic\Entries\Entry;
+use Statamic\Facades\Entry as EntryFacade;
 use Statamic\Facades\Site;
+use Statamic\Facades\Term;
 use Statamic\Facades\URL;
 use Statamic\Structures\Page;
-use Statamic\Facades\Term;
 use Statamic\Taxonomies\LocalizedTerm;
 
 class InjectStructuredData
@@ -76,7 +76,7 @@ class InjectStructuredData
     {
         $scripts = $this->structuredDataService->getJsonLdScripts($item);
 
-        if (!$scripts ?? false) {
+        if (! $scripts ?? false) {
             return $response;
         }
 
@@ -101,12 +101,14 @@ class InjectStructuredData
     protected function getCurrentEntry(): Page|Entry|null
     {
         $url = URL::getCurrent();
+
         return EntryFacade::findByUri($url, Site::current()->handle());
     }
 
-    protected function getCurrentTerm(): LocalizedTerm|null
+    protected function getCurrentTerm(): ?LocalizedTerm
     {
         $url = URL::getCurrent();
+
         return Term::findByUri($url, Site::current()->handle());
     }
 }

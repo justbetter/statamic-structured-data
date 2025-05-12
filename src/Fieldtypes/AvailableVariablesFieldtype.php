@@ -31,9 +31,9 @@ class AvailableVariablesFieldtype extends Fieldtype
     {
         return [
             'site' => [
-                    ['name' => 'site:name', 'description' => 'Site Name'],
-                    ['name' => 'site:url', 'description' => 'Site URL'],
-                ],
+                ['name' => 'site:name', 'description' => 'Site Name'],
+                ['name' => 'site:url', 'description' => 'Site URL'],
+            ],
             'globals' => $this->getGlobalVariables(),
             'entry' => $this->getEntryFields(),
             'term' => $this->getTermFields(),
@@ -66,15 +66,15 @@ class AvailableVariablesFieldtype extends Fieldtype
             return [];
         }
 
-        $fields = collect($dataTemplate?->use_for_collection?->entryBlueprints()?->reduce(function($carry, $blueprint) {
+        $fields = collect($dataTemplate?->use_for_collection?->entryBlueprints()?->reduce(function ($carry, $blueprint) {
             return array_merge($carry, $blueprint->fields()->items()->toArray());
         }, []) ?? []);
 
-        if(class_exists(OnPageSeoBlueprint::class)) {
+        if (class_exists(OnPageSeoBlueprint::class)) {
             $fields = $fields->merge(OnPageSeoBlueprint::requestBlueprint()->fields()?->items());
         }
 
-        if (!$fields) {
+        if (! $fields) {
             return [];
         }
 
@@ -83,9 +83,9 @@ class AvailableVariablesFieldtype extends Fieldtype
         $collectionFields = $fields->map(function ($field) {
             return $this->setFieldData($field);
         })
-        ->filter()
-        ->values()
-        ->all();
+            ->filter()
+            ->values()
+            ->all();
 
         return array_merge($baseFields, $collectionFields);
     }
@@ -98,15 +98,15 @@ class AvailableVariablesFieldtype extends Fieldtype
             return [];
         }
 
-        $fields = collect($dataTemplate?->use_for_taxonomy?->termBlueprints()?->reduce(function($carry, $blueprint) {
+        $fields = collect($dataTemplate?->use_for_taxonomy?->termBlueprints()?->reduce(function ($carry, $blueprint) {
             return array_merge($carry, $blueprint->fields()->items()->toArray());
         }, []) ?? []);
 
-        if(class_exists(OnPageSeoBlueprint::class)) {
+        if (class_exists(OnPageSeoBlueprint::class)) {
             $fields = $fields->merge(OnPageSeoBlueprint::requestBlueprint()->fields()?->items());
         }
 
-        if (!$fields) {
+        if (! $fields) {
             return [];
         }
 
@@ -115,9 +115,9 @@ class AvailableVariablesFieldtype extends Fieldtype
         $collectionFields = $fields->map(function ($field) {
             return $this->setFieldData($field);
         })
-        ->filter()
-        ->values()
-        ->all();
+            ->filter()
+            ->values()
+            ->all();
 
         return array_merge($baseFields, $collectionFields);
     }
@@ -132,8 +132,9 @@ class AvailableVariablesFieldtype extends Fieldtype
 
             if ($fields) {
                 $globalVariables = $fields->items()->map(function ($field) use ($globalSet) {
-                    $name = ($globalSet->handle() . ':' . ($field['handle'] ?? ''));
+                    $name = ($globalSet->handle().':'.($field['handle'] ?? ''));
                     $description = ($field['field']['display'] ?? ($field['handle'] ?? ''));
+
                     return $this->setFieldData($field, $name, $description);
                 })->values()->all();
             }
@@ -146,27 +147,28 @@ class AvailableVariablesFieldtype extends Fieldtype
 
     protected function getCollectionVariables(string $collectionHandle, array $field): array
     {
-        if(!$collectionHandle || $collectionHandle === 'structured_data_templates') {
+        if (! $collectionHandle || $collectionHandle === 'structured_data_templates') {
             return [];
         }
 
         return Collection::find($collectionHandle)?->entryBlueprints()?->first()?->fields()?->items()?->map(function ($entryField) use ($field) {
-            $name = ($field['handle'] . ':' . ($entryField['handle'] ?? ''));
-            $description = (($field['field']['display'] ?? '') . ': ' . ($entryField['field']['display'] ?? ($entryField['handle'] ?? '')));
+            $name = ($field['handle'].':'.($entryField['handle'] ?? ''));
+            $description = (($field['field']['display'] ?? '').': '.($entryField['field']['display'] ?? ($entryField['handle'] ?? '')));
+
             return $this->setFieldData($entryField, $name, $description, false);
         })->filter()->values()->all();
     }
 
     protected function setFieldData(array $field, ?string $name = null, ?string $description = null, bool $recursive = true): ?array
     {
-        if(!($field['handle'] ?? false) || $field['handle'] === 'parent' || !($field['field']['type'] ?? false) || !$this->fieldTypeIsEligible($field['field']['type'])) {
+        if (! ($field['handle'] ?? false) || $field['handle'] === 'parent' || ! ($field['field']['type'] ?? false) || ! $this->fieldTypeIsEligible($field['field']['type'])) {
             return null;
         }
 
         $children = [];
 
-        if($field['field']['type'] === 'entries' && $recursive) {
-            if(!isset($field['field']['collections'][0])) {
+        if ($field['field']['type'] === 'entries' && $recursive) {
+            if (! isset($field['field']['collections'][0])) {
                 return null;
             }
 
@@ -176,7 +178,7 @@ class AvailableVariablesFieldtype extends Fieldtype
         return [
             'name' => $name ?? $field['handle'],
             'description' => $description ?? ($field['field']['display'] ?? $field['handle']),
-            'children' => $children
+            'children' => $children,
         ];
     }
 }

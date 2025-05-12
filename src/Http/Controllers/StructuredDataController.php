@@ -55,7 +55,7 @@ class StructuredDataController extends CpController
 
                 $structuredData = $entry->schema_data;
 
-                if (!$structuredData) {
+                if (! $structuredData) {
                     return null;
                 }
 
@@ -91,7 +91,7 @@ class StructuredDataController extends CpController
             'entry' => [],
         ];
 
-        if (!$entry) {
+        if (! $entry) {
             return response()->json($variables);
         }
 
