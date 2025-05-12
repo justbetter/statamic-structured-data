@@ -6,17 +6,18 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Justbetter\StatamicStructuredData\Fieldtypes\AvailableVariablesFieldtype;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataBuilder;
-use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataPreview;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataObjectBuilder;
+use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataPreview;
 use Justbetter\StatamicStructuredData\Http\Middleware\InjectStructuredData;
 use Justbetter\StatamicStructuredData\Listeners\AddStructuredDataTab;
 use Statamic\Events\EntryBlueprintFound;
+use Statamic\Events\TermBlueprintFound;
 use Statamic\Facades\Blueprint;
 use Statamic\Facades\Collection;
 use Statamic\Facades\Site;
+use Statamic\Facades\Taxonomy;
 use Statamic\Providers\AddonServiceProvider;
 use Symfony\Component\Yaml\Yaml;
-use Statamic\Facades\Taxonomy;
 
 class ServiceProvider extends AddonServiceProvider
 {
@@ -52,13 +53,14 @@ class ServiceProvider extends AddonServiceProvider
     public function bootEvents()
     {
         Event::listen(EntryBlueprintFound::class, AddStructuredDataTab::class);
+        Event::listen(TermBlueprintFound::class, AddStructuredDataTab::class);
 
         return $this;
     }
 
     public function bootCollections()
     {
-        if($this->app->runningInConsole() || Collection::find('structured_data_templates')) {
+        if ($this->app->runningInConsole() || Collection::find('structured_data_templates')) {
             return $this;
         }
 
@@ -80,7 +82,7 @@ class ServiceProvider extends AddonServiceProvider
 
     public function bootTaxonomies()
     {
-        if($this->app->runningInConsole() || Taxonomy::find('structured_data_objects')) {
+        if ($this->app->runningInConsole() || Taxonomy::find('structured_data_objects')) {
             return $this;
         }
 

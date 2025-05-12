@@ -6,6 +6,7 @@ use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Facades\Entry as EntryFacade;
 use Statamic\Structures\Page;
+use Statamic\Taxonomies\LocalizedTerm;
 
 class StructuredDataService
 {
@@ -16,19 +17,11 @@ class StructuredDataService
         $this->parser = $parser;
     }
 
-    public function getJsonLdScripts($entry): array
+    public function getJsonLdScripts($item): array
     {
-        if (! $entry instanceof EntryContract && ! $entry instanceof Page) {
-            return [];
-        }
+        $templates = $this->getTemplates($item);
 
-        if ($entry instanceof Page) {
-            $entry = $entry->entry();
-        }
-
-        $templates = $entry->get('structured_data_templates');
-
-        if (!($templates ?? false)) {
+        if (! $templates) {
             return [];
         }
 
@@ -48,7 +41,7 @@ class StructuredDataService
             }
 
             try {
-                $parsedSchemas = $this->parser->parse($schemas, $entry);
+                $parsedSchemas = $this->parser->parse($schemas, $item);
                 foreach ($parsedSchemas as $parsedSchema) {
                     $scripts[] = $this->formatJsonLd($parsedSchema);
                 }
@@ -105,5 +98,20 @@ class StructuredDataService
         }
 
         return $result;
+    }
+
+    protected function getTemplates($item): array
+    {
+        if (! $item instanceof EntryContract && ! $item instanceof Page && ! $item instanceof LocalizedTerm) {
+            return [];
+        }
+
+        if ($item instanceof Page) {
+            $item = $item->entry();
+        }
+
+        $templates = $item->get('structured_data_templates');
+
+        return $templates ?? [];
     }
 }

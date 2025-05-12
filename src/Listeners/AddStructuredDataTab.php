@@ -3,25 +3,52 @@
 namespace Justbetter\StatamicStructuredData\Listeners;
 
 use Statamic\Events\EntryBlueprintFound;
-use Statamic\Facades\Collection;
+use Statamic\Events\TermBlueprintFound;
+use Statamic\Fields\Blueprint;
 
 class AddStructuredDataTab
 {
-    public function handle(EntryBlueprintFound $event): void
+    public function handle(EntryBlueprintFound|TermBlueprintFound $event): void
     {
         $blueprint = $event->blueprint;
 
-        if (! str_contains($blueprint->namespace(), 'collections')) {
+        if ($event instanceof EntryBlueprintFound && str_contains($blueprint->namespace(), 'collections')) {
+            $this->handleCollectionBlueprintFound($blueprint);
+
+            return;
+        } elseif ($event instanceof TermBlueprintFound && str_contains($blueprint->namespace(), 'taxonomies')) {
+            $this->handleTaxonomyBlueprintFound($blueprint);
+
             return;
         }
+    }
 
+    public function handleCollectionBlueprintFound(Blueprint $blueprint): void
+    {
         $handle = str_replace('collections.', '', $blueprint->namespace());
-
         $enabledCollections = config('justbetter.structured-data.collections', []);
+
         if (! in_array($handle, $enabledCollections)) {
             return;
         }
 
+        $this->addStructuredDataTab($blueprint);
+    }
+
+    public function handleTaxonomyBlueprintFound(Blueprint $blueprint): void
+    {
+        $handle = str_replace('taxonomies.', '', $blueprint->namespace());
+        $enabledTaxonomies = config('justbetter.structured-data.taxonomies', []);
+
+        if (! in_array($handle, $enabledTaxonomies)) {
+            return;
+        }
+
+        $this->addStructuredDataTab($blueprint);
+    }
+
+    protected function addStructuredDataTab(Blueprint $blueprint): void
+    {
         $contents = $blueprint->contents();
 
         if (! isset($contents['tabs']['structured_data'])) {

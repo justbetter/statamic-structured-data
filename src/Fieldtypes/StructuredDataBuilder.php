@@ -4,8 +4,8 @@ namespace Justbetter\StatamicStructuredData\Fieldtypes;
 
 use Illuminate\Support\Collection;
 use Statamic\Facades\Site;
-use Statamic\Fields\Fieldtype;
 use Statamic\Facades\Taxonomy;
+use Statamic\Fields\Fieldtype;
 
 class StructuredDataBuilder extends Fieldtype
 {
