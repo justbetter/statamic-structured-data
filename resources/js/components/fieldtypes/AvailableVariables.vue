@@ -68,7 +68,8 @@ export default {
         variables() {
             return this.meta?.variables || {
                 config: {},
-                entry: []
+                entry: [],
+                term: []
             };
         },
 

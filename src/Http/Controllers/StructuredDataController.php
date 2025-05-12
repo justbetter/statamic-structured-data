@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
 use Statamic\Facades\Entry;
 use Statamic\Facades\Site;
+use Statamic\Facades\Term;
 use Statamic\Http\Controllers\CP\CpController;
 
 class StructuredDataController extends CpController
@@ -35,6 +36,10 @@ class StructuredDataController extends CpController
     {
         $templateIds = $request->input('ids', []);
         $contentEntry = Entry::find($request->input('entry_id'));
+
+        if (! $contentEntry) {
+            $contentEntry = Term::find($request->input('entry_id'));
+        }
 
         if (! $contentEntry) {
             return response()->json(['error' => 'Content entry not found'], 404);

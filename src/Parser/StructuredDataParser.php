@@ -16,16 +16,16 @@ class StructuredDataParser
         $this->structuredDataService = new StructuredDataService($this);
     }
 
-    public function parse($data, $entry)
+    public function parse($data, $item)
     {
-        return $this->parseAntlersInData($data, $entry);
+        return $this->parseAntlersInData($data, $item);
     }
 
-    protected function parseAntlersInData($data, $entry)
+    protected function parseAntlersInData($data, $item)
     {
         if (is_string($data)) {
             if (str_contains($data, '{{')) {
-                return (string) (new Antlers)->parse($data, $this->getParseContext($entry));
+                return (string) (new Antlers)->parse($data, $this->getParseContext($item));
             }
 
             if (str_contains($data, '@dataObject::')) {
@@ -40,20 +40,20 @@ class StructuredDataParser
 
         if (is_array($data)) {
             foreach ($data as $key => $value) {
-                $data[$key] = $this->parseAntlersInData($value, $entry);
+                $data[$key] = $this->parseAntlersInData($value, $item);
             }
         }
 
         return $data;
     }
 
-    protected function getParseContext($entry): array
+    protected function getParseContext($item): array
     {
         return array_merge(
             ['config' => config()->all()],
             ['site' => Site::current()->toAugmentedArray()],
-            ['absolute_url' => $entry->absoluteUrl()],
-            $entry->toAugmentedArray()
+            ['absolute_url' => $item->absoluteUrl()],
+            $item->toAugmentedArray()
         );
     }
 

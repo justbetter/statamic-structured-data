@@ -36,6 +36,7 @@ class AvailableVariablesFieldtype extends Fieldtype
                 ],
             'globals' => $this->getGlobalVariables(),
             'entry' => $this->getEntryFields(),
+            'term' => $this->getTermFields(),
         ];
     }
 
@@ -66,6 +67,38 @@ class AvailableVariablesFieldtype extends Fieldtype
         }
 
         $fields = collect($dataTemplate?->use_for_collection?->entryBlueprints()?->reduce(function($carry, $blueprint) {
+            return array_merge($carry, $blueprint->fields()->items()->toArray());
+        }, []) ?? []);
+
+        if(class_exists(OnPageSeoBlueprint::class)) {
+            $fields = $fields->merge(OnPageSeoBlueprint::requestBlueprint()->fields()?->items());
+        }
+
+        if (!$fields) {
+            return [];
+        }
+
+        $baseFields = [['name' => 'absolute_url', 'description' => 'Full URL']];
+
+        $collectionFields = $fields->map(function ($field) {
+            return $this->setFieldData($field);
+        })
+        ->filter()
+        ->values()
+        ->all();
+
+        return array_merge($baseFields, $collectionFields);
+    }
+
+    protected function getTermFields(): array
+    {
+        $dataTemplate = $this->field->parent();
+
+        if (! $dataTemplate?->use_for_taxonomy?->termBlueprints()?->first()) {
+            return [];
+        }
+
+        $fields = collect($dataTemplate?->use_for_taxonomy?->termBlueprints()?->reduce(function($carry, $blueprint) {
             return array_merge($carry, $blueprint->fields()->items()->toArray());
         }, []) ?? []);
 

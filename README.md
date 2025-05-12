@@ -4,7 +4,7 @@ This Statamic addon provides a powerful and flexible way to add structured data 
 
 ## Features
 
-- 🔄 Dynamic JSON-LD generation based on entry data
+- 🔄 Dynamic JSON-LD generation based on entry and term data
 - 📝 Template-based structured data configuration
 - 🔌 Automatic injection of structured data into your pages
 - 🎯 Support for multiple schemas per page
@@ -37,7 +37,7 @@ Create templates in your Statamic control panel that define your structured data
 
 ### 2. Assigning Templates to Entries
 
-In your entry's content, you can assign one or more structured data templates using the `structured_data_templates` field. The addon will automatically process these templates and generate the appropriate JSON-LD scripts.
+In your entry or term's content, you can assign one or more structured data templates using the `structured_data_templates` field. The addon will automatically process these templates and generate the appropriate JSON-LD scripts.
 
 ### 3. Automatic Injection
 
@@ -71,4 +71,4 @@ Here's an example of how you might structure a basic Organization schema:
 
 ## Configuration
 
-The addon works out of the box with sensible defaults. Configuration can be customized through your entry blueprints and templates.
+The addon works out of the box with sensible defaults. Configuration can be customized through your entry and term blueprints and templates.

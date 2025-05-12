@@ -33,6 +33,21 @@ tabs:
               localizable: true
               validate: 'max:200'
           -
+            handle: blueprint_type
+            field:
+              options:
+                -
+                  key: collection
+                  value: Collection
+                -
+                  key: taxonomy
+                  value: Taxonomy
+              max_items: 1
+              default: collection
+              type: select
+              display: 'Blueprint type'
+              localizable: true
+          -
             handle: use_for_collection
             field:
               max_items: 1
@@ -40,7 +55,22 @@ tabs:
               display: 'Use for collection'
               localizable: true
               validate:
+                - sometimes
                 - required
+              if:
+                blueprint_type: 'equals collection'
+          -
+            handle: use_for_taxonomy
+            field:
+              max_items: 1
+              type: taxonomies
+              display: 'Use for taxonomy'
+              localizable: true
+              validate:
+                - sometimes
+                - required
+              if:
+                blueprint_type: 'equals taxonomy'
           -
             handle: structured_data_available_variables
             field:

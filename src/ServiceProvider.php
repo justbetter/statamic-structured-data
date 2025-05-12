@@ -11,6 +11,7 @@ use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataObjectBuilder;
 use Justbetter\StatamicStructuredData\Http\Middleware\InjectStructuredData;
 use Justbetter\StatamicStructuredData\Listeners\AddStructuredDataTab;
 use Statamic\Events\EntryBlueprintFound;
+use Statamic\Events\TermBlueprintFound;
 use Statamic\Facades\Blueprint;
 use Statamic\Facades\Collection;
 use Statamic\Facades\Site;
@@ -52,6 +53,7 @@ class ServiceProvider extends AddonServiceProvider
     public function bootEvents()
     {
         Event::listen(EntryBlueprintFound::class, AddStructuredDataTab::class);
+        Event::listen(TermBlueprintFound::class, AddStructuredDataTab::class);
 
         return $this;
     }
