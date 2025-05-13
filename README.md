@@ -32,7 +32,7 @@ composer require justbetter/statamic-structured-data
 Create templates in your Statamic control panel that define your structured data schemas. Each template can contain multiple schema definitions with:
 
 - Special properties (@context, @type, @id)
-- Custom fields with various data types (strings, arrays, objects)
+- Custom fields with various data types (strings, numeric, arrays, objects)
 - Dynamic values using Antlers templating syntax
 
 ### 2. Assigning Templates to Entries
