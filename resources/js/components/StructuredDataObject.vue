@@ -51,6 +51,10 @@
                         <input type="text" v-model="field.value" class="input-text w-full" />
                     </div>
 
+                    <div v-else-if="field.type === 'numeric'">
+                        <input type="number" v-model="field.value" class="input-text w-full" />
+                    </div>
+
                     <div v-else-if="field.type === 'array'" class="space-y-2">
                         <div v-for="(value, valueIndex) in field.values" :key="valueIndex" class="flex gap-2">
                             <input type="text" v-model="field.values[valueIndex]" class="input-text flex-1" />
@@ -119,6 +123,7 @@ export default {
         selectOptions() {
             return [
                 { value: 'string', label: 'String' },
+                { value: 'numeric', label: 'Numeric' },
                 { value: 'array', label: 'Array' },
                 { value: 'object', label: 'Object' }
             ];

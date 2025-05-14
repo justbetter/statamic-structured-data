@@ -39,6 +39,13 @@
                                         class="input-text w-full"
                                         :placeholder="'Enter value'"
                                     />
+                                    <input
+                                        v-if="field.type === 'numeric'"
+                                        type="number"
+                                        v-model="field.value"
+                                        class="input-text w-full"
+                                        :placeholder="'Enter value'"
+                                    />
                                     <div v-else-if="field.type === 'array'" class="mt-2">
                                         <div class="flex flex-col gap-2 space-y-2">
                                             <div v-for="(value, valueIndex) in field.values" :key="valueIndex" class="flex items-center gap-2">
@@ -151,6 +158,7 @@ export default {
         selectOptions() {
             return [
                 { value: 'string', label: 'String' },
+                { value: 'numeric', label: 'Numeric' },
                 { value: 'array', label: 'Array' },
                 { value: 'object', label: 'Object' }
             ];
