@@ -1,6 +1,11 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.2.1...1.2.1)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.2.2...1.2.2)
+## [1.2.2](https://github.com/justbetter/statamic-structured-data/releases/tag/1.2.2) - 2025-05-19
+
+### Changed
+ - Allow json response from service class (#8)
+
 ## [1.2.1](https://github.com/justbetter/statamic-structured-data/releases/tag/1.2.1) - 2025-05-14
 
 ### Changed
