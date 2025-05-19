@@ -40,7 +40,7 @@ class ServiceProvider extends AddonServiceProvider
         AvailableVariablesFieldtype::class,
     ];
 
-    public function bootAddon()
+    public function bootAddon(): void
     {
         $this->bootCollections()
             ->bootTaxonomies()
@@ -49,7 +49,7 @@ class ServiceProvider extends AddonServiceProvider
             ->bootEvents();
     }
 
-    public function bootEvents()
+    public function bootEvents(): self
     {
         Event::listen(EntryBlueprintFound::class, AddStructuredDataTabListener::class);
         Event::listen(TermBlueprintFound::class, AddStructuredDataTabListener::class);
@@ -57,7 +57,7 @@ class ServiceProvider extends AddonServiceProvider
         return $this;
     }
 
-    public function bootCollections()
+    public function bootCollections(): self
     {
         if ($this->app->runningInConsole() || Collection::find('structured_data_templates')) {
             return $this;
@@ -79,7 +79,7 @@ class ServiceProvider extends AddonServiceProvider
         return $this;
     }
 
-    public function bootTaxonomies()
+    public function bootTaxonomies(): self
     {
         if ($this->app->runningInConsole() || Taxonomy::find('structured_data_objects')) {
             return $this;
@@ -101,7 +101,7 @@ class ServiceProvider extends AddonServiceProvider
         return $this;
     }
 
-    protected function bootConfig()
+    protected function bootConfig(): self
     {
         $this->publishes([
             __DIR__.'/../config/structured-data.php' => config_path('justbetter/structured-data.php'),
