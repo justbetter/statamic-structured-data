@@ -25,6 +25,12 @@ You can install this addon via Composer:
 composer require justbetter/statamic-structured-data
 ```
 
+After installing make sure to load the Structured Data tag in your head.
+
+``` blade
+{!! Statamic::tag('structured-data:head')->fetch() !!}
+```
+
 ## Configuration
 
 Make sure to publish the config by running:

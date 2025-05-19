@@ -8,8 +8,8 @@ use Justbetter\StatamicStructuredData\Fieldtypes\AvailableVariablesFieldtype;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataBuilder;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataObjectBuilder;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataPreview;
-use Justbetter\StatamicStructuredData\Http\Middleware\InjectStructuredData;
-use Justbetter\StatamicStructuredData\Listeners\AddStructuredDataTab;
+use Justbetter\StatamicStructuredData\Listeners\AddStructuredDataTabListener;
+use Justbetter\StatamicStructuredData\Tags\StructuredData;
 use Statamic\Events\EntryBlueprintFound;
 use Statamic\Events\TermBlueprintFound;
 use Statamic\Facades\Blueprint;
@@ -29,6 +29,10 @@ class ServiceProvider extends AddonServiceProvider
         'publicDirectory' => 'resources/dist',
     ];
 
+    protected $tags = [
+        StructuredData::class,
+    ];
+
     protected $fieldtypes = [
         StructuredDataBuilder::class,
         StructuredDataPreview::class,
@@ -36,24 +40,19 @@ class ServiceProvider extends AddonServiceProvider
         AvailableVariablesFieldtype::class,
     ];
 
-    protected $middlewareGroups = [
-        'web' => [
-            InjectStructuredData::class,
-        ],
-    ];
-
     public function bootAddon()
     {
         $this->bootCollections()
             ->bootTaxonomies()
             ->bootConfig()
+            ->bootActions()
             ->bootEvents();
     }
 
     public function bootEvents()
     {
-        Event::listen(EntryBlueprintFound::class, AddStructuredDataTab::class);
-        Event::listen(TermBlueprintFound::class, AddStructuredDataTab::class);
+        Event::listen(EntryBlueprintFound::class, AddStructuredDataTabListener::class);
+        Event::listen(TermBlueprintFound::class, AddStructuredDataTabListener::class);
 
         return $this;
     }

@@ -1,10 +1,8 @@
 <?php
 
-namespace Justbetter\StatamicStructuredData\Http\Middleware;
+namespace Justbetter\StatamicStructuredData\Actions;
 
-use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Justbetter\StatamicStructuredData\Services\StructuredDataService;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Entry as EntryFacade;
@@ -14,7 +12,7 @@ use Statamic\Facades\URL;
 use Statamic\Structures\Page;
 use Statamic\Taxonomies\LocalizedTerm;
 
-class InjectStructuredData
+class InjectStructuredDataAction
 {
     protected $structuredDataService;
 
@@ -23,30 +21,30 @@ class InjectStructuredData
         $this->structuredDataService = $structuredDataService;
     }
 
-    public function handle(Request $request, Closure $next)
+    public function execute(): ?string
     {
-        $response = $next($request);
+        $request = request();
 
-        if (! $response instanceof Response || ! $this->shouldInject($response)) {
-            return $response;
+        if (! $this->shouldInject($request)) {
+            return null;
         }
 
         $entry = $this->getCurrentEntry();
 
         if ($entry) {
-            return $this->handleEntry($response, $entry);
+            return $this->handleEntry($entry);
         }
 
         $term = $this->getCurrentTerm();
 
         if ($term) {
-            return $this->handleTaxonomy($response, $term);
+            return $this->handleTaxonomy($term);
         }
 
-        return $response;
+        return null;
     }
 
-    protected function handleEntry($response, $entry)
+    protected function handleEntry($entry): ?string
     {
         if ($entry instanceof Page) {
             $entry = $entry->entry();
@@ -55,47 +53,37 @@ class InjectStructuredData
         $enabledCollections = config('justbetter.structured-data.collections', []);
 
         if (! in_array($entry?->collection()?->handle(), $enabledCollections)) {
-            return $response;
+            return null;
         }
 
-        return $this->handleScripts($response, $entry);
+        return $this->handleScripts($entry);
     }
 
-    protected function handleTaxonomy($response, $term)
+    protected function handleTaxonomy($term): ?string
     {
         $enabledTaxonomies = config('justbetter.structured-data.taxonomies', []);
 
         if (! in_array($term?->taxonomy()?->handle(), $enabledTaxonomies)) {
-            return $response;
+            return null;
         }
 
-        return $this->handleScripts($response, $term);
+        return $this->handleScripts($term);
     }
 
-    protected function handleScripts($response, $item)
+    protected function handleScripts($item): ?string
     {
         $scripts = $this->structuredDataService->getJsonLdScripts($item);
 
         if (! $scripts ?? false) {
-            return $response;
+            return null;
         }
 
-        $content = $response->getContent();
-        $scriptsHtml = implode("\n", $scripts);
-
-        $content = str_replace('</head>', "\n".$scriptsHtml."\n</head>", $content);
-        $response->setContent($content);
-
-        return $response;
+        return implode("\n", $scripts);
     }
 
-    protected function shouldInject($response): bool
+    protected function shouldInject(Request $request): bool
     {
-        $content = $response->getContent();
-
-        return
-            str_contains($response->headers->get('Content-Type', ''), 'text/html') &&
-            str_contains($content, '</head>');
+        return true;
     }
 
     protected function getCurrentEntry(): Page|Entry|null
