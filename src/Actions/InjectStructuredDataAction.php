@@ -23,12 +23,6 @@ class InjectStructuredDataAction
 
     public function execute(): ?string
     {
-        $request = request();
-
-        if (! $this->shouldInject($request)) {
-            return null;
-        }
-
         $entry = $this->getCurrentEntry();
 
         if ($entry) {
@@ -79,11 +73,6 @@ class InjectStructuredDataAction
         }
 
         return implode("\n", $scripts);
-    }
-
-    protected function shouldInject(Request $request): bool
-    {
-        return true;
     }
 
     protected function getCurrentEntry(): Page|Entry|null
