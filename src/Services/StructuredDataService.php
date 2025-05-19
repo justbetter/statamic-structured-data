@@ -17,7 +17,7 @@ class StructuredDataService
         $this->parser = $parser;
     }
 
-    public function getJsonLdScripts($item): array
+    public function getJsonLdScripts($item, $json = false): array
     {
         $templates = $this->getTemplates($item);
 
@@ -43,7 +43,7 @@ class StructuredDataService
             try {
                 $parsedSchemas = $this->parser->parse($schemas, $item);
                 foreach ($parsedSchemas as $parsedSchema) {
-                    $scripts[] = $this->formatJsonLd($parsedSchema);
+                    $scripts[] = $this->formatJsonLd($parsedSchema, $json);
                 }
             } catch (\Exception $e) {
                 continue;
@@ -53,13 +53,17 @@ class StructuredDataService
         return $scripts;
     }
 
-    public function formatJsonLd(array $schema): string
+    public function formatJsonLd(array $schema, $json = false): string
     {
         $transformedSchema = $this->transformSchema($schema);
+        $schema = json_encode($transformedSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($json) {
+            return $schema;
+        }
 
         return sprintf(
             '<script type="application/ld+json">%s</script>',
-            json_encode($transformedSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+            $schema
         );
     }
 
