@@ -1,6 +1,11 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.2.2...1.2.2)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.3.0...1.3.0)
+## [1.3.0](https://github.com/justbetter/statamic-structured-data/releases/tag/1.3.0) - 2025-05-20
+
+### Changed
+ - Changed injection of structured data (#9)
+
 ## [1.2.2](https://github.com/justbetter/statamic-structured-data/releases/tag/1.2.2) - 2025-05-19
 
 ### Changed
