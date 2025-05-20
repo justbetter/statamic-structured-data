@@ -6,7 +6,7 @@ use Statamic\Events\EntryBlueprintFound;
 use Statamic\Events\TermBlueprintFound;
 use Statamic\Fields\Blueprint;
 
-class AddStructuredDataTab
+class AddStructuredDataTabListener
 {
     public function handle(EntryBlueprintFound|TermBlueprintFound $event): void
     {
