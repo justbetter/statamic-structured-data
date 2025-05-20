@@ -2,7 +2,6 @@
 
 namespace Justbetter\StatamicStructuredData\Actions;
 
-use Illuminate\Http\Request;
 use Justbetter\StatamicStructuredData\Services\StructuredDataService;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Entry as EntryFacade;
@@ -14,12 +13,7 @@ use Statamic\Taxonomies\LocalizedTerm;
 
 class InjectStructuredDataAction
 {
-    protected $structuredDataService;
-
-    public function __construct(StructuredDataService $structuredDataService)
-    {
-        $this->structuredDataService = $structuredDataService;
-    }
+    public function __construct(protected StructuredDataService $structuredDataService) {}
 
     public function execute(): ?string
     {
@@ -38,7 +32,7 @@ class InjectStructuredDataAction
         return null;
     }
 
-    protected function handleEntry($entry): ?string
+    protected function handleEntry(Entry|Page $entry): ?string
     {
         if ($entry instanceof Page) {
             $entry = $entry->entry();
@@ -53,7 +47,7 @@ class InjectStructuredDataAction
         return $this->handleScripts($entry);
     }
 
-    protected function handleTaxonomy($term): ?string
+    protected function handleTaxonomy(LocalizedTerm $term): ?string
     {
         $enabledTaxonomies = config('justbetter.structured-data.taxonomies', []);
 
@@ -64,7 +58,7 @@ class InjectStructuredDataAction
         return $this->handleScripts($term);
     }
 
-    protected function handleScripts($item): ?string
+    protected function handleScripts(mixed $item): ?string
     {
         $scripts = $this->structuredDataService->getJsonLdScripts($item);
 
