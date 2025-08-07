@@ -1,18 +1,18 @@
 {
   "resources/css/statamic-structured-data.css": {
-    "file": "assets/statamic-structured-data-f776e0ca.css",
+    "file": "assets/statamic-structured-data-c8c9d7ed.css",
     "isEntry": true,
     "src": "resources/css/statamic-structured-data.css"
   },
   "resources/js/statamic-structured-data.css": {
-    "file": "assets/statamic-structured-data-05ad0e35.css",
+    "file": "assets/statamic-structured-data-84529790.css",
     "src": "resources/js/statamic-structured-data.css"
   },
   "resources/js/statamic-structured-data.js": {
     "css": [
-      "assets/statamic-structured-data-05ad0e35.css"
+      "assets/statamic-structured-data-84529790.css"
     ],
-    "file": "assets/statamic-structured-data-6608a688.js",
+    "file": "assets/statamic-structured-data-e538cc20.js",
     "isEntry": true,
     "src": "resources/js/statamic-structured-data.js"
   }

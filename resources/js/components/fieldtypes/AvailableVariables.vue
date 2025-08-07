@@ -6,7 +6,7 @@
                 <div :class="['chevron', { 'chevron-up': !variablesCollapsed }]"></div>
             </div>
         </div>
-        <div v-if="!variablesCollapsed" class="py-4 bg-white">
+        <div v-if="!variablesCollapsed" class="structured-data-variables-list py-4">
             <div v-if="!hasVariables" class="text-gray-500 text-sm">
                 {{ __('No variables available for this collection.') }}
             </div>
@@ -26,7 +26,7 @@
                                 <div v-if="showChildren[variable.name]">
                                     <div
                                         v-for="childVariable in variable.children" :key="childVariable.name"
-                                        class="variable-item p-1 hover:bg-gray-100 cursor-pointer rounded"
+                                        class="variable-item p-1 cursor-pointer rounded"
                                         @click="copyVariable('{{ ' + childVariable.name + ' }}', $event)"
                                     >
                                         <div class="text-sm">{{ childVariable.description }}</div>
@@ -34,7 +34,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div v-else @click="copyVariable('{{ ' + variable.name + ' }}', $event)" class="cursor-pointer hover:bg-gray-100">
+                            <div v-else @click="copyVariable('{{ ' + variable.name + ' }}', $event)" class="variable-item cursor-pointer">
                                 <div class="text-sm">{{ variable.description }}</div>
                                 <div class="text-xs text-gray-500">{{ variable.name }}</div>
                             </div>

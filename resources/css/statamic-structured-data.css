@@ -32,3 +32,24 @@
 .structured-data-object pre {
     @apply font-mono text-sm;
 }
+
+.structured-data-preview-code {
+    @apply bg-gray-100 dark:bg-gray-800;
+}
+
+.structured-data-schema {
+    @apply bg-white dark:bg-transparent;
+}
+
+.structured-data-schema-field-header {
+    @apply bg-gray-100 dark:bg-transparent;
+}
+
+.structured-data-variables-list {
+    @apply bg-white dark:bg-transparent;
+}
+
+.structured-data-variables-list .variable-item {
+    @apply hover:bg-gray-100 dark:hover:bg-gray-800;
+}
+
