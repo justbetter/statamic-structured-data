@@ -39,8 +39,8 @@
                 </div>
 
                 <div v-show="!template.isCollapsed">
-                    <pre v-if="isPrettyPrint" class="bg-gray-100 p-4 rounded overflow-auto">{{ formatJson(template.structuredData) }}</pre>
-                    <pre v-else class="bg-gray-100 p-4 rounded overflow-auto">{{ JSON.stringify(template.structuredData) }}</pre>
+                    <pre v-if="isPrettyPrint" class="structured-data-preview-code p-4 rounded overflow-auto">{{ formatJson(template.structuredData) }}</pre>
+                    <pre v-else class="structured-data-preview-code p-4 rounded overflow-auto">{{ JSON.stringify(template.structuredData) }}</pre>
                 </div>
             </div>
         </div>

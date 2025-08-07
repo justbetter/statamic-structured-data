@@ -1,7 +1,7 @@
 <template>
     <div class="structured-data-builder">
         <div class="flex-1">
-            <div v-for="(schema, schemaIndex) in schemas" :key="schemaIndex" class="mb-6 bg-white rounded-lg shadow-sm border">
+            <div v-for="(schema, schemaIndex) in schemas" :key="schemaIndex" class="structured-data-schema mb-6 rounded-lg shadow-sm border">
                 <div class="px-4 py-2 bg-gray-50 border-b rounded-t-lg flex justify-between items-center">
                     <div class="flex items-center gap-2 cursor-pointer" @click="toggleSchema(schemaIndex)">
                         <div class="chevron" :class="{ 'chevron-up': !isSchemaCollapsed(schemaIndex) }"></div>
@@ -53,7 +53,7 @@
 
                             <draggable v-model="schema.fields" @end="onEnd" :key="schemaIndex" handle=".drag-handle">
                                 <div v-for="(field, index) in schema.fields" :key="index" class="mb-2 border rounded bg-gray-50">
-                                    <div class="px-2 py-2 bg-gray-100 flex justify-between items-center border-b rounded-t-lg cursor-drag drag-handle">
+                                    <div class="structured-data-schema-field-header px-2 py-2 flex justify-between items-center border-b rounded-t-lg cursor-drag drag-handle">
                                         <button v-show="index > 0" @click="moveFieldUp(index, schema)" class="btn btn-secondary">↑ Move Up</button>
                                         <button v-show="index < schema.fields.length - 1" @click="moveFieldDown(index, schema)" class="btn btn-secondary">Move Down ↓</button>
                                     </div>

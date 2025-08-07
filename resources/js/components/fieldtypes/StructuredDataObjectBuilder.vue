@@ -1,7 +1,7 @@
 <template>
     <div class="structured-data-builder">
         <div class="flex-1">
-            <div v-if="schema" class="mb-6 bg-white rounded-lg shadow-sm border">
+            <div v-if="schema" class="structured-data-schema mb-6 rounded-lg shadow-sm border">
                 <div class="px-4 py-2 bg-gray-50 border-b rounded-t-lg flex justify-between items-center">
                     <div class="flex items-center gap-2 cursor-pointer">
                         <h3 class="font-bold text-lg">{{ __('Object Data Builder') }}</h3>
