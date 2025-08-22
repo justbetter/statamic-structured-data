@@ -1,6 +1,12 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.3.0...1.3.0)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.3.1...1.3.1)
+## [1.3.1](https://github.com/justbetter/statamic-structured-data/releases/tag/1.3.1) - 2025-08-12
+
+### Fixed
+
+- Dark mode styling fix (#10)
+
 ## [1.3.0](https://github.com/justbetter/statamic-structured-data/releases/tag/1.3.0) - 2025-05-20
 
 ### Changed
