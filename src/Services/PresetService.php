@@ -101,7 +101,7 @@ class PresetService
     public function getPresetByName(string $name): ?array
     {
         return $this->getAvailablePresets()
-            ->first(function ($preset) use ($name) {
+            ->first(function (array $preset) use ($name): bool {
                 return $preset['name'] === $name;
             });
     }

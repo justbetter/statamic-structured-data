@@ -53,9 +53,7 @@ class ServiceProvider extends AddonServiceProvider
 
     public function bootServices(): self
     {
-        $this->app->singleton(PresetService::class, function ($app) {
-            return new PresetService();
-        });
+        $this->app->singleton(PresetService::class);
 
         return $this;
     }

@@ -16,6 +16,10 @@ class StructuredDataBuilder extends Fieldtype
 
     protected static $handle = 'structured_data_builder';
 
+    public function __construct(protected PresetService $presetService)
+    {
+    }
+
     public function preProcess($data)
     {
         $data = $data ?? [
@@ -34,12 +38,10 @@ class StructuredDataBuilder extends Fieldtype
 
     public function preload()
     {
-        $presetService = app(PresetService::class);
-        
         return [
             'base_url' => config('app.url'),
             'taxonomy_terms' => $this->getStructuredDataObjects(),
-            'presets' => $presetService->getAvailablePresets()->toArray(),
+            'presets' => $this->presetService->getAvailablePresets()->toArray(),
             'presets_enabled' => config('justbetter.structured-data.presets.enabled', true),
         ];
     }
