@@ -3,6 +3,7 @@
 namespace Justbetter\StatamicStructuredData\Fieldtypes;
 
 use Illuminate\Support\Collection;
+use Justbetter\StatamicStructuredData\Services\PresetService;
 use Statamic\Facades\Site;
 use Statamic\Facades\Taxonomy;
 use Statamic\Fields\Fieldtype;
@@ -33,9 +34,13 @@ class StructuredDataBuilder extends Fieldtype
 
     public function preload()
     {
+        $presetService = app(PresetService::class);
+        
         return [
             'base_url' => config('app.url'),
             'taxonomy_terms' => $this->getStructuredDataObjects(),
+            'presets' => $presetService->getAvailablePresets()->toArray(),
+            'presets_enabled' => config('justbetter.structured-data.presets.enabled', true),
         ];
     }
 

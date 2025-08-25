@@ -1,0 +1,125 @@
+{
+  "name": "Organization",
+  "description": "Basic organization schema with contact and location info",
+  "schema": {
+    "specialProps": {
+      "context": "http://schema.org",
+      "type": "Organization",
+      "id": "{{ site:url }}/#Organization"
+    },
+    "fields": [
+      {
+        "key": "name",
+        "type": "string",
+        "value": "{{ site:name }}",
+        "values": [],
+        "fields": []
+      },
+      {
+        "key": "url",
+        "type": "string",
+        "value": "{{ site:url }}",
+        "values": [],
+        "fields": []
+      },
+      {
+        "key": "description",
+        "type": "string",
+        "value": "Your organization description here",
+        "values": [],
+        "fields": []
+      },
+      {
+        "key": "logo",
+        "type": "object",
+        "value": {
+          "specialProps": {
+            "type": "ImageObject",
+            "id": ""
+          },
+          "fields": [
+            {
+              "key": "url",
+              "type": "string",
+              "value": "{{ site:url }}/path/to/your/logo.png",
+              "values": [],
+              "fields": []
+            }
+          ]
+        },
+        "values": [],
+        "fields": []
+      },
+      {
+        "key": "contactPoint",
+        "type": "object",
+        "value": {
+          "specialProps": {
+            "type": "ContactPoint",
+            "id": ""
+          },
+          "fields": [
+            {
+              "key": "telephone",
+              "type": "string",
+              "value": "+31 20 123 4567",
+              "values": [],
+              "fields": []
+            },
+            {
+              "key": "contactType",
+              "type": "string",
+              "value": "customer service",
+              "values": [],
+              "fields": []
+            }
+          ]
+        },
+        "values": [],
+        "fields": []
+      },
+      {
+        "key": "address",
+        "type": "object",
+        "value": {
+          "specialProps": {
+            "type": "PostalAddress",
+            "id": ""
+          },
+          "fields": [
+            {
+              "key": "streetAddress",
+              "type": "string",
+              "value": "123 Main Street",
+              "values": [],
+              "fields": []
+            },
+            {
+              "key": "addressLocality",
+              "type": "string",
+              "value": "City Name",
+              "values": [],
+              "fields": []
+            },
+            {
+              "key": "postalCode",
+              "type": "string",
+              "value": "12345",
+              "values": [],
+              "fields": []
+            },
+            {
+              "key": "addressCountry",
+              "type": "string",
+              "value": "US",
+              "values": [],
+              "fields": []
+            }
+          ]
+        },
+        "values": [],
+        "fields": []
+      }
+    ]
+  }
+}

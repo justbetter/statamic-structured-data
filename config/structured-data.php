@@ -9,4 +9,9 @@ return [
         // Add taxonomy handles here that should have structured data objects
         // Example: 'categories', 'tags'
     ],
+    'presets' => [
+        'enabled' => true,
+        'default_presets' => ['website', 'organization', 'article', 'webpage', 'localbusiness'],
+        'custom_preset_paths' => [],
+    ],
 ];

@@ -5,7 +5,10 @@
                 <div class="px-4 py-2 bg-gray-50 border-b rounded-t-lg flex justify-between items-center">
                     <div class="flex items-center gap-2 cursor-pointer" @click="toggleSchema(schemaIndex)">
                         <div class="chevron" :class="{ 'chevron-up': !isSchemaCollapsed(schemaIndex) }"></div>
-                        <h3 class="font-bold text-lg">{{ __('Schema') }} {{ schemaIndex + 1 }}</h3>
+                        <h3 class="font-bold text-lg">
+                            <span v-if="schema.specialProps.type">{{ schema.specialProps.type }}</span>
+                            <span v-else>{{ __('Schema') }} {{ schemaIndex + 1 }}</span>
+                        </h3>
                     </div>
                     <button
                         v-if="schemas.length > 1"
@@ -175,6 +178,13 @@
 
             <div class="flex gap-2 mt-4">
                 <button class="btn-primary" @click="addSchema">{{ __('Add Schema') }}</button>
+                <button 
+                    v-if="presetsEnabled && presets.length > 0" 
+                    class="btn-preset" 
+                    @click="showPresetModal = true"
+                >
+                    {{ __('Add Preset') }}
+                </button>
                 <button class="btn" @click="togglePreview">
                     {{ showPreview ? __('Hide Preview') : __('Show Preview') }}
                 </button>
@@ -184,11 +194,20 @@
                 <pre class="bg-gray-50 p-4 rounded-lg overflow-x-auto">{{ preview }}</pre>
             </div>
         </div>
+
+        <preset-modal
+            :visible="showPresetModal"
+            :presets="presets"
+            :has-existing-schemas="schemas.length > 0"
+            @close="showPresetModal = false"
+            @preset-selected="handlePresetSelected"
+        />
     </div>
 </template>
 
 <script>
 import StructuredDataObject from '../StructuredDataObject.vue';
+import PresetModal from '../PresetModal.vue';
 import { formatSchemaJson } from '../../utils/schema';
 import draggable from 'vuedraggable';
 
@@ -198,6 +217,7 @@ export default {
 
     components: {
         'structured-data-object': StructuredDataObject,
+        'preset-modal': PresetModal,
         draggable,
     },
 
@@ -234,6 +254,7 @@ export default {
                 fields: []
             }],
             showPreview: false,
+            showPresetModal: false,
             collapsedSchemas: {}
         }
     },
@@ -269,6 +290,14 @@ export default {
                     value: '@dataObject::' + term.slug
                 };
             });
+        },
+
+        presets() {
+            return this.meta?.presets || [];
+        },
+
+        presetsEnabled() {
+            return this.meta?.presets_enabled || false;
         }
     },
 
@@ -312,6 +341,7 @@ export default {
                 schema.fields = fields;
             }
         },
+
         moveFieldDown(index, schema) {
             if (index < schema.fields.length - 1) {
                 const fields = [...schema.fields];
@@ -398,6 +428,20 @@ export default {
             this.schemas.splice(index, 1);
         },
 
+        handlePresetSelected(data) {
+            const { preset, action } = data;
+            
+            switch (action) {
+                case 'merge':
+                case 'add':
+                    this.schemas.push(JSON.parse(JSON.stringify(preset.schema)));
+                    break;
+                case 'override':
+                    this.schemas = [JSON.parse(JSON.stringify(preset.schema))];
+                    break;
+            }
+        },
+
         getFieldByInput(inputElement) {
             const fieldElement = inputElement.closest('.field');
             if (fieldElement) {
@@ -419,12 +463,19 @@ export default {
 .structured-data-builder {
     max-width: 800px;
 }
+
 .btn-close {
     @apply px-2 py-1 text-gray-500 hover:text-gray-700;
 }
+
 .btn {
     @apply bg-gray-200 px-3 py-1 rounded hover:bg-gray-300;
 }
+
+.btn-preset {
+    @apply bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 font-medium transition-colors;
+}
+
 .chevron {
     width: 10px;
     height: 10px;
@@ -433,6 +484,7 @@ export default {
     transform: rotate(45deg);
     transition: transform 0.2s ease;
 }
+
 .chevron-up {
     transform: rotate(-135deg);
 }

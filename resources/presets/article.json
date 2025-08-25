@@ -1,0 +1,139 @@
+{
+  "name": "Article",
+  "description": "Basic article schema for blog posts and news articles",
+  "schema": {
+    "specialProps": {
+      "context": "http://schema.org",
+      "type": "Article",
+      "id": "{{ entry:url }}"
+    },
+    "fields": [
+      {
+        "key": "headline",
+        "type": "string",
+        "value": "{{ entry:title }}",
+        "values": [],
+        "fields": []
+      },
+      {
+        "key": "description",
+        "type": "string",
+        "value": "Article description or excerpt here",
+        "values": [],
+        "fields": []
+      },
+      {
+        "key": "author",
+        "type": "object",
+        "value": {
+          "specialProps": {
+            "type": "Person",
+            "id": ""
+          },
+          "fields": [
+            {
+              "key": "name",
+              "type": "string",
+              "value": "Author Name",
+              "values": [],
+              "fields": []
+            }
+          ]
+        },
+        "values": [],
+        "fields": []
+      },
+      {
+        "key": "publisher",
+        "type": "object",
+        "value": {
+          "specialProps": {
+            "type": "Organization",
+            "id": ""
+          },
+          "fields": [
+            {
+              "key": "name",
+              "type": "string",
+              "value": "{{ site:name }}",
+              "values": [],
+              "fields": []
+            },
+            {
+              "key": "logo",
+              "type": "object",
+              "value": {
+                "specialProps": {
+                  "type": "ImageObject",
+                  "id": ""
+                },
+                "fields": [
+                  {
+                    "key": "url",
+                    "type": "string",
+                    "value": "{{ site:url }}/path/to/your/logo.png",
+                    "values": [],
+                    "fields": []
+                  }
+                ]
+              },
+              "values": [],
+              "fields": []
+            }
+          ]
+        },
+        "values": [],
+        "fields": []
+      },
+      {
+        "key": "datePublished",
+        "type": "string",
+        "value": "2024-01-01T10:00:00Z",
+        "values": [],
+        "fields": []
+      },
+      {
+        "key": "dateModified",
+        "type": "string",
+        "value": "2024-01-01T10:00:00Z",
+        "values": [],
+        "fields": []
+      },
+      {
+        "key": "image",
+        "type": "object",
+        "value": {
+          "specialProps": {
+            "type": "ImageObject",
+            "id": ""
+          },
+          "fields": [
+            {
+              "key": "url",
+              "type": "string",
+              "value": "{{ site:url }}/path/to/featured-image.jpg",
+              "values": [],
+              "fields": []
+            },
+            {
+              "key": "width",
+              "type": "numeric",
+              "value": "1200",
+              "values": [],
+              "fields": []
+            },
+            {
+              "key": "height",
+              "type": "numeric",
+              "value": "630",
+              "values": [],
+              "fields": []
+            }
+          ]
+        },
+        "values": [],
+        "fields": []
+      }
+    ]
+  }
+}
