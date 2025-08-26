@@ -1,0 +1,121 @@
+{
+    "name": "LocalBusiness",
+    "description": "Local business schema with location and contact information",
+    "schema": {
+      "specialProps": {
+        "context": "http://schema.org",
+        "type": "LocalBusiness",
+        "id": "{{ site:url }}/#LocalBusiness"
+      },
+      "fields": [
+        {
+          "key": "name",
+          "type": "string",
+          "value": "{{ site:name }}",
+          "values": [],
+          "fields": []
+        },
+        {
+          "key": "url",
+          "type": "string",
+          "value": "{{ site:url }}",
+          "values": [],
+          "fields": []
+        },
+        {
+          "key": "description",
+          "type": "string",
+          "value": "Your local business description here",
+          "values": [],
+          "fields": []
+        },
+        {
+          "key": "telephone",
+          "type": "string",
+          "value": "+31 20 123 4567",
+          "values": [],
+          "fields": []
+        },
+        {
+          "key": "email",
+          "type": "string",
+          "value": "info@yourbusiness.com",
+          "values": [],
+          "fields": []
+        },
+        {
+          "key": "address",
+          "type": "object",
+          "value": {
+            "specialProps": {
+              "type": "PostalAddress",
+              "id": ""
+            },
+            "fields": [
+              {
+                "key": "streetAddress",
+                "type": "string",
+                "value": "123 Main Street",
+                "values": [],
+                "fields": []
+              },
+              {
+                "key": "addressLocality",
+                "type": "string",
+                "value": "Your City",
+                "values": [],
+                "fields": []
+              },
+              {
+                "key": "addressRegion",
+                "type": "string",
+                "value": "Your State",
+                "values": [],
+                "fields": []
+              },
+              {
+                "key": "postalCode",
+                "type": "string",
+                "value": "12345",
+                "values": [],
+                "fields": []
+              },
+              {
+                "key": "addressCountry",
+                "type": "string",
+                "value": "US",
+                "values": [],
+                "fields": []
+              }
+            ]
+          },
+          "values": [],
+          "fields": []
+        },
+        {
+          "key": "openingHours",
+          "type": "array",
+          "value": "",
+          "values": [
+            "Mo-Fr 09:00-17:00",
+            "Sa 10:00-14:00"
+          ],
+          "fields": []
+        },
+        {
+          "key": "priceRange",
+          "type": "string",
+          "value": "$$",
+          "values": [],
+          "fields": []
+        },
+        {
+          "key": "image",
+          "type": "string",
+          "value": "{{ site:url }}/path/to/business-photo.jpg",
+          "values": [],
+          "fields": []
+        }
+      ]
+    }
+  }
