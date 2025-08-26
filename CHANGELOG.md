@@ -1,6 +1,12 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.3.1...1.3.1)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.4.0...1.4.0)
+## [1.4.0](https://github.com/justbetter/statamic-structured-data/releases/tag/1.4.0) - 2025-08-26
+
+### Added
+
+- Presets (#11)
+
 ## [1.3.1](https://github.com/justbetter/statamic-structured-data/releases/tag/1.3.1) - 2025-08-12
 
 ### Fixed
