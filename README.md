@@ -27,8 +27,16 @@ composer require justbetter/statamic-structured-data
 
 After installing make sure to load the Structured Data tag in your head.
 
+**Blade**:
+
 ``` blade
 {!! Statamic::tag('structured-data:head')->fetch() !!}
+```
+
+**Antlers**
+
+```html
+{{ structured-data:head }}
 ```
 
 ## Configuration
