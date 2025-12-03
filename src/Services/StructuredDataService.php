@@ -95,6 +95,10 @@ class StructuredDataService
                     $result[$key] = $field['values'];
                 } elseif ($field['type'] === 'object' && isset($field['value'])) {
                     $result[$key] = $this->transformSchema($field['value']);
+                } elseif ($field['type'] === 'object_array' && isset($field['values'])) {
+                    foreach ($field['values'] as $value) {
+                        $result[$key][] =  $this->transformSchema($value);
+                    }
                 } elseif ($field['type'] === 'numeric' && isset($field['value'])) {
                     $result[$key] = (float) $field['value'];
                 } else {
