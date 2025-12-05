@@ -4,7 +4,7 @@
 ## [1.4.2](https://github.com/justbetter/statamic-structured-data/releases/tag/1.4.2) - 2025-12-05
 
 ### Fixed
-* Fixed object array output (#15)
+- Fixed object array output (#15)
 
 ## [1.4.0](https://github.com/justbetter/statamic-structured-data/releases/tag/1.4.0) - 2025-08-26
 
