@@ -9,6 +9,7 @@ use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataBuilder;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataObjectBuilder;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataPreview;
 use Justbetter\StatamicStructuredData\Listeners\AddStructuredDataTabListener;
+use Justbetter\StatamicStructuredData\Services\PresetService;
 use Justbetter\StatamicStructuredData\Tags\StructuredData;
 use Statamic\Events\EntryBlueprintFound;
 use Statamic\Events\TermBlueprintFound;
@@ -46,7 +47,15 @@ class ServiceProvider extends AddonServiceProvider
             ->bootTaxonomies()
             ->bootConfig()
             ->bootActions()
-            ->bootEvents();
+            ->bootEvents()
+            ->bootServices();
+    }
+
+    public function bootServices(): self
+    {
+        $this->app->singleton(PresetService::class);
+
+        return $this;
     }
 
     public function bootEvents(): self
