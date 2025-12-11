@@ -2,17 +2,13 @@
 
 namespace Justbetter\StatamicStructuredData;
 
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Justbetter\StatamicStructuredData\Fieldtypes\AvailableVariablesFieldtype;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataBuilder;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataObjectBuilder;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataPreview;
-use Justbetter\StatamicStructuredData\Listeners\AddStructuredDataTabListener;
 use Justbetter\StatamicStructuredData\Services\PresetService;
 use Justbetter\StatamicStructuredData\Tags\StructuredData;
-use Statamic\Events\EntryBlueprintFound;
-use Statamic\Events\TermBlueprintFound;
 use Statamic\Facades\Blueprint;
 use Statamic\Facades\Collection;
 use Statamic\Facades\Site;
@@ -47,21 +43,12 @@ class ServiceProvider extends AddonServiceProvider
             ->bootTaxonomies()
             ->bootConfig()
             ->bootActions()
-            ->bootEvents()
             ->bootServices();
     }
 
     public function bootServices(): self
     {
         $this->app->singleton(PresetService::class);
-
-        return $this;
-    }
-
-    public function bootEvents(): self
-    {
-        Event::listen(EntryBlueprintFound::class, AddStructuredDataTabListener::class);
-        Event::listen(TermBlueprintFound::class, AddStructuredDataTabListener::class);
 
         return $this;
     }

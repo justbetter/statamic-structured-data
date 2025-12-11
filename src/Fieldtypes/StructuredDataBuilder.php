@@ -16,9 +16,7 @@ class StructuredDataBuilder extends Fieldtype
 
     protected static $handle = 'structured_data_builder';
 
-    public function __construct(protected PresetService $presetService)
-    {
-    }
+    public function __construct(protected PresetService $presetService) {}
 
     public function preProcess($data)
     {

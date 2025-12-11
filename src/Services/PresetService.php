@@ -12,14 +12,14 @@ class PresetService
 
     public function __construct()
     {
-        $this->defaultPresetsPath = __DIR__ . '/../../resources/presets';
+        $this->defaultPresetsPath = __DIR__.'/../../resources/presets';
     }
 
     public function getAvailablePresets(): Collection
     {
         $presets = collect();
 
-        if (!config('justbetter.structured-data.presets.enabled', true)) {
+        if (! config('justbetter.structured-data.presets.enabled', true)) {
             return $presets;
         }
 
@@ -37,13 +37,13 @@ class PresetService
         $presets = collect();
         $enabledPresets = config('justbetter.structured-data.presets.default_presets', []);
 
-        if (!File::exists($this->defaultPresetsPath)) {
+        if (! File::exists($this->defaultPresetsPath)) {
             return $presets;
         }
 
         foreach ($enabledPresets as $presetName) {
-            $presetFile = $this->defaultPresetsPath . "/{$presetName}.json";
-            
+            $presetFile = $this->defaultPresetsPath."/{$presetName}.json";
+
             if (File::exists($presetFile)) {
                 try {
                     $presetData = json_decode(File::get($presetFile), true);
@@ -65,12 +65,12 @@ class PresetService
         $customPaths = config('justbetter.structured-data.presets.custom_preset_paths', []);
 
         foreach ($customPaths as $path) {
-            if (!File::exists($path)) {
+            if (! File::exists($path)) {
                 continue;
             }
 
             $files = File::files($path);
-            
+
             foreach ($files as $file) {
                 if ($file->getExtension() === 'json') {
                     try {
@@ -90,7 +90,7 @@ class PresetService
 
     protected function validatePresetStructure(array $preset): bool
     {
-        return isset($preset['name']) 
+        return isset($preset['name'])
             && isset($preset['description'])
             && isset($preset['schema'])
             && isset($preset['schema']['specialProps'])

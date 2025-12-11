@@ -42,7 +42,6 @@ tabs:
                 -
                   key: taxonomy
                   value: Taxonomy
-              max_items: 1
               default: collection
               type: select
               display: 'Blueprint type'
@@ -71,6 +70,14 @@ tabs:
                 - required
               if:
                 blueprint_type: 'equals taxonomy'
+          -
+            handle: apply_automatically
+            field:
+              type: toggle
+              display: 'Apply automatically'
+              instructions: 'Apply the structured data template automatically to new entries of the selected collection or taxonomy.'
+              localizable: true
+              default: false
           -
             handle: structured_data_available_variables
             field:
