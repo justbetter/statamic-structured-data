@@ -76,6 +76,9 @@
                                             :field-key="field.key"
                                         />
                                     </div>
+                                    <div v-else-if="field.type === 'replicator_object_array'" class="mt-2">
+                                        <replicator-field-mapper v-model="field.config" />
+                                    </div>
                                 </div>
                                 <div class="flex justify-end mt-3">
                                     <button
@@ -109,6 +112,7 @@
 
 <script>
 import StructuredDataObject from '../StructuredDataObject.vue';
+import ReplicatorFieldMapper from './ReplicatorFieldMapper.vue';
 import { formatSchemaJson } from '../../utils/schema';
 
 export default {
@@ -116,7 +120,8 @@ export default {
     mixins: [Fieldtype],
 
     components: {
-        'structured-data-object': StructuredDataObject
+        'structured-data-object': StructuredDataObject,
+        'replicator-field-mapper': ReplicatorFieldMapper
     },
 
     props: {
@@ -160,7 +165,8 @@ export default {
                 { value: 'string', label: 'String' },
                 { value: 'numeric', label: 'Numeric' },
                 { value: 'array', label: 'Array' },
-                { value: 'object', label: 'Object' }
+                { value: 'object', label: 'Object' },
+                { value: 'replicator_object_array', label: 'Replicator Object Array' }
             ];
         }
     },
@@ -214,6 +220,13 @@ export default {
                     fields: []
                 };
             } else if (field.type === 'array') {
+                field.values = [];
+            } else if (field.type === 'replicator_object_array') {
+                field.config = {
+                    replicator_field: '',
+                    set: '',
+                    mappings: []
+                };
                 field.values = [];
             } else {
                 field.value = '';

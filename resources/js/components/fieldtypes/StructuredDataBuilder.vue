@@ -154,6 +154,10 @@
                                                     @input="(value) => { field.value = value.value; }"
                                                 />
                                             </div>
+
+                                        <div v-else-if="field.type === 'replicator_object_array'" class="mt-2">
+                                            <replicator-field-mapper v-model="field.config" />
+                                        </div>
                                         </div>
 
                                         <div class="flex justify-end mt-3">
@@ -207,6 +211,7 @@
 
 <script>
 import StructuredDataObject from '../StructuredDataObject.vue';
+import ReplicatorFieldMapper from './ReplicatorFieldMapper.vue';
 import PresetModal from '../PresetModal.vue';
 import { formatSchemaJson } from '../../utils/schema';
 import draggable from 'vuedraggable';
@@ -217,6 +222,7 @@ export default {
 
     components: {
         'structured-data-object': StructuredDataObject,
+        'replicator-field-mapper': ReplicatorFieldMapper,
         'preset-modal': PresetModal,
         draggable,
     },
@@ -275,7 +281,8 @@ export default {
                 { value: 'array', label: 'Array' },
                 { value: 'object', label: 'Object' },
                 { value: 'object_array', label: 'Object Array' },
-                { value: 'data_object', label: 'Data Object (Term)' }
+                { value: 'data_object', label: 'Data Object (Term)' },
+                { value: 'replicator_object_array', label: 'Replicator Object Array' },
             ];
         },
 
@@ -328,7 +335,8 @@ export default {
                 type: 'string',
                 value: '',
                 values: [],
-                fields: []
+                fields: [],
+                config: {}
             });
         },
 
@@ -407,6 +415,13 @@ export default {
                 field.values = [];
             } else if (field.type === 'data_object') {
                 field.value = '';
+            } else if (field.type === 'replicator_object_array') {
+                field.config = {
+                    replicator_field: '',
+                    set: '',
+                    mappings: []
+                };
+                field.values = [];
             } else {
                 field.value = '';
             }

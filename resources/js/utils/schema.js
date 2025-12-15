@@ -23,6 +23,24 @@ export function formatOutput(schema) {
                 result[field.key] = formatOutput(field.value);
             } else if (field.type === 'object_array' && field.values) {
                 result[field.key] = field.values.map(value => formatOutput(value));
+            } else if (field.type === 'replicator_object_array' && field.config) {
+                const sample = {};
+                const mappings = Array.isArray(field.config.mappings) ? field.config.mappings : [];
+                mappings.forEach(mapping => {
+                    if (!mapping.key) {
+                        return;
+                    }
+                    if (mapping.mode === 'static') {
+                        sample[mapping.key] = mapping.static ?? '';
+                    } else if (mapping.mode === 'field') {
+                        sample[mapping.key] = `{{ ${mapping.field || 'field'} }}`;
+                    } else if (mapping.mode === 'nested_replicator') {
+                        sample[mapping.key] = [{}];
+                    } else {
+                        sample[mapping.key] = '';
+                    }
+                });
+                result[field.key] = [sample];
             } else {
                 result[field.key] = field.value ?? null;
             }
