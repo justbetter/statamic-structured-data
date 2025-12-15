@@ -4,6 +4,7 @@ namespace Justbetter\StatamicStructuredData\Listeners;
 
 use Statamic\Events\TermCreated;
 use Statamic\Facades\Entry;
+use Statamic\Query\EloquentQueryBuilder;
 use Statamic\Taxonomies\Term;
 
 class TermCreatedListener
@@ -14,11 +15,16 @@ class TermCreatedListener
         $term = $event->term;
         $taxonomyHandle = $term->taxonomy()->handle();
 
-        if (! in_array($taxonomyHandle, config('justbetter.structured-data.taxonomies', []))) {
+        $enabledTaxonomies = config()->array('justbetter.structured-data.taxonomies', []);
+
+        if (! in_array($taxonomyHandle, $enabledTaxonomies)) {
             return;
         }
 
-        $templatesIds = Entry::query()
+        /** @var EloquentQueryBuilder $query */
+        $query = Entry::query();
+
+        $templatesIds = $query
             ->where('collection', 'structured_data_templates')
             ->whereStatus('published')
             ->where('blueprint_type', 'taxonomy')

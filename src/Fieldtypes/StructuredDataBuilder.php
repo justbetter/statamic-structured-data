@@ -4,23 +4,33 @@ namespace Justbetter\StatamicStructuredData\Fieldtypes;
 
 use Illuminate\Support\Collection;
 use Justbetter\StatamicStructuredData\Services\PresetService;
-use Statamic\Facades\Site;
-use Statamic\Facades\Taxonomy;
+use Statamic\Facades\Site as SiteFacade;
+use Statamic\Facades\Taxonomy as TaxonomyFacade;
 use Statamic\Fields\Fieldtype;
+use Statamic\Sites\Site;
+use Statamic\Taxonomies\LocalizedTerm;
+use Statamic\Taxonomies\Taxonomy;
 
 class StructuredDataBuilder extends Fieldtype
 {
+    /** @var string */
     protected $icon = 'code';
 
+    /** @var array<string> */
     protected $categories = ['structured_data'];
 
+    /** @var string */
     protected static $handle = 'structured_data_builder';
 
     public function __construct(protected PresetService $presetService) {}
 
-    public function preProcess($data)
+    /**
+     * @param  mixed  $data
+     * @return array<int, array<string, mixed>>
+     */
+    public function preProcess($data): array
     {
-        $data = $data ?? [
+        $default = [
             [
                 'specialProps' => [
                     'context' => 'http://schema.org',
@@ -31,10 +41,15 @@ class StructuredDataBuilder extends Fieldtype
             ],
         ];
 
+        if (! is_array($data)) {
+            return $default;
+        }
+
         return $data;
     }
 
-    public function preload()
+    /** @return array<string, mixed> */
+    public function preload(): array
     {
         return [
             'base_url' => config('app.url'),
@@ -44,6 +59,7 @@ class StructuredDataBuilder extends Fieldtype
         ];
     }
 
+    /** @return array<string, array<string, mixed>> */
     protected function configFieldItems(): array
     {
         return [
@@ -56,18 +72,30 @@ class StructuredDataBuilder extends Fieldtype
         ];
     }
 
+    /** @return Collection<int, array<string, mixed>> */
     protected function getStructuredDataObjects(): Collection
     {
-        $terms = Taxonomy::findByHandle('structured_data_objects')
+        /** @var Taxonomy|null $taxonomy */
+        $taxonomy = TaxonomyFacade::findByHandle('structured_data_objects');
+
+        /** @var Site|null $site */
+        $site = SiteFacade::selected();
+
+        if (! $taxonomy || ! $site) {
+            return collect();
+        }
+
+        $terms = $taxonomy
             ->queryTerms()
-            ->where('site', Site::selected()->handle())
+            ->where('site', $site->handle())
             ->get();
 
         return $terms->map(function ($term) {
+            /** @var LocalizedTerm $term */
             return [
-                'title' => $term->title,
-                'slug' => $term->slug,
-                'object_data' => $term->object_data,
+                'title' => $term->get('title'),
+                'slug' => $term->slug(),
+                'object_data' => $term->get('object_data'),
             ];
         });
     }
