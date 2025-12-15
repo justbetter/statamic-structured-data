@@ -4,20 +4,25 @@ namespace Justbetter\StatamicStructuredData\Services;
 
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
 use Statamic\Contracts\Entries\Entry as EntryContract;
+use Statamic\Entries\Entry as EntryModel;
 use Statamic\Facades\Entry as EntryFacade;
 use Statamic\Structures\Page;
 use Statamic\Taxonomies\LocalizedTerm;
 
 class StructuredDataService
 {
-    protected $parser;
+    protected StructuredDataParser $parser;
 
     public function __construct(StructuredDataParser $parser)
     {
         $this->parser = $parser;
     }
 
-    public function getJsonLdScripts($item, $json = false): array
+    /**
+     * @param  EntryContract|Page|LocalizedTerm  $item
+     * @return array<int, string>
+     */
+    public function getJsonLdScripts($item, bool $json = false): array
     {
         $templates = $this->getTemplates($item);
 
@@ -30,19 +35,29 @@ class StructuredDataService
         foreach ($templates as $templateId) {
             $template = EntryFacade::find($templateId);
 
-            if (! $template) {
+            if (! $template instanceof EntryModel) {
                 continue;
             }
 
-            $schemas = $template->get('schema_data') ?? [];
+            /** @var array<int, array<string, mixed>>|null $schemas */
+            $schemas = $template->get('schema_data');
+            $schemas = $schemas ?? [];
 
-            if (empty($schemas)) {
+            if (empty($schemas) || ! is_array($schemas)) {
                 continue;
             }
 
             try {
                 $parsedSchemas = $this->parser->parse($schemas, $item);
+                if (! is_array($parsedSchemas)) {
+                    continue;
+                }
+
                 foreach ($parsedSchemas as $parsedSchema) {
+                    if (! is_array($parsedSchema)) {
+                        continue;
+                    }
+
                     $scripts[] = $this->formatJsonLd($parsedSchema, $json);
                 }
             } catch (\Exception $e) {
@@ -53,33 +68,42 @@ class StructuredDataService
         return $scripts;
     }
 
-    public function formatJsonLd(array $schema, $json = false): string
+    /**
+     * @param  array<string, mixed>  $schema
+     */
+    public function formatJsonLd(array $schema, bool $json = false): string
     {
         $transformedSchema = $this->transformSchema($schema);
-        $schema = json_encode($transformedSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $encodedSchema = json_encode($transformedSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
         if ($json) {
-            return $schema;
+            return $encodedSchema ?: '';
         }
 
         return sprintf(
             '<script type="application/ld+json">%s</script>',
-            $schema
+            $encodedSchema ?: ''
         );
     }
 
+    /**
+     * @param  array<string, mixed>  $schema
+     * @return array<string, mixed>
+     */
     public function transformSchema(array $schema): array
     {
         $result = [];
 
-        if (isset($schema['specialProps'])) {
-            if (isset($schema['specialProps']['context'])) {
-                $result['@context'] = $schema['specialProps']['context'];
+        if (isset($schema['specialProps']) && is_array($schema['specialProps'])) {
+            $specialProps = $schema['specialProps'];
+            if (isset($specialProps['context'])) {
+                $result['@context'] = $specialProps['context'];
             }
-            if (isset($schema['specialProps']['type'])) {
-                $result['@type'] = $schema['specialProps']['type'];
+            if (isset($specialProps['type'])) {
+                $result['@type'] = $specialProps['type'];
             }
-            if (isset($schema['specialProps']['id'])) {
-                $result['@id'] = $schema['specialProps']['id'];
+            if (isset($specialProps['id'])) {
+                $result['@id'] = $specialProps['id'];
             }
         }
 
@@ -97,7 +121,7 @@ class StructuredDataService
                     $result[$key] = $this->transformSchema($field['value']);
                 } elseif ($field['type'] === 'object_array' && isset($field['values'])) {
                     foreach ($field['values'] as $value) {
-                        $result[$key][] =  $this->transformSchema($value);
+                        $result[$key][] = $this->transformSchema($value);
                     }
                 } elseif ($field['type'] === 'numeric' && isset($field['value'])) {
                     $result[$key] = (float) $field['value'];
@@ -110,18 +134,31 @@ class StructuredDataService
         return $result;
     }
 
+    /**
+     * @param  EntryContract|Page|LocalizedTerm|mixed  $item
+     * @return array<int|string, mixed>
+     */
     protected function getTemplates($item): array
     {
-        if (! $item instanceof EntryContract && ! $item instanceof Page && ! $item instanceof LocalizedTerm) {
-            return [];
-        }
-
         if ($item instanceof Page) {
+            /** @var EntryContract $item */
             $item = $item->entry();
         }
 
-        $templates = $item->get('structured_data_templates');
+        if ($item instanceof EntryModel) {
+            /** @var array<int|string, mixed>|null $templates */
+            $templates = $item->get('structured_data_templates');
 
-        return $templates ?? [];
+            return is_array($templates) ? $templates : [];
+        }
+
+        if ($item instanceof LocalizedTerm) {
+            /** @var array<int|string, mixed>|null $templates */
+            $templates = $item->get('structured_data_templates');
+
+            return is_array($templates) ? $templates : [];
+        }
+
+        return [];
     }
 }

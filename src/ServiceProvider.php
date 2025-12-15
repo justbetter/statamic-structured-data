@@ -2,26 +2,26 @@
 
 namespace Justbetter\StatamicStructuredData;
 
-use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\File;
 use Justbetter\StatamicStructuredData\Fieldtypes\AvailableVariablesFieldtype;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataBuilder;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataObjectBuilder;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataPreview;
-use Justbetter\StatamicStructuredData\Listeners\AddStructuredDataTabListener;
 use Justbetter\StatamicStructuredData\Services\PresetService;
 use Justbetter\StatamicStructuredData\Tags\StructuredData;
-use Statamic\Events\EntryBlueprintFound;
-use Statamic\Events\TermBlueprintFound;
 use Statamic\Facades\Blueprint;
 use Statamic\Facades\Collection;
 use Statamic\Facades\Site;
 use Statamic\Facades\Taxonomy;
 use Statamic\Providers\AddonServiceProvider;
+use Statamic\Sites\Site as StatamicSite;
+use Statamic\Taxonomies\Taxonomy as StatamicTaxonomy;
 use Symfony\Component\Yaml\Yaml;
 
 class ServiceProvider extends AddonServiceProvider
 {
+    /** @phpstan-ignore-next-line */
     protected $vite = [
         'input' => [
             'resources/js/statamic-structured-data.js',
@@ -47,7 +47,6 @@ class ServiceProvider extends AddonServiceProvider
             ->bootTaxonomies()
             ->bootConfig()
             ->bootActions()
-            ->bootEvents()
             ->bootServices();
     }
 
@@ -58,23 +57,18 @@ class ServiceProvider extends AddonServiceProvider
         return $this;
     }
 
-    public function bootEvents(): self
-    {
-        Event::listen(EntryBlueprintFound::class, AddStructuredDataTabListener::class);
-        Event::listen(TermBlueprintFound::class, AddStructuredDataTabListener::class);
-
-        return $this;
-    }
-
     public function bootCollections(): self
     {
         if ($this->app->runningInConsole() || Collection::find('structured_data_templates')) {
             return $this;
         }
 
+        /** @var SupportCollection<string, StatamicSite> $sites */
+        $sites = Site::all();
+
         Collection::make('structured_data_templates')
             ->title('Structured Data Templates')
-            ->sites(Site::all()->keys()->all())
+            ->sites($sites->keys()->all())
             ->save();
 
         $blueprintPath = __DIR__.'/../resources/blueprints/collections/structured_data_templates/structured_data_templates.yaml';
@@ -94,9 +88,13 @@ class ServiceProvider extends AddonServiceProvider
             return $this;
         }
 
-        Taxonomy::make('structured_data_objects')
-            ->title('Structured Data Objects')
-            ->sites(Site::all()->keys()->all())
+        /** @var SupportCollection<string, StatamicSite> $sites */
+        $sites = Site::all();
+
+        /** @var StatamicTaxonomy $taxonomy */
+        $taxonomy = Taxonomy::make('structured_data_objects');
+        $taxonomy->title('Structured Data Objects')
+            ->sites($sites->keys()->all())
             ->save();
 
         $blueprintPath = __DIR__.'/../resources/blueprints/taxonomies/structured_data_objects/structured_data_object.yaml';

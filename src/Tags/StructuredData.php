@@ -7,9 +7,10 @@ use Statamic\Tags\Tags;
 
 class StructuredData extends Tags
 {
+    /** @var string */
     protected static $handle = 'structured-data';
 
-    protected $action;
+    protected InjectStructuredDataAction $action;
 
     public function __construct(InjectStructuredDataAction $action)
     {

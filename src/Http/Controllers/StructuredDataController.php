@@ -2,8 +2,13 @@
 
 namespace Justbetter\StatamicStructuredData\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
+use Statamic\Contracts\Data\Augmentable;
+use Statamic\Contracts\Entries\Entry as EntryContract;
+use Statamic\Contracts\Taxonomies\Term as TermContract;
+use Statamic\Entries\Entry as EntryModel;
 use Statamic\Facades\Entry;
 use Statamic\Facades\Site;
 use Statamic\Facades\Term;
@@ -11,29 +16,41 @@ use Statamic\Http\Controllers\CP\CpController;
 
 class StructuredDataController extends CpController
 {
-    protected $parser;
+    protected StructuredDataParser $parser;
 
     public function __construct(StructuredDataParser $parser)
     {
         $this->parser = $parser;
     }
 
-    public function parseAntlersInData($data, $entry)
+    /**
+     * @param  mixed  $data
+     */
+    public function parseAntlersInData($data, EntryContract|TermContract $entry): mixed
     {
         return $this->parser->parse($data, $entry);
     }
 
-    protected function getParseContext($entry)
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getParseContext(EntryContract|TermContract $entry): array
     {
+        $site = Site::current();
+        $siteAugmented = ($site && $site instanceof Augmentable) ? $site->toAugmentedArray() : [];
+
+        $entryAugmented = $entry instanceof Augmentable ? $entry->toAugmentedArray() : [];
+
         return array_merge(
             ['config' => config()->all()],
-            ['site' => Site::current()->toAugmentedArray()],
-            $entry->toAugmentedArray()
+            ['site' => $siteAugmented],
+            $entryAugmented
         );
     }
 
-    public function getTemplates(Request $request)
+    public function getTemplates(Request $request): JsonResponse
     {
+        /** @var array<int|string>|null $templateIds */
         $templateIds = $request->input('ids', []);
         $contentEntry = Entry::find($request->input('entry_id'));
 
@@ -41,21 +58,22 @@ class StructuredDataController extends CpController
             $contentEntry = Term::find($request->input('entry_id'));
         }
 
-        if (! $contentEntry) {
+        if (! $contentEntry instanceof EntryContract && ! $contentEntry instanceof TermContract) {
             return response()->json(['error' => 'Content entry not found'], 404);
         }
 
-        $templates = collect($templateIds)
+        /** @var array<int, array<string, mixed>> $templates */
+        $templates = collect($templateIds ?? [])
             ->map(function ($id) use ($contentEntry) {
                 $entry = Entry::find($id);
 
-                if (! $entry) {
+                if (! $entry instanceof EntryModel) {
                     return null;
                 }
 
-                $structuredData = $entry->schema_data;
+                $structuredData = $entry->get('schema_data');
 
-                if (! $structuredData) {
+                if ($structuredData === null) {
                     return null;
                 }
 
@@ -63,18 +81,20 @@ class StructuredDataController extends CpController
 
                 return [
                     'id' => $entry->id(),
-                    'title' => $entry->title,
+                    'title' => $entry->get('title'),
                     'structuredData' => $parsedData,
                 ];
             })
             ->filter()
-            ->values();
+            ->values()
+            ->all();
 
         return response()->json($templates);
     }
 
-    public function getAvailableVariables(Request $request)
+    public function getAvailableVariables(Request $request): JsonResponse
     {
+        /** @var EntryContract|null $entry */
         $entry = Entry::find($request->input('entry_id'));
 
         $variables = [
@@ -91,22 +111,20 @@ class StructuredDataController extends CpController
             'entry' => [],
         ];
 
-        if (! $entry) {
+        if (! $entry instanceof EntryModel) {
             return response()->json($variables);
         }
 
         $blueprint = $entry->blueprint();
-        $fields = $blueprint->fields()->all();
+        /** @var array<int, \Statamic\Fields\Field> $fields */
+        $fields = array_values($blueprint->fields()->all());
 
-        $variables['entry'] = collect($fields)
-            ->map(function ($field) {
-                return [
-                    'name' => $field->handle(),
-                    'description' => $field->display(),
-                ];
-            })
-            ->values()
-            ->all();
+        $variables['entry'] = array_values(array_map(function ($field): array {
+            return [
+                'name' => $field->handle(),
+                'description' => $field->display(),
+            ];
+        }, $fields));
 
         return response()->json($variables);
     }

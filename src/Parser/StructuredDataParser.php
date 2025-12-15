@@ -3,25 +3,35 @@
 namespace Justbetter\StatamicStructuredData\Parser;
 
 use Justbetter\StatamicStructuredData\Services\StructuredDataService;
-use Statamic\Facades\Site;
+use Statamic\Contracts\Data\Augmentable;
+use Statamic\Contracts\Entries\Entry as EntryContract;
+use Statamic\Contracts\Taxonomies\Term as TermContract;
+use Statamic\Facades\Site as SiteFacade;
 use Statamic\Facades\Term;
+use Statamic\Sites\Site;
 use Statamic\View\Antlers\Antlers;
 
 class StructuredDataParser
 {
-    protected $structuredDataService;
+    protected StructuredDataService $structuredDataService;
 
     public function __construct()
     {
         $this->structuredDataService = new StructuredDataService($this);
     }
 
-    public function parse($data, $item)
+    /**
+     * @param  mixed  $data
+     */
+    public function parse($data, EntryContract|TermContract $item): mixed
     {
         return $this->parseAntlersInData($data, $item);
     }
 
-    protected function parseAntlersInData($data, $item)
+    /**
+     * @param  mixed  $data
+     */
+    protected function parseAntlersInData($data, EntryContract|TermContract $item): mixed
     {
         if (is_string($data)) {
             if (str_contains($data, '{{')) {
@@ -47,39 +57,53 @@ class StructuredDataParser
         return $data;
     }
 
-    protected function getParseContext($item): array
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getParseContext(EntryContract|TermContract $item): array
     {
+        /** @var Site $site */
+        $site = SiteFacade::current();
+        $siteAugmented = $site->toAugmentedArray();
+        $itemAugmented = ($item instanceof Augmentable) ? $item->toAugmentedArray() : [];
+
         return array_merge(
             ['config' => config()->all()],
-            ['site' => Site::current()->toAugmentedArray()],
-            ['absolute_url' => $item->absoluteUrl()],
-            $item->toAugmentedArray()
+            ['site' => $siteAugmented],
+            ['absolute_url' => method_exists($item, 'absoluteUrl') ? $item->absoluteUrl() : ''],
+            $itemAugmented
         );
     }
 
-    protected function getObjectData($objectSlug): array
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getObjectData(string $objectSlug): array
     {
+        /** @var Site $site */
+        $site = SiteFacade::current();
+
         $dataObject = Term::query()
             ->where('taxonomy', 'structured_data_objects')
-            ->where('site', Site::current()->handle())
+            ->where('site', $site->handle())
             ->where('slug', $objectSlug)
             ->first();
 
-        if (! $dataObject || ! $dataObject->object_data) {
+        if (! $dataObject || ! isset($dataObject->object_data) || ! is_array($dataObject->object_data)) {
             return [];
         }
 
-        $objectType = $dataObject->object_type;
+        $objectType = $dataObject->object_type ?? '';
         $objectTypeData = [
             'key' => '@type',
             'type' => 'string',
-            'value' => $objectType ?? '',
+            'value' => $objectType,
             'fields' => [],
             'values' => [],
         ];
 
         $objectData = $dataObject->object_data;
-        $objectData['fields'] = array_merge([$objectTypeData], $objectData['fields']);
+        $objectData['fields'] = array_merge([$objectTypeData], $objectData['fields'] ?? []);
 
         return $objectData;
     }

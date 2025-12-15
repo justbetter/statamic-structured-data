@@ -25,10 +25,11 @@ class AddStructuredDataTabListener
 
     public function handleCollectionBlueprintFound(Blueprint $blueprint): void
     {
-        $handle = str_replace('collections.', '', $blueprint->namespace());
+        $namespace = (string) $blueprint->namespace();
+        $handle = str_replace('collections.', '', $namespace);
         $enabledCollections = config('justbetter.structured-data.collections', []);
 
-        if (! in_array($handle, $enabledCollections)) {
+        if (! is_array($enabledCollections) || ! in_array($handle, $enabledCollections, true)) {
             return;
         }
 
@@ -37,10 +38,11 @@ class AddStructuredDataTabListener
 
     public function handleTaxonomyBlueprintFound(Blueprint $blueprint): void
     {
-        $handle = str_replace('taxonomies.', '', $blueprint->namespace());
+        $namespace = (string) $blueprint->namespace();
+        $handle = str_replace('taxonomies.', '', $namespace);
         $enabledTaxonomies = config('justbetter.structured-data.taxonomies', []);
 
-        if (! in_array($handle, $enabledTaxonomies)) {
+        if (! is_array($enabledTaxonomies) || ! in_array($handle, $enabledTaxonomies, true)) {
             return;
         }
 

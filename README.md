@@ -1,3 +1,7 @@
+<a href="github.com/justbetter/statamic-structured-data" title="JustBetter">
+    <img src="./art/banner.svg" alt="Banner">
+</a>
+
 # Statamic Structured Data
 
 This Statamic addon provides a powerful and flexible way to add structured data (JSON-LD) to your Statamic website. It allows you to define structured data templates and automatically inject them into your pages, improving your site's SEO and making your content more understandable for search engines.
@@ -94,6 +98,23 @@ Here's an example of how you might structure a basic Organization schema:
 }
 ```
 
-## Configuration
+## Credits
 
-The addon works out of the box with sensible defaults. Configuration can be customized through your entry and term blueprints and templates.
+- [Kevin Meijer](https://github.com/kevinmeijer97)
+- [All Contributors](../../contributors)
+
+## Contributing
+
+Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
+
+## Security Vulnerabilities
+
+Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
+
+## License
+
+The MIT License (MIT). Please see [License File](LICENSE) for more information.
+
+<a href="https://justbetter.nl" title="JustBetter">
+    <img src="./art/footer.svg" alt="JustBetter logo">
+</a>
