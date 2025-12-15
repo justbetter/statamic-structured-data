@@ -72,7 +72,7 @@ class InjectStructuredDataAction
         return implode("\n", $scripts);
     }
 
-    protected function getCurrentEntry(): ?Entry
+    protected function getCurrentEntry(): Entry|Page|null
     {
         $url = URL::getCurrent();
 
@@ -81,7 +81,7 @@ class InjectStructuredDataAction
 
         $entry = EntryFacade::findByUri($url, $site->handle());
 
-        return $entry instanceof Entry ? $entry : null;
+        return $entry instanceof Entry ? $entry : ($entry instanceof Page ? $entry : null);
     }
 
     protected function getCurrentTerm(): ?LocalizedTerm
