@@ -2,7 +2,7 @@
     <div class="replicator-mapper space-y-3">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-                <label class="text-gray-600 mb-1 block">Replicator Field Handle</label>
+                <label class="text-gray-600 mb-1 block">{{ __('Replicator Field Handle') }}</label>
                 <input
                     type="text"
                     v-model="localConfig.replicator_field"
@@ -11,7 +11,7 @@
                 />
             </div>
             <div>
-                <label class="text-gray-600 mb-1 block">Limit to Set (optional)</label>
+                <label class="text-gray-600 mb-1 block">{{ __('Limit to Set (optional)') }}</label>
                 <input
                     type="text"
                     v-model="localConfig.set"
@@ -23,12 +23,12 @@
 
         <div class="border rounded p-3">
             <div class="flex items-center justify-between mb-2">
-                <h4 class="font-semibold text-gray-700">Field Mappings</h4>
-                <button class="btn-primary text-sm" @click="addMapping">Add Mapping</button>
+                <h4 class="font-semibold text-gray-700">{{ __('Field Mappings') }}</h4>
+                <button class="btn-primary text-sm" @click="addMapping">{{ __('Add Mapping') }}</button>
             </div>
 
             <div v-if="!localConfig.mappings.length" class="text-sm text-gray-500">
-                No mappings yet. Add one to map replicator fields into your JSON-LD object.
+                {{ __('No mappings yet. Add one to map replicator fields into your JSON-LD object.') }}
             </div>
 
             <div
@@ -38,7 +38,7 @@
             >
                 <div class="flex items-start gap-2">
                     <div class="flex-1">
-                        <label class="text-gray-600 mb-1 block">JSON-LD Key</label>
+                        <label class="text-gray-600 mb-1 block">{{ __('JSON-LD Key') }}</label>
                         <input
                             type="text"
                             v-model="mapping.key"
@@ -48,34 +48,34 @@
                         />
                     </div>
                     <div class="w-40">
-                        <label class="text-gray-600 mb-1 block">Source</label>
+                        <label class="text-gray-600 mb-1 block">{{ __('Source') }}</label>
                         <v-select
                             v-model="mapping.mode"
                             :options="modeOptions"
                             @input="(val) => { mapping.mode = val.value; }"
                         />
                     </div>
-                    <button class="btn-danger mt-6" @click="removeMapping(index)">Remove</button>
+                    <button class="btn-danger mt-6" @click="removeMapping(index)">{{ __('Remove') }}</button>
                 </div>
 
                 <div class="mt-2">
                     <template v-if="mapping.mode === 'static'">
-                        <label class="text-gray-600 mb-1 block">Static Value</label>
+                        <label class="text-gray-600 mb-1 block">{{ __('Static Value') }}</label>
                         <input
                             type="text"
                             v-model="mapping.static"
                             class="input-text w-full"
-                            placeholder="e.g. PropertyValue"
+                            placeholder="{{ __('e.g. PropertyValue') }}"
                         />
                     </template>
 
                     <template v-else-if="mapping.mode === 'field'">
-                        <label class="text-gray-600 mb-1 block">Replicator Field Handle</label>
+                        <label class="text-gray-600 mb-1 block">{{ __('Replicator Field Handle') }}</label>
                         <input
                             type="text"
                             v-model="mapping.field"
                             class="input-text w-full"
-                            placeholder="e.g. title"
+                            placeholder="{{ __('e.g. title') }}"
                         />
                     </template>
 

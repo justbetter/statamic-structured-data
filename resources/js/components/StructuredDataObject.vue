@@ -15,7 +15,7 @@
                 <label class="block mb-1">@id</label>
                 <div class="flex">
                     <input type="text" v-model="objectData.specialProps.id" class="input-text flex-1" :placeholder="suggestedId" />
-                    <button class="btn ml-2" @click="useDefaultId">Use Default</button>
+                    <button class="btn ml-2" @click="useDefaultId">{{ __('Use Default') }}</button>
                 </div>
             </div>
         </div>
@@ -24,7 +24,7 @@
             <div v-for="(field, index) in objectData.fields" :key="index" class="mb-4 border-b pb-4">
                     <div class="flex items-start gap-2">
                     <div class="flex-1">
-                        <label class="block mb-1">Key</label>
+                        <label class="block mb-1">{{ __('Key') }}</label>
                         <input
                             type="text"
                             v-model="field.key"
@@ -60,7 +60,7 @@
                             <input type="text" v-model="field.values[valueIndex]" class="input-text flex-1" />
                             <button class="btn-close" @click="removeArrayValue(field, valueIndex)">&times;</button>
                         </div>
-                        <button class="btn" @click="addArrayValue(field)">Add Value</button>
+                        <button class="btn" @click="addArrayValue(field)">{{ __('Add Value') }}</button>
                     </div>
 
                     <div v-else-if="field.type === 'object'" class="mt-2 border rounded p-4">
@@ -78,7 +78,7 @@
                 </div>
             </div>
 
-            <button class="btn" @click="addField">Add Property</button>
+            <button class="btn" @click="addField">{{ __('Add Property') }}</button>
         </div>
     </div>
 </template>

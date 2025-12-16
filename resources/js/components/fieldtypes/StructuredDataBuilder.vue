@@ -46,7 +46,7 @@
                                         class="input-text flex-1"
                                         :placeholder="suggestedId(schema)"
                                     />
-                                    <button class="btn-primary" @click="useDefaultId(schema)">Use Default</button>
+                                    <button class="btn-primary" @click="useDefaultId(schema)">{{ __('Use Default') }}</button>
                                 </div>
                             </div>
                         </div>
@@ -57,8 +57,8 @@
                             <draggable v-model="schema.fields" @end="onEnd" :key="schemaIndex" handle=".drag-handle">
                                 <div v-for="(field, index) in schema.fields" :key="index" class="mb-2 border rounded bg-gray-50">
                                     <div class="structured-data-schema-field-header px-2 py-2 flex justify-between items-center border-b rounded-t-lg cursor-drag drag-handle">
-                                        <button v-show="index > 0" @click="moveFieldUp(index, schema)" class="btn btn-secondary">↑ Move Up</button>
-                                        <button v-show="index < schema.fields.length - 1" @click="moveFieldDown(index, schema)" class="btn btn-secondary">Move Down ↓</button>
+                                        <button v-show="index > 0" @click="moveFieldUp(index, schema)" class="btn btn-secondary">↑ {{ __('Move Up') }}</button>
+                                        <button v-show="index < schema.fields.length - 1" @click="moveFieldDown(index, schema)" class="btn btn-secondary">{{ __('Move Down') }} ↓</button>
                                     </div>
                                     <div class="p-3">
                                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
