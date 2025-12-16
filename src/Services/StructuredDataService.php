@@ -128,9 +128,8 @@ class StructuredDataService
 
     /**
      * @param  array<string, mixed>  $field
-     * @return mixed
      */
-    protected function transformField(array $field, EntryContract|Page|LocalizedTerm|null $item = null)
+    protected function transformField(array $field, EntryContract|Page|LocalizedTerm|null $item = null): mixed
     {
         $type = $field['type'] ?? null;
 

@@ -12,7 +12,7 @@ class ReplicatorObjectArrayTransformer implements FieldTransformerInterface
      * @param  mixed  $item
      * @return array<int, array<string, mixed>>
      */
-    public function transform(array $field, $item = null)
+    public function transform(array $field, $item = null): array
     {
         /** @var array<string, mixed>|null $config */
         $config = $field['config'] ?? null;
@@ -208,9 +208,8 @@ class ReplicatorObjectArrayTransformer implements FieldTransformerInterface
 
     /**
      * @param  mixed  $value
-     * @return mixed
      */
-    protected function unwrapValue($value)
+    protected function unwrapValue($value): mixed
     {
         if ($value instanceof Value) {
             $value = $value->value();
