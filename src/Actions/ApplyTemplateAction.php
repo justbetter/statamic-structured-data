@@ -9,9 +9,9 @@ use Statamic\Entries\Collection;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
+use Statamic\Sites\Site;
 use Statamic\Taxonomies\LocalizedTerm;
 use Statamic\Taxonomies\Taxonomy;
-use Statamic\Sites\Site;
 
 class ApplyTemplateAction extends Action
 {
@@ -89,7 +89,7 @@ class ApplyTemplateAction extends Action
             ->queryEntries()
             ->where('site', $site->handle())
             ->get();
-            
+
         $count = 0;
 
         $entries->each(function (Entry $entry) use ($templateId, &$count) {
