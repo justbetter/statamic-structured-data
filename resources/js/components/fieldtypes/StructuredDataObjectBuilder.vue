@@ -74,10 +74,14 @@
                                             v-model="field.value"
                                             :base-url="baseUrl"
                                             :field-key="field.key"
+                                            :replicator-fields="replicatorFields"
                                         />
                                     </div>
                                     <div v-else-if="field.type === 'replicator_object_array'" class="mt-2">
-                                        <replicator-field-mapper v-model="field.config" />
+                                        <replicator-field-mapper 
+                                            v-model="field.config" 
+                                            :replicator-fields="replicatorFields"
+                                        />
                                     </div>
                                 </div>
                                 <div class="flex justify-end mt-3">
@@ -168,6 +172,9 @@ export default {
                 { value: 'object', label: 'Object' },
                 { value: 'replicator_object_array', label: 'Replicator Object Array' }
             ];
+        },
+        replicatorFields() {
+            return this.meta?.replicator_fields || [];
         }
     },
 

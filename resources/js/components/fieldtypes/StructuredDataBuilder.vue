@@ -124,7 +124,10 @@
                                             </div>
 
                                             <div v-else-if="field.type === 'object'" class="mt-2">
-                                                <structured-data-object v-model="field.value" />
+                                                <structured-data-object 
+                                                    v-model="field.value" 
+                                                    :replicator-fields="replicatorFields"
+                                                />
                                             </div>
 
                                             <div v-else-if="field.type === 'object_array'" class="mt-2">
@@ -156,7 +159,10 @@
                                             </div>
 
                                         <div v-else-if="field.type === 'replicator_object_array'" class="mt-2">
-                                            <replicator-field-mapper v-model="field.config" />
+                                            <replicator-field-mapper 
+                                                v-model="field.config" 
+                                                :replicator-fields="replicatorFields"
+                                            />
                                         </div>
                                         </div>
 
@@ -305,6 +311,9 @@ export default {
 
         presetsEnabled() {
             return this.meta?.presets_enabled || false;
+        },
+        replicatorFields() {
+            return this.meta?.replicator_fields || [];
         }
     },
 

@@ -73,7 +73,10 @@
                     </div>
 
                     <div v-else-if="field.type === 'replicator_object_array'" class="mt-2">
-                        <replicator-field-mapper v-model="field.config" />
+                        <replicator-field-mapper 
+                            v-model="field.config" 
+                            :replicator-fields="replicatorFields"
+                        />
                     </div>
                 </div>
             </div>
@@ -137,6 +140,9 @@ export default {
                 { value: 'object', label: 'Object' },
                 { value: 'replicator_object_array', label: 'Replicator Object Array' }
             ];
+        },
+        availableReplicatorFields() {
+            return this.replicatorFields || [];
         }
     },
 
