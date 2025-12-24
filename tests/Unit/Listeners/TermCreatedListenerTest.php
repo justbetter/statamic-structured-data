@@ -34,7 +34,7 @@ class TermCreatedListenerTest extends TestCase
         $listener = new TermCreatedListener;
         $listener->handle($event);
 
-        // Listener handles event without errors
+        $this->assertNull($term->get('structured_data_templates'));
     }
 
     #[Test]
@@ -62,7 +62,7 @@ class TermCreatedListenerTest extends TestCase
         $listener = new TermCreatedListener;
         $listener->handle($event);
 
-        // Listener handles event without errors
+        $this->assertNull($term->get('structured_data_templates'));
     }
 
     #[Test]

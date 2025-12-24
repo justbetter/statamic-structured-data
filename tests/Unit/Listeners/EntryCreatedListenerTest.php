@@ -29,7 +29,7 @@ class EntryCreatedListenerTest extends TestCase
         $listener = new EntryCreatedListener;
         $listener->handle($event);
 
-        // Listener handles event without errors
+        $this->assertNull($entry->get('structured_data_templates'));
     }
 
     #[Test]
@@ -56,7 +56,7 @@ class EntryCreatedListenerTest extends TestCase
         $listener = new EntryCreatedListener;
         $listener->handle($event);
 
-        // Listener handles event without errors
+        $this->assertNull($entry->get('structured_data_templates'));
     }
 
     #[Test]

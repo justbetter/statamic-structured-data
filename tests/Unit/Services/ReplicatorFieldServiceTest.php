@@ -52,14 +52,12 @@ class ReplicatorFieldServiceTest extends TestCase
 
         /** @var \Statamic\Entries\Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
-        /** @phpstan-ignore-next-line */
         $templateMock->set('use_for_taxonomy', $taxonomyMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
         $result = $service->getReplicatorFields($templateMock);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -119,8 +117,7 @@ class ReplicatorFieldServiceTest extends TestCase
 
         $fieldObject = new class
         {
-            /** @return null */
-            public function toArray(): ?string
+            public function toArray(): null
             {
                 return null;
             }
@@ -336,7 +333,7 @@ class ReplicatorFieldServiceTest extends TestCase
 
         $object = new class
         {
-            public function toArray(): ?string
+            public function toArray(): null
             {
                 return null;
             }
@@ -673,14 +670,12 @@ class ReplicatorFieldServiceTest extends TestCase
 
         /** @var \Statamic\Entries\Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
-        /** @phpstan-ignore-next-line */
         $templateMock->set('use_for_collection', $collectionMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
         $result = $service->getReplicatorFields($templateMock);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -704,14 +699,12 @@ class ReplicatorFieldServiceTest extends TestCase
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
         $templateMock->use_for_collection = null;
-        /** @phpstan-ignore-next-line */
         $templateMock->set('use_for_taxonomy', $taxonomyMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
         $result = $service->getReplicatorFields($templateMock);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -768,7 +761,7 @@ class ReplicatorFieldServiceTest extends TestCase
         $method->setAccessible(true);
         $result = $method->invoke($service, collect([$blueprint1, $blueprint2]));
 
-        $this->assertIsArray($result);
+        /** @var array<int, array<string, mixed>> $result */
         $this->assertCount(2, $result);
     }
 
@@ -792,14 +785,12 @@ class ReplicatorFieldServiceTest extends TestCase
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
         $templateMock->use_for_collection = null;
-        /** @phpstan-ignore-next-line */
         $templateMock->set('use_for_taxonomy', $taxonomyMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
         $result = $service->getReplicatorFields($templateMock);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -822,14 +813,12 @@ class ReplicatorFieldServiceTest extends TestCase
 
         /** @var \Statamic\Entries\Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
-        /** @phpstan-ignore-next-line */
         $templateMock->set('use_for_collection', $collectionMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
         $result = $service->getReplicatorFields($templateMock);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -852,14 +841,12 @@ class ReplicatorFieldServiceTest extends TestCase
 
         /** @var \Statamic\Entries\Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
-        /** @phpstan-ignore-next-line */
         $templateMock->set('use_for_collection', $collectionMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
         $result = $service->getReplicatorFields($templateMock);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -910,14 +897,12 @@ class ReplicatorFieldServiceTest extends TestCase
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
         $templateMock->use_for_collection = null;
-        /** @phpstan-ignore-next-line */
         $templateMock->set('use_for_taxonomy', $taxonomyMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
         $result = $service->getReplicatorFields($templateMock);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 }

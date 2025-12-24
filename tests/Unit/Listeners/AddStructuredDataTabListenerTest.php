@@ -31,7 +31,6 @@ class AddStructuredDataTabListenerTest extends TestCase
         $listener = new AddStructuredDataTabListener;
         $listener->handle($event);
 
-        // Listener handles event without errors
     }
 
     #[Test]
@@ -49,7 +48,6 @@ class AddStructuredDataTabListenerTest extends TestCase
         $listener = new AddStructuredDataTabListener;
         $listener->handle($event);
 
-        // Listener handles event without errors
     }
 
     #[Test]
@@ -70,7 +68,6 @@ class AddStructuredDataTabListenerTest extends TestCase
         $listener = new AddStructuredDataTabListener;
         $listener->handle($event);
 
-        // Listener handles event without errors
     }
 
     #[Test]
@@ -88,7 +85,6 @@ class AddStructuredDataTabListenerTest extends TestCase
         $listener = new AddStructuredDataTabListener;
         $listener->handle($event);
 
-        // Listener handles event without errors
     }
 
     #[Test]
@@ -108,7 +104,6 @@ class AddStructuredDataTabListenerTest extends TestCase
         $listener = new AddStructuredDataTabListener;
         $listener->handleCollectionBlueprintFound($blueprint);
 
-        $this->assertTrue(true);
     }
 
     #[Test]
@@ -128,7 +123,6 @@ class AddStructuredDataTabListenerTest extends TestCase
         $listener = new AddStructuredDataTabListener;
         $listener->handleTaxonomyBlueprintFound($blueprint);
 
-        $this->assertTrue(true);
     }
 
     #[Test]
@@ -146,7 +140,6 @@ class AddStructuredDataTabListenerTest extends TestCase
         $listener = new AddStructuredDataTabListener;
         $listener->handleCollectionBlueprintFound($blueprint);
 
-        $this->assertTrue(true);
     }
 
     #[Test]
@@ -164,7 +157,6 @@ class AddStructuredDataTabListenerTest extends TestCase
         $listener = new AddStructuredDataTabListener;
         $listener->handleTaxonomyBlueprintFound($blueprint);
 
-        $this->assertTrue(true);
     }
 
     #[Test]
@@ -180,7 +172,6 @@ class AddStructuredDataTabListenerTest extends TestCase
         $listener = new AddStructuredDataTabListener;
         $listener->handle($event);
 
-        // Listener handles event without errors
     }
 
     #[Test]
@@ -196,6 +187,5 @@ class AddStructuredDataTabListenerTest extends TestCase
         $listener = new AddStructuredDataTabListener;
         $listener->handle($event);
 
-        // Listener handles event without errors
     }
 }

@@ -152,7 +152,6 @@ class StructuredDataServiceTest extends TestCase
 
         $result = $service->getJsonLdScripts($entry);
 
-        $this->assertIsArray($result);
         $this->assertNotEmpty($result);
         $this->assertStringContainsString('<script type="application/ld+json">', $result[0]);
     }
@@ -162,24 +161,47 @@ class StructuredDataServiceTest extends TestCase
     {
         $collection = CollectionFacade::make('blog');
         $collection->save();
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+
         $entry = (new Entry)
             ->collection($collection)
             ->id('entry-123')
             ->set('structured_data_templates', ['template-123']);
 
+        $template = (new Entry)
+            ->collection($templatesCollection)
+            ->id('template-123')
+            ->set('schema_data', [
+                [
+                    'specialProps' => ['type' => 'Article'],
+                    'fields' => [],
+                ],
+            ]);
+
+        EntryFacade::shouldReceive('find')->with('template-123')->andReturn($template);
+
         $page = $this->mock(Page::class, function (MockInterface $mock) use ($entry): void {
             $mock->shouldReceive('entry')->andReturn($entry);
         });
 
-        $parser = $this->mock(StructuredDataParser::class);
+        $parser = $this->mock(StructuredDataParser::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('parse')->andReturn([
+                [
+                    'specialProps' => ['type' => 'Article'],
+                    'fields' => [],
+                ],
+            ]);
+        });
+
         /** @var StructuredDataParser $parser */
         $service = new StructuredDataService($parser);
 
-        /** @var \Statamic\Contracts\Entries\Entry|\Statamic\Taxonomies\LocalizedTerm $page */
+        /** @var Page $page */
         $result = $service->getJsonLdScripts($page);
 
-        // Method always returns array per PHPDoc
-        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+        $this->assertStringContainsString('<script type="application/ld+json">', $result[0]);
     }
 
     #[Test]
@@ -578,7 +600,6 @@ class StructuredDataServiceTest extends TestCase
 
         $result = $service->getJsonLdScripts($entry);
 
-        $this->assertIsArray($result);
         $this->assertCount(1, $result);
     }
 

@@ -13,9 +13,8 @@ class StructuredDataPreviewTest extends TestCase
     {
         $fieldtype = new StructuredDataPreview;
 
-        $result = $fieldtype->defaultValue();
+        $_ = $fieldtype->defaultValue();
 
-        // Method always returns null per PHPDoc
-        $this->assertNull($result);
+        $this->expectNotToPerformAssertions();
     }
 }

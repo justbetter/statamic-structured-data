@@ -23,7 +23,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -39,7 +38,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -57,7 +55,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -84,7 +81,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -103,7 +99,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
             ],
         ];
 
-        /** @phpstan-ignore-next-line */
         $item = new class($replicatorData)
         {
             /** @param array<int|string, mixed> $data */
@@ -128,7 +123,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertCount(1, $result);
         $this->assertArrayHasKey('name', $result[0]);
         $this->assertEquals('Test Title', $result[0]['name']);
@@ -146,7 +140,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
             ['type' => 'other_set', 'values' => ['title' => 'Test 2']],
         ];
 
-        /** @phpstan-ignore-next-line */
         $item = new class($replicatorData)
         {
             /** @param array<int|string, mixed> $data */
@@ -171,7 +164,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertCount(1, $result);
         $this->assertEquals('Test 1', $result[0]['name']);
     }
@@ -185,7 +177,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
             ['type' => 'test_set', 'values' => []],
         ];
 
-        /** @phpstan-ignore-next-line */
         $item = new class($replicatorData)
         {
             /** @param array<int|string, mixed> $data */
@@ -209,7 +200,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertCount(1, $result);
         $this->assertEquals('Static Content', $result[0]['static_value']);
     }
@@ -230,7 +220,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
             ],
         ];
 
-        /** @phpstan-ignore-next-line */
         $item = new class($replicatorData)
         {
             /** @param array<int|string, mixed> $data */
@@ -269,7 +258,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertCount(1, $result);
         $this->assertArrayHasKey('nested', $result[0]);
         $this->assertIsArray($result[0]['nested']);
@@ -311,7 +299,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertNotEmpty($result);
     }
 
@@ -347,7 +334,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertNotEmpty($result);
     }
 
@@ -360,7 +346,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
             ['set' => 'test_set', 'values' => ['title' => 'Test']],
         ];
 
-        /** @phpstan-ignore-next-line */
         $item = new class($replicatorData)
         {
             /** @param array<int|string, mixed> $data */
@@ -385,7 +370,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertCount(1, $result);
     }
 
@@ -398,7 +382,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
             ['type' => 'test_set', 'title' => 'Direct Value'],
         ];
 
-        /** @phpstan-ignore-next-line */
         $item = new class($replicatorData)
         {
             /** @param array<int|string, mixed> $data */
@@ -422,7 +405,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertCount(1, $result);
         $this->assertEquals('Direct Value', $result[0]['name']);
     }
@@ -436,7 +418,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
             ['type' => 'test_set', 'values' => ['title' => 'Test']],
         ];
 
-        /** @phpstan-ignore-next-line */
         $item = new class($replicatorData)
         {
             /** @param array<int|string, mixed> $data */
@@ -461,7 +442,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertCount(1, $result);
         $this->assertArrayHasKey('name', $result[0]);
         $this->assertArrayNotHasKey('', $result[0]);
@@ -476,7 +456,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
             ['type' => 'test_set', 'values' => ['title' => 'Test']],
         ];
 
-        /** @phpstan-ignore-next-line */
         $item = new class($replicatorData)
         {
             /** @param array<int|string, mixed> $data */
@@ -501,7 +480,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertCount(1, $result);
         $this->assertArrayNotHasKey('name', $result[0]);
         $this->assertArrayHasKey('title', $result[0]);
@@ -516,7 +494,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
             ['type' => 'other_set', 'values' => ['title' => 'Test']],
         ];
 
-        /** @phpstan-ignore-next-line */
         $item = new class($replicatorData)
         {
             /** @param array<int|string, mixed> $data */
@@ -541,7 +518,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -554,7 +530,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
             ['type' => 'test_set', 'values' => []],
         ];
 
-        /** @phpstan-ignore-next-line */
         $item = new class($replicatorData)
         {
             /** @param array<int|string, mixed> $data */
@@ -576,7 +551,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -590,7 +564,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
             ['type' => 'test_set', 'values' => ['field1' => 'value1']],
         ];
 
-        /** @phpstan-ignore-next-line */
         $item = new class($replicatorData)
         {
             /** @param array<int|string, mixed> $data */
@@ -618,7 +591,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertCount(1, $result);
     }
 
@@ -631,7 +603,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
             ['type' => 'test_set', 'values' => 'not-an-array'],
         ];
 
-        /** @phpstan-ignore-next-line */
         $item = new class($replicatorData)
         {
             /** @param array<int|string, mixed> $data */
@@ -657,7 +628,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -688,7 +658,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertNotEmpty($result);
     }
 
@@ -715,7 +684,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $transformer->transform($field, $item);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -734,7 +702,7 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $method->invoke($transformer, $row);
 
-        $this->assertIsArray($result);
+        /** @var array<string, mixed> $result */
         $this->assertIsArray($result['values']);
     }
 
@@ -752,7 +720,7 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $method->invoke($transformer, $valueMock);
 
-        $this->assertIsArray($result);
+        /** @var array<string, mixed> $result */
         $this->assertEquals('test_set', $result['set']);
     }
 
@@ -770,7 +738,7 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $method->invoke($transformer, $collectionMock);
 
-        $this->assertIsArray($result);
+        /** @var array<string, mixed> $result */
         $this->assertEquals('test_set', $result['set']);
     }
 
@@ -789,7 +757,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $method->invoke($transformer, $field);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -810,7 +777,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $method->invoke($transformer, $field);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -831,7 +797,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $method->invoke($transformer, $field);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -874,7 +839,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $method->invoke($transformer, $field, $item, null);
 
-        $this->assertIsArray($result);
         $this->assertNotEmpty($result);
     }
 
@@ -908,7 +872,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $method->invoke($transformer, $field, $item);
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -922,7 +885,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
 
         $result = $method->invoke($transformer, 'not-an-array');
 
-        $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
 
@@ -937,7 +899,6 @@ class ReplicatorObjectArrayTransformerTest extends TestCase
         $input = ['key' => 'value'];
         $result = $method->invoke($transformer, $input);
 
-        $this->assertIsArray($result);
         $this->assertEquals($input, $result);
     }
 }

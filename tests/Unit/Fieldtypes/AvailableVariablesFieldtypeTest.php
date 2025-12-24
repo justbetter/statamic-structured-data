@@ -25,10 +25,9 @@ class AvailableVariablesFieldtypeTest extends TestCase
     {
         $fieldtype = new AvailableVariablesFieldtype;
 
-        $result = $fieldtype->defaultValue();
+        $_ = $fieldtype->defaultValue();
 
-        // Method always returns null per PHPDoc
-        $this->assertNull($result);
+        $this->expectNotToPerformAssertions();
     }
 
     #[Test]

@@ -53,7 +53,7 @@ class ApplyTemplateToItemJobTest extends TestCase
         $job = new ApplyTemplateToItemJob('entry-123', 'entry', 'template-456');
         $job->handle();
 
-        // Job handles gracefully when entry not found
+        $this->expectNotToPerformAssertions();
     }
 
     #[Test]
@@ -73,7 +73,6 @@ class ApplyTemplateToItemJobTest extends TestCase
         $job = new ApplyTemplateToItemJob('term-123', 'term', 'template-456');
         $job->handle();
 
-        // Job handles gracefully when entry not found
     }
 
     #[Test]
@@ -84,7 +83,7 @@ class ApplyTemplateToItemJobTest extends TestCase
         $job = new ApplyTemplateToItemJob('term-123', 'term', 'template-456');
         $job->handle();
 
-        // Job handles gracefully when entry not found
+        $this->expectNotToPerformAssertions();
     }
 
     #[Test]
