@@ -47,7 +47,7 @@ class StructuredDataService
             $schemas = $template->get('schema_data');
             $schemas = $schemas ?? [];
 
-            if (empty($schemas) || ! is_array($schemas)) {
+            if (empty($schemas)) {
                 continue;
             }
 
@@ -62,6 +62,7 @@ class StructuredDataService
                         continue;
                     }
 
+                    /** @var array<string, mixed> $parsedSchema */
                     $scripts[] = $this->formatJsonLd($parsedSchema, $json, $item);
                 }
             } catch (\Exception $e) {
@@ -113,11 +114,15 @@ class StructuredDataService
 
         if (isset($schema['fields']) && is_array($schema['fields'])) {
             foreach ($schema['fields'] as $field) {
-                if (! isset($field['key'])) {
+                if (! is_array($field) || ! isset($field['key'])) {
                     continue;
                 }
 
+                /** @var array<string, mixed> $field */
                 $key = $field['key'];
+                if (! is_string($key)) {
+                    continue;
+                }
 
                 $result[$key] = $this->transformField($field, $item);
             }
@@ -135,13 +140,17 @@ class StructuredDataService
 
         // Handle object and object_array types that need recursive schema transformation
         if ($type === 'object' && isset($field['value']) && is_array($field['value'])) {
-            return $this->transformSchema($field['value'], $item);
+            /** @var array<string, mixed> $fieldValue */
+            $fieldValue = $field['value'];
+
+            return $this->transformSchema($fieldValue, $item);
         }
 
         if ($type === 'object_array' && isset($field['values']) && is_array($field['values'])) {
             $output = [];
             foreach ($field['values'] as $value) {
                 if (is_array($value)) {
+                    /** @var array<string, mixed> $value */
                     $output[] = $this->transformSchema($value, $item);
                 }
             }

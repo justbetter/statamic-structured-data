@@ -11,18 +11,17 @@ class ReplicatorFieldService
     /** @return array<int, array<string, mixed>> */
     public function getReplicatorFields(EntryContract $dataTemplate): array
     {
-        // @phpstan-ignore-next-line
-        $collection = $dataTemplate->use_for_collection;
-        // @phpstan-ignore-next-line
-        $taxonomy = $dataTemplate->use_for_taxonomy;
+        /** @var \Statamic\Entries\Entry $dataTemplate */
+        $collection = $dataTemplate->get('use_for_collection');
+        $taxonomy = $dataTemplate->get('use_for_taxonomy');
 
         if (! $collection && ! $taxonomy) {
             return [];
         }
 
         $blueprints = $collection
-            ? $collection->entryBlueprints()
-            : $taxonomy->termBlueprints();
+            ? ($collection->entryBlueprints() ?? false)
+            : ($taxonomy->termBlueprints() ?? false);
 
         if (! $blueprints || ! $blueprints->first()) {
             return [];
@@ -91,10 +90,22 @@ class ReplicatorFieldService
     protected function normalizeField($field): ?array
     {
         if (is_object($field) && method_exists($field, 'toArray')) {
-            return $field->toArray();
+            /** @var array<string, mixed>|null $result */
+            $result = $field->toArray();
+            if (is_array($result)) {
+                /** @var array<string, mixed> $result */
+                return $result;
+            }
+
+            return null;
         }
 
-        return is_array($field) ? $field : null;
+        if (is_array($field)) {
+            /** @var array<string, mixed> $field */
+            return $field;
+        }
+
+        return null;
     }
 
     /**
@@ -130,6 +141,7 @@ class ReplicatorFieldService
         $setOptions = [];
 
         foreach ($sets as $setHandle => $setConfig) {
+            /** @phpstan-ignore-next-line */
             if (! is_string($setHandle) || ! is_array($setConfig)) {
                 continue;
             }
@@ -166,6 +178,7 @@ class ReplicatorFieldService
 
             [$setFieldHandle, $setFieldConfig] = $fieldData;
 
+            /** @phpstan-ignore-next-line */
             if (! is_string($setFieldHandle)) {
                 continue;
             }
@@ -195,14 +208,22 @@ class ReplicatorFieldService
     {
         // Handle list array format: [['handle' => 'text', 'field' => [...]]]
         if (is_array($setFieldData) && isset($setFieldData['handle'])) {
+            $handle = $setFieldData['handle'];
+            if (! is_string($handle)) {
+                return null;
+            }
+            /** @var array<string, mixed> $fieldConfig */
+            $fieldConfig = is_array($setFieldData['field'] ?? null) ? $setFieldData['field'] : [];
+
             return [
-                $setFieldData['handle'],
-                $setFieldData['field'] ?? [],
+                $handle,
+                $fieldConfig,
             ];
         }
 
         // Handle associative array format: ['text' => ['type' => ...]]
         if (is_string($setFieldKey) && is_array($setFieldData)) {
+            /** @var array<string, mixed> $setFieldData */
             return [
                 $setFieldKey,
                 $setFieldData,

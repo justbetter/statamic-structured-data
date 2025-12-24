@@ -49,6 +49,7 @@ class StructuredDataBuilder extends Fieldtype
             return $default;
         }
 
+        /** @var array<int, array<string, mixed>> $data */
         return $data;
     }
 

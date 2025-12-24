@@ -29,7 +29,9 @@ class ReplicatorObjectArrayTransformer implements FieldTransformerInterface
 
         $setFilter = $config['set'] ?? null;
         $setFilter = is_string($setFilter) || $setFilter === null ? $setFilter : null;
-        $mappings = is_array($config['mappings'] ?? null) ? $config['mappings'] : [];
+        $mappingsRaw = $config['mappings'] ?? [];
+        /** @var array<int, array<string, mixed>> $mappings */
+        $mappings = is_array($mappingsRaw) ? $mappingsRaw : [];
 
         $replicatorData = null;
 
@@ -69,10 +71,7 @@ class ReplicatorObjectArrayTransformer implements FieldTransformerInterface
                 continue;
             }
 
-            $rowValues = $rowArray['values'];
-            if (! is_array($rowValues)) {
-                $rowValues = [];
-            }
+            $rowValues = $this->ensureArrayValues($rowArray['values'] ?? null);
 
             $mapped = $this->applyMappings($mappings, $rowValues, $item);
 
@@ -152,7 +151,9 @@ class ReplicatorObjectArrayTransformer implements FieldTransformerInterface
 
         $setFilter = $config['set'] ?? null;
         $setFilter = is_string($setFilter) || $setFilter === null ? $setFilter : null;
-        $mappings = is_array($config['mappings'] ?? null) ? $config['mappings'] : [];
+        $mappingsRaw = $config['mappings'] ?? [];
+        /** @var array<int, array<string, mixed>> $mappings */
+        $mappings = is_array($mappingsRaw) ? $mappingsRaw : [];
 
         $replicatorData = null;
 
@@ -220,5 +221,21 @@ class ReplicatorObjectArrayTransformer implements FieldTransformerInterface
         }
 
         return $value;
+    }
+
+    /**
+     * Ensures the given value is an array, converting non-arrays to empty array.
+     *
+     * @param  mixed  $values
+     * @return array<string, mixed>
+     */
+    protected function ensureArrayValues($values): array
+    {
+        if (! is_array($values)) {
+            return [];
+        }
+
+        /** @var array<string, mixed> $values */
+        return $values;
     }
 }

@@ -49,6 +49,7 @@ class PresetService
         }
 
         foreach ($enabledPresets as $presetName) {
+            /** @phpstan-ignore-next-line */
             if (! is_string($presetName)) {
                 continue;
             }
@@ -81,6 +82,7 @@ class PresetService
         $customPaths = config('justbetter.structured-data.presets.custom_preset_paths', []);
 
         foreach ($customPaths as $path) {
+            /** @phpstan-ignore-next-line */
             if (! is_string($path) || ! File::exists($path)) {
                 continue;
             }

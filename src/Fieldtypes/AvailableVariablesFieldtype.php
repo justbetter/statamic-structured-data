@@ -7,7 +7,6 @@ use Statamic\Facades\Collection;
 use Statamic\Facades\GlobalSet;
 use Statamic\Fields\Fieldtype;
 use Statamic\Globals\GlobalSet as StatamicGlobalSet;
-use WithCandour\AardvarkSeo\Blueprints\CP\OnPageSeoBlueprint;
 
 class AvailableVariablesFieldtype extends Fieldtype
 {
@@ -70,7 +69,7 @@ class AvailableVariablesFieldtype extends Fieldtype
     protected function getEntryFields(): array
     {
         $dataTemplate = $this->field->parent();
-        $collection = $dataTemplate?->use_for_collection;
+        $collection = $dataTemplate?->get('use_for_collection');
 
         if (! $collection) {
             return [];
@@ -84,16 +83,12 @@ class AvailableVariablesFieldtype extends Fieldtype
 
         /** @var array<int, array<string, mixed>> $fieldsArray */
         $fieldsArray = $blueprints->reduce(function (array $carry, $blueprint): array {
-            $items = $blueprint->fields()->items();
+            $items = $this->normalizeBlueprintItems($blueprint->fields()->items());
 
-            return array_merge($carry, is_array($items) ? $items : []);
+            return array_merge($carry, $items);
         }, []);
 
         $fields = collect($fieldsArray);
-
-        if (class_exists(OnPageSeoBlueprint::class)) {
-            $fields = $fields->merge(OnPageSeoBlueprint::requestBlueprint()->fields()?->items() ?? []);
-        }
 
         if ($fields->isEmpty()) {
             return [];
@@ -115,7 +110,7 @@ class AvailableVariablesFieldtype extends Fieldtype
     protected function getTermFields(): array
     {
         $dataTemplate = $this->field->parent();
-        $taxonomy = $dataTemplate?->use_for_taxonomy;
+        $taxonomy = $dataTemplate?->get('use_for_taxonomy');
 
         if (! $taxonomy) {
             return [];
@@ -129,14 +124,12 @@ class AvailableVariablesFieldtype extends Fieldtype
 
         /** @var array<int, array<string, mixed>> $fieldsArray */
         $fieldsArray = $blueprints->reduce(function (array $carry, $blueprint): array {
-            return array_merge($carry, $blueprint->fields()->items()->toArray());
+            $items = $this->normalizeBlueprintItems($blueprint->fields()->items());
+
+            return array_merge($carry, $items);
         }, []);
 
         $fields = collect($fieldsArray);
-
-        if (class_exists(OnPageSeoBlueprint::class)) {
-            $fields = $fields->merge(OnPageSeoBlueprint::requestBlueprint()->fields()?->items() ?? []);
-        }
 
         if ($fields->isEmpty()) {
             return [];
@@ -204,8 +197,12 @@ class AvailableVariablesFieldtype extends Fieldtype
         return $blueprint->fields()->items()->map(function (array $entryField) use ($field) {
             $entryFieldConfig = is_array($entryField['field'] ?? null) ? $entryField['field'] : [];
             $parentFieldConfig = is_array($field['field'] ?? null) ? $field['field'] : [];
-            $name = ($field['handle'].':'.($entryField['handle'] ?? ''));
-            $description = (($parentFieldConfig['display'] ?? '').': '.($entryFieldConfig['display'] ?? ($entryField['handle'] ?? '')));
+            $fieldHandle = is_string($field['handle'] ?? null) ? $field['handle'] : '';
+            $entryFieldHandle = is_string($entryField['handle'] ?? null) ? $entryField['handle'] : '';
+            $name = $fieldHandle.':'.$entryFieldHandle;
+            $parentDisplay = is_string($parentFieldConfig['display'] ?? null) ? $parentFieldConfig['display'] : '';
+            $entryDisplay = is_string($entryFieldConfig['display'] ?? null) ? $entryFieldConfig['display'] : '';
+            $description = $parentDisplay.': '.($entryDisplay ?: $entryFieldHandle);
 
             return $this->setFieldData($entryField, $name, $description, false);
         })->filter()->values()->all();
@@ -246,5 +243,28 @@ class AvailableVariablesFieldtype extends Fieldtype
             'description' => $descriptionValue ?? $display ?? $fieldHandle,
             'children' => $children,
         ];
+    }
+
+    /**
+     * Normalizes blueprint items to ensure they are an array.
+     *
+     * @param  mixed  $items
+     * @return array<int, array<string, mixed>>
+     */
+    protected function normalizeBlueprintItems($items): array
+    {
+        if (is_array($items)) {
+            /** @var array<int, array<string, mixed>> $items */
+            return $items;
+        }
+
+        if ($items instanceof \Illuminate\Support\Collection) {
+            /** @var array<int, array<string, mixed>> $result */
+            $result = $items->all();
+
+            return $result;
+        }
+
+        return [];
     }
 }

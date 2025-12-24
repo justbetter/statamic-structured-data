@@ -1,0 +1,943 @@
+<?php
+
+namespace Justbetter\StatamicStructuredData\Tests\Unit\Services\Transformers;
+
+use Illuminate\Support\Collection;
+use Justbetter\StatamicStructuredData\Services\Transformers\ReplicatorObjectArrayTransformer;
+use Justbetter\StatamicStructuredData\Tests\TestCase;
+use Mockery\MockInterface;
+use PHPUnit\Framework\Attributes\Test;
+use Statamic\Fields\Value;
+
+class ReplicatorObjectArrayTransformerTest extends TestCase
+{
+    #[Test]
+    public function it_returns_empty_array_when_config_is_not_array(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => null,
+        ];
+
+        $result = $transformer->transform($field);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function it_returns_empty_array_when_replicator_field_is_missing(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [],
+        ];
+
+        $result = $transformer->transform($field);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function it_returns_empty_array_when_replicator_field_is_empty_string(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => '',
+            ],
+        ];
+
+        $result = $transformer->transform($field);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function it_returns_empty_array_when_item_has_no_replicator_data(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $item = new class
+        {
+            public function get(string $key): mixed
+            {
+                return null;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function it_processes_replicator_rows_with_field_mode_mapping(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            [
+                'type' => 'test_set',
+                'values' => [
+                    'title' => 'Test Title',
+                    'description' => 'Test Description',
+                ],
+            ],
+        ];
+
+        /** @phpstan-ignore-next-line */
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                return $this->data;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [
+                    ['key' => 'name', 'mode' => 'field', 'field' => 'title'],
+                    ['key' => 'desc', 'mode' => 'field', 'field' => 'description'],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertArrayHasKey('name', $result[0]);
+        $this->assertEquals('Test Title', $result[0]['name']);
+        $this->assertArrayHasKey('desc', $result[0]);
+        $this->assertEquals('Test Description', $result[0]['desc']);
+    }
+
+    #[Test]
+    public function it_filters_rows_by_set_filter(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            ['type' => 'test_set', 'values' => ['title' => 'Test 1']],
+            ['type' => 'other_set', 'values' => ['title' => 'Test 2']],
+        ];
+
+        /** @phpstan-ignore-next-line */
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                return $this->data;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'set' => 'test_set',
+                'mappings' => [
+                    ['key' => 'name', 'mode' => 'field', 'field' => 'title'],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertEquals('Test 1', $result[0]['name']);
+    }
+
+    #[Test]
+    public function it_handles_static_mode_mapping(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            ['type' => 'test_set', 'values' => []],
+        ];
+
+        /** @phpstan-ignore-next-line */
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                return $this->data;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [
+                    ['key' => 'static_value', 'mode' => 'static', 'static' => 'Static Content'],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertEquals('Static Content', $result[0]['static_value']);
+    }
+
+    #[Test]
+    public function it_handles_nested_replicator_mode(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            [
+                'type' => 'test_set',
+                'values' => [
+                    'nested_field' => [
+                        ['type' => 'nested_set', 'values' => ['title' => 'Nested Title']],
+                    ],
+                ],
+            ],
+        ];
+
+        /** @phpstan-ignore-next-line */
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                if ($key === 'nested_field') {
+                    return [
+                        ['type' => 'nested_set', 'values' => ['title' => 'Nested Title']],
+                    ];
+                }
+
+                return $this->data;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [
+                    [
+                        'key' => 'nested',
+                        'mode' => 'nested_replicator',
+                        'nested' => [
+                            'replicator_field' => 'nested_field',
+                            'mappings' => [
+                                ['key' => 'name', 'mode' => 'field', 'field' => 'title'],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertArrayHasKey('nested', $result[0]);
+        $this->assertIsArray($result[0]['nested']);
+    }
+
+    #[Test]
+    public function it_unwraps_value_objects(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            ['type' => 'test_set', 'values' => ['title' => 'Test']],
+        ];
+
+        $valueMock = $this->mock(Value::class, function (MockInterface $mock) use ($replicatorData): void {
+            $mock->shouldReceive('value')->andReturn($replicatorData);
+        });
+
+        $item = new class($valueMock)
+        {
+            /** @param mixed $value */
+            public function __construct(private $value) {}
+
+            public function get(string $key): mixed
+            {
+                return $this->value;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [
+                    ['key' => 'name', 'mode' => 'field', 'field' => 'title'],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+    }
+
+    #[Test]
+    public function it_unwraps_collection_objects(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $collection = collect([
+            ['type' => 'test_set', 'values' => ['title' => 'Test']],
+        ]);
+
+        $item = new class($collection)
+        {
+            /** @param mixed $collection */
+            public function __construct(private $collection) {}
+
+            public function get(string $key): mixed
+            {
+                return $this->collection;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [
+                    ['key' => 'name', 'mode' => 'field', 'field' => 'title'],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+    }
+
+    #[Test]
+    public function it_handles_rows_with_set_key_instead_of_type(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            ['set' => 'test_set', 'values' => ['title' => 'Test']],
+        ];
+
+        /** @phpstan-ignore-next-line */
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                return $this->data;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'set' => 'test_set',
+                'mappings' => [
+                    ['key' => 'name', 'mode' => 'field', 'field' => 'title'],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+    }
+
+    #[Test]
+    public function it_handles_rows_without_values_key(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            ['type' => 'test_set', 'title' => 'Direct Value'],
+        ];
+
+        /** @phpstan-ignore-next-line */
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                return $this->data;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [
+                    ['key' => 'name', 'mode' => 'field', 'field' => 'title'],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertEquals('Direct Value', $result[0]['name']);
+    }
+
+    #[Test]
+    public function it_skips_mappings_without_key(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            ['type' => 'test_set', 'values' => ['title' => 'Test']],
+        ];
+
+        /** @phpstan-ignore-next-line */
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                return $this->data;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [
+                    ['mode' => 'field', 'field' => 'title'],
+                    ['key' => 'name', 'mode' => 'field', 'field' => 'title'],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertArrayHasKey('name', $result[0]);
+        $this->assertArrayNotHasKey('', $result[0]);
+    }
+
+    #[Test]
+    public function it_skips_mappings_without_field_in_field_mode(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            ['type' => 'test_set', 'values' => ['title' => 'Test']],
+        ];
+
+        /** @phpstan-ignore-next-line */
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                return $this->data;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [
+                    ['key' => 'name', 'mode' => 'field'],
+                    ['key' => 'title', 'mode' => 'field', 'field' => 'title'],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertArrayNotHasKey('name', $result[0]);
+        $this->assertArrayHasKey('title', $result[0]);
+    }
+
+    #[Test]
+    public function it_returns_empty_array_when_all_rows_filtered_out(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            ['type' => 'other_set', 'values' => ['title' => 'Test']],
+        ];
+
+        /** @phpstan-ignore-next-line */
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                return $this->data;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'set' => 'test_set',
+                'mappings' => [
+                    ['key' => 'name', 'mode' => 'field', 'field' => 'title'],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function it_skips_empty_mapped_results(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            ['type' => 'test_set', 'values' => []],
+        ];
+
+        /** @phpstan-ignore-next-line */
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                return $this->data;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function it_skips_rows_that_normalize_to_null(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            'not-an-array',
+            ['type' => 'test_set', 'values' => ['field1' => 'value1']],
+        ];
+
+        /** @phpstan-ignore-next-line */
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                if ($key === 'replicator_field') {
+                    return $this->data;
+                }
+
+                return null;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [
+                    ['key' => 'field1', 'field' => 'field1'],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+    }
+
+    #[Test]
+    public function it_handles_non_array_row_values(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $replicatorData = [
+            ['type' => 'test_set', 'values' => 'not-an-array'],
+        ];
+
+        /** @phpstan-ignore-next-line */
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                if ($key === 'replicator_field') {
+                    return $this->data;
+                }
+
+                return null;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function it_handles_item_with_get_method_when_source_data_not_array(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $item = new class
+        {
+            public function get(string $key): mixed
+            {
+                return [
+                    ['type' => 'test_set', 'values' => ['field1' => 'value1']],
+                ];
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [
+                    ['key' => 'field1', 'field' => 'field1'],
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+    }
+
+    #[Test]
+    public function it_returns_empty_array_when_replicator_data_unwraps_to_non_array(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+
+        $item = new class
+        {
+            public function get(string $key): mixed
+            {
+                return 'not-an-array';
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [],
+            ],
+        ];
+
+        $result = $transformer->transform($field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function it_handles_non_array_values_in_normalize(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+        $reflection = new \ReflectionClass($transformer);
+        $method = $reflection->getMethod('normalizeReplicatorRow');
+        $method->setAccessible(true);
+
+        $row = [
+            'type' => 'test_set',
+            'values' => 'not-an-array',
+        ];
+
+        $result = $method->invoke($transformer, $row);
+
+        $this->assertIsArray($result);
+        $this->assertIsArray($result['values']);
+    }
+
+    #[Test]
+    public function it_handles_value_instance_in_normalize(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+        $reflection = new \ReflectionClass($transformer);
+        $method = $reflection->getMethod('normalizeReplicatorRow');
+        $method->setAccessible(true);
+
+        $valueMock = $this->mock(Value::class, function ($mock) {
+            $mock->shouldReceive('value')->andReturn(['type' => 'test_set', 'values' => ['field1' => 'value1']]);
+        });
+
+        $result = $method->invoke($transformer, $valueMock);
+
+        $this->assertIsArray($result);
+        $this->assertEquals('test_set', $result['set']);
+    }
+
+    #[Test]
+    public function it_handles_collection_instance_in_normalize(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+        $reflection = new \ReflectionClass($transformer);
+        $method = $reflection->getMethod('normalizeReplicatorRow');
+        $method->setAccessible(true);
+
+        $collectionMock = $this->mock(Collection::class, function ($mock) {
+            $mock->shouldReceive('all')->andReturn(['type' => 'test_set', 'values' => ['field1' => 'value1']]);
+        });
+
+        $result = $method->invoke($transformer, $collectionMock);
+
+        $this->assertIsArray($result);
+        $this->assertEquals('test_set', $result['set']);
+    }
+
+    #[Test]
+    public function it_handles_non_array_config_in_transform_nested(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+        $reflection = new \ReflectionClass($transformer);
+        $method = $reflection->getMethod('transformNested');
+        $method->setAccessible(true);
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => 'not-an-array',
+        ];
+
+        $result = $method->invoke($transformer, $field);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function it_handles_non_string_replicator_handle_in_transform_nested(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+        $reflection = new \ReflectionClass($transformer);
+        $method = $reflection->getMethod('transformNested');
+        $method->setAccessible(true);
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 123,
+            ],
+        ];
+
+        $result = $method->invoke($transformer, $field);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function it_handles_empty_string_replicator_handle_in_transform_nested(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+        $reflection = new \ReflectionClass($transformer);
+        $method = $reflection->getMethod('transformNested');
+        $method->setAccessible(true);
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => '',
+            ],
+        ];
+
+        $result = $method->invoke($transformer, $field);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function it_handles_item_get_method_when_source_data_not_array_in_transform_nested(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+        $reflection = new \ReflectionClass($transformer);
+        $method = $reflection->getMethod('transformNested');
+        $method->setAccessible(true);
+
+        $replicatorData = [
+            ['type' => 'test_set', 'values' => ['field1' => 'value1']],
+        ];
+
+        $item = new class($replicatorData)
+        {
+            /** @param array<int|string, mixed> $data */
+            public function __construct(private array $data) {}
+
+            public function get(string $key): mixed
+            {
+                if ($key === 'replicator_field') {
+                    return $this->data;
+                }
+
+                return null;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [
+                    ['key' => 'field1', 'field' => 'field1'],
+                ],
+            ],
+        ];
+
+        $result = $method->invoke($transformer, $field, $item, null);
+
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+    }
+
+    #[Test]
+    public function it_handles_non_array_replicator_data_after_unwrap_in_transform_nested(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+        $reflection = new \ReflectionClass($transformer);
+        $method = $reflection->getMethod('transformNested');
+        $method->setAccessible(true);
+
+        $item = new class
+        {
+            public function get(string $key): mixed
+            {
+                if ($key === 'replicator_field') {
+                    return 'not-an-array';
+                }
+
+                return null;
+            }
+        };
+
+        $field = [
+            'type' => 'replicator_object_array',
+            'config' => [
+                'replicator_field' => 'replicator_field',
+                'mappings' => [],
+            ],
+        ];
+
+        $result = $method->invoke($transformer, $field, $item);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function it_handles_non_array_row_values_through_ensure_array_values(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+        $reflection = new \ReflectionClass($transformer);
+        $method = $reflection->getMethod('ensureArrayValues');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($transformer, 'not-an-array');
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function ensure_array_values_returns_array_as_is(): void
+    {
+        $transformer = new ReplicatorObjectArrayTransformer;
+        $reflection = new \ReflectionClass($transformer);
+        $method = $reflection->getMethod('ensureArrayValues');
+        $method->setAccessible(true);
+
+        $input = ['key' => 'value'];
+        $result = $method->invoke($transformer, $input);
+
+        $this->assertIsArray($result);
+        $this->assertEquals($input, $result);
+    }
+}

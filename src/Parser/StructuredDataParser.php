@@ -103,7 +103,8 @@ class StructuredDataParser
         ];
 
         $objectData = $dataObject->object_data;
-        $objectData['fields'] = array_merge([$objectTypeData], $objectData['fields'] ?? []);
+        $existingFields = is_array($objectData['fields'] ?? null) ? $objectData['fields'] : [];
+        $objectData['fields'] = array_merge([$objectTypeData], $existingFields);
 
         return $objectData;
     }
