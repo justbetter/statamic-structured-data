@@ -193,7 +193,6 @@ class ReplicatorFieldService
      */
     protected function extractFieldData($setFieldKey, $setFieldData): ?array
     {
-        // Handle list array format: [['handle' => 'text', 'field' => [...]]]
         if (is_array($setFieldData) && isset($setFieldData['handle'])) {
             return [
                 $setFieldData['handle'],
@@ -201,7 +200,6 @@ class ReplicatorFieldService
             ];
         }
 
-        // Handle associative array format: ['text' => ['type' => ...]]
         if (is_string($setFieldKey) && is_array($setFieldData)) {
             return [
                 $setFieldKey,

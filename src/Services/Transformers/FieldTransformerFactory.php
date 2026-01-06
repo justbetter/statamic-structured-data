@@ -6,9 +6,10 @@ class FieldTransformerFactory
 {
     public function getTransformer(?string $type): FieldTransformerInterface
     {
-        return match ($type) {
-            'replicator_object_array' => new ReplicatorObjectArrayTransformer,
-            default => new DefaultFieldTransformer,
-        };
+        if ($type === 'replicator_object_array') {
+            return new ReplicatorObjectArrayTransformer;
+        }
+
+        return new DefaultFieldTransformer;
     }
 }
