@@ -3,6 +3,7 @@
 namespace Justbetter\StatamicStructuredData\Services;
 
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
+use Justbetter\StatamicStructuredData\Services\Transformers\FieldTransformerFactory;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Entries\Entry as EntryModel;
 use Statamic\Facades\Entry as EntryFacade;
@@ -13,9 +14,12 @@ class StructuredDataService
 {
     protected StructuredDataParser $parser;
 
+    protected FieldTransformerFactory $transformerFactory;
+
     public function __construct(StructuredDataParser $parser)
     {
         $this->parser = $parser;
+        $this->transformerFactory = new FieldTransformerFactory;
     }
 
     /**
@@ -58,7 +62,7 @@ class StructuredDataService
                         continue;
                     }
 
-                    $scripts[] = $this->formatJsonLd($parsedSchema, $json);
+                    $scripts[] = $this->formatJsonLd($parsedSchema, $json, $item);
                 }
             } catch (\Exception $e) {
                 continue;
@@ -71,9 +75,9 @@ class StructuredDataService
     /**
      * @param  array<string, mixed>  $schema
      */
-    public function formatJsonLd(array $schema, bool $json = false): string
+    public function formatJsonLd(array $schema, bool $json = false, EntryContract|Page|LocalizedTerm|null $item = null): string
     {
-        $transformedSchema = $this->transformSchema($schema);
+        $transformedSchema = $this->transformSchema($schema, $item);
         $encodedSchema = json_encode($transformedSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         if ($json) {
@@ -90,7 +94,7 @@ class StructuredDataService
      * @param  array<string, mixed>  $schema
      * @return array<string, mixed>
      */
-    public function transformSchema(array $schema): array
+    public function transformSchema(array $schema, EntryContract|Page|LocalizedTerm|null $item = null): array
     {
         $result = [];
 
@@ -115,23 +119,40 @@ class StructuredDataService
 
                 $key = $field['key'];
 
-                if ($field['type'] === 'array' && isset($field['values'])) {
-                    $result[$key] = $field['values'];
-                } elseif ($field['type'] === 'object' && isset($field['value'])) {
-                    $result[$key] = $this->transformSchema($field['value']);
-                } elseif ($field['type'] === 'object_array' && isset($field['values'])) {
-                    foreach ($field['values'] as $value) {
-                        $result[$key][] = $this->transformSchema($value);
-                    }
-                } elseif ($field['type'] === 'numeric' && isset($field['value'])) {
-                    $result[$key] = (float) $field['value'];
-                } else {
-                    $result[$key] = $field['value'] ?? null;
-                }
+                $result[$key] = $this->transformField($field, $item);
             }
         }
 
         return $result;
+    }
+
+    /**
+     * @param  array<string, mixed>  $field
+     */
+    protected function transformField(array $field, EntryContract|Page|LocalizedTerm|null $item = null): mixed
+    {
+        $type = $field['type'] ?? null;
+
+        // Handle object and object_array types that need recursive schema transformation
+        if ($type === 'object' && isset($field['value']) && is_array($field['value'])) {
+            return $this->transformSchema($field['value'], $item);
+        }
+
+        if ($type === 'object_array' && isset($field['values']) && is_array($field['values'])) {
+            $output = [];
+            foreach ($field['values'] as $value) {
+                if (is_array($value)) {
+                    $output[] = $this->transformSchema($value, $item);
+                }
+            }
+
+            return $output;
+        }
+
+        // Use transformer factory for all other field types
+        $transformer = $this->transformerFactory->getTransformer(is_string($type) ? $type : null);
+
+        return $transformer->transform($field, $item);
     }
 
     /**

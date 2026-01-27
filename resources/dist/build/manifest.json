@@ -5,14 +5,14 @@
     "src": "resources/css/statamic-structured-data.css"
   },
   "resources/js/statamic-structured-data.css": {
-    "file": "assets/statamic-structured-data-61a769e2.css",
+    "file": "assets/statamic-structured-data-b8c077b4.css",
     "src": "resources/js/statamic-structured-data.css"
   },
   "resources/js/statamic-structured-data.js": {
     "css": [
-      "assets/statamic-structured-data-61a769e2.css"
+      "assets/statamic-structured-data-b8c077b4.css"
     ],
-    "file": "assets/statamic-structured-data-959d3d78.js",
+    "file": "assets/statamic-structured-data-82617d3f.js",
     "isEntry": true,
     "src": "resources/js/statamic-structured-data.js"
   }

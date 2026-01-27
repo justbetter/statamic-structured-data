@@ -43,7 +43,7 @@
                 </div>
             </div>
         </div>
-        <div v-show="tooltipVisible" class="tooltip" :style="tooltipStyle">Copied!</div>
+        <div v-show="tooltipVisible" class="tooltip" :style="tooltipStyle">{{ __('Copied!') }}</div>
     </div>
 </template>
 

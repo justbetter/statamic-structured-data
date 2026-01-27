@@ -4,6 +4,7 @@ namespace Justbetter\StatamicStructuredData\Fieldtypes;
 
 use Illuminate\Support\Collection;
 use Justbetter\StatamicStructuredData\Services\PresetService;
+use Justbetter\StatamicStructuredData\Services\ReplicatorFieldService;
 use Statamic\Facades\Site as SiteFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
 use Statamic\Fields\Fieldtype;
@@ -22,7 +23,10 @@ class StructuredDataBuilder extends Fieldtype
     /** @var string */
     protected static $handle = 'structured_data_builder';
 
-    public function __construct(protected PresetService $presetService) {}
+    public function __construct(
+        protected PresetService $presetService,
+        protected ReplicatorFieldService $replicatorFieldService
+    ) {}
 
     /**
      * @param  mixed  $data
@@ -56,7 +60,20 @@ class StructuredDataBuilder extends Fieldtype
             'taxonomy_terms' => $this->getStructuredDataObjects(),
             'presets' => $this->presetService->getAvailablePresets()->toArray(),
             'presets_enabled' => config('justbetter.structured-data.presets.enabled', true),
+            'replicator_fields' => $this->getReplicatorFields(),
         ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    protected function getReplicatorFields(): array
+    {
+        $dataTemplate = $this->field->parent();
+
+        if (! $dataTemplate) {
+            return [];
+        }
+
+        return $this->replicatorFieldService->getReplicatorFields($dataTemplate);
     }
 
     /** @return array<string, array<string, mixed>> */
