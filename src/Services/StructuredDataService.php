@@ -118,12 +118,30 @@ class StructuredDataService
                 }
 
                 $key = $field['key'];
+                $transformedValue = $this->transformField($field, $item);
 
-                $result[$key] = $this->transformField($field, $item);
+                if (($field['type'] ?? null) === 'replicator_object_array'
+                    && isset($field['config']['flat'])
+                    && $field['config']['flat'] === true
+                    && is_array($transformedValue)
+                    && $this->isAssociativeArray($transformedValue)) {
+                    $result = array_merge($result, $transformedValue);
+                } else {
+                    $result[$key] = $transformedValue;
+                }
             }
         }
 
         return $result;
+    }
+
+    protected function isAssociativeArray(array $array): bool
+    {
+        if (empty($array)) {
+            return false;
+        }
+
+        return array_keys($array) !== range(0, count($array) - 1);
     }
 
     /**

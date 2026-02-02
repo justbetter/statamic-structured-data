@@ -5,6 +5,7 @@ namespace Justbetter\StatamicStructuredData\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
+use Justbetter\StatamicStructuredData\Services\StructuredDataService;
 use Statamic\Contracts\Data\Augmentable;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Contracts\Taxonomies\Term as TermContract;
@@ -78,11 +79,21 @@ class StructuredDataController extends CpController
                 }
 
                 $parsedData = $this->parseAntlersInData($structuredData, $contentEntry);
+                
+                $structuredDataService = app(StructuredDataService::class);
+                $transformedData = [];
+                if (is_array($parsedData)) {
+                    foreach ($parsedData as $schema) {
+                        if (is_array($schema)) {
+                            $transformedData[] = $structuredDataService->transformSchema($schema, $contentEntry);
+                        }
+                    }
+                }
 
                 return [
                     'id' => $entry->id(),
                     'title' => $entry->get('title'),
-                    'structuredData' => $parsedData,
+                    'structuredData' => $transformedData,
                 ];
             })
             ->filter()

@@ -137,7 +137,14 @@ class ReplicatorFieldService
             /** @var array<string, mixed> $setConfig */
             $setDisplay = is_string($setConfig['display'] ?? null) ? $setConfig['display'] : $setHandle;
             $setFields = is_array($setConfig['fields'] ?? null) ? $setConfig['fields'] : [];
+            $nestedSets = is_array($setConfig['sets'] ?? null) ? $setConfig['sets'] : [];
+            
             $fieldOptions = $this->parseSetFields($setFields);
+            
+            if (! empty($nestedSets)) {
+                $nestedFields = $this->extractFieldsFromNestedSets($nestedSets);
+                $fieldOptions = array_merge($fieldOptions, $nestedFields);
+            }
 
             $setOptions[] = [
                 'value' => $setHandle,
@@ -147,6 +154,34 @@ class ReplicatorFieldService
         }
 
         return $setOptions;
+    }
+
+    /**
+     * @param  array<string, mixed>  $nestedSets
+     * @return array<int, array<string, mixed>>
+     */
+    protected function extractFieldsFromNestedSets(array $nestedSets): array
+    {
+        $allFields = [];
+
+        foreach ($nestedSets as $nestedSetHandle => $nestedSetConfig) {
+            if (! is_array($nestedSetConfig)) {
+                continue;
+            }
+
+            /** @var array<string, mixed> $nestedSetConfig */
+            $nestedSetFields = is_array($nestedSetConfig['fields'] ?? null) ? $nestedSetConfig['fields'] : [];
+            $fields = $this->parseSetFields($nestedSetFields);
+            $allFields = array_merge($allFields, $fields);
+
+            $deeperNestedSets = is_array($nestedSetConfig['sets'] ?? null) ? $nestedSetConfig['sets'] : [];
+            if (! empty($deeperNestedSets)) {
+                $deeperFields = $this->extractFieldsFromNestedSets($deeperNestedSets);
+                $allFields = array_merge($allFields, $deeperFields);
+            }
+        }
+
+        return $allFields;
     }
 
     /**
