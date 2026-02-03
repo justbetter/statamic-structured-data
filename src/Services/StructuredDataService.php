@@ -91,6 +91,27 @@ class StructuredDataService
     }
 
     /**
+     * @param  mixed  $schemas
+     * @param  EntryContract|Page|LocalizedTerm|null  $item
+     * @return array<int, array<string, mixed>>
+     */
+    public function parseAndTransformSchemas($schemas, EntryContract|Page|LocalizedTerm|null $item = null): array
+    {
+        $parsedData = $this->parser->parse($schemas, $item);
+        $transformedData = [];
+
+        if (is_array($parsedData)) {
+            foreach ($parsedData as $schema) {
+                if (is_array($schema)) {
+                    $transformedData[] = $this->transformSchema($schema, $item);
+                }
+            }
+        }
+
+        return $transformedData;
+    }
+
+    /**
      * @param  array<string, mixed>  $schema
      * @return array<string, mixed>
      */
@@ -118,17 +139,13 @@ class StructuredDataService
                 }
 
                 $key = $field['key'];
-                $transformedValue = $this->transformField($field, $item);
+                $transformedValue = $this->transformField($field, $item, $result);
 
-                if (($field['type'] ?? null) === 'replicator_object_array'
-                    && isset($field['config']['flat'])
-                    && $field['config']['flat'] === true
-                    && is_array($transformedValue)
-                    && $this->isAssociativeArray($transformedValue)) {
-                    $result = array_merge($result, $transformedValue);
-                } else {
-                    $result[$key] = $transformedValue;
+                if ($transformedValue === null) {
+                    continue;
                 }
+
+                $result[$key] = $transformedValue;
             }
         }
 
@@ -146,8 +163,9 @@ class StructuredDataService
 
     /**
      * @param  array<string, mixed>  $field
+     * @param  array<string, mixed>  $result
      */
-    protected function transformField(array $field, EntryContract|Page|LocalizedTerm|null $item = null): mixed
+    protected function transformField(array $field, EntryContract|Page|LocalizedTerm|null $item = null, array &$result = []): mixed
     {
         $type = $field['type'] ?? null;
 
@@ -169,8 +187,20 @@ class StructuredDataService
 
         // Use transformer factory for all other field types
         $transformer = $this->transformerFactory->getTransformer(is_string($type) ? $type : null);
+        $transformedValue = $transformer->transform($field, $item);
 
-        return $transformer->transform($field, $item);
+        // Handle flat mode for replicator_object_array
+        if ($type === 'replicator_object_array'
+            && isset($field['config']['flat'])
+            && $field['config']['flat'] === true
+            && is_array($transformedValue)
+            && $this->isAssociativeArray($transformedValue)) {
+            $result = array_merge($result, $transformedValue);
+
+            return null;
+        }
+
+        return $transformedValue;
     }
 
     /**

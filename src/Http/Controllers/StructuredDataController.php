@@ -78,17 +78,8 @@ class StructuredDataController extends CpController
                     return null;
                 }
 
-                $parsedData = $this->parseAntlersInData($structuredData, $contentEntry);
-                
                 $structuredDataService = app(StructuredDataService::class);
-                $transformedData = [];
-                if (is_array($parsedData)) {
-                    foreach ($parsedData as $schema) {
-                        if (is_array($schema)) {
-                            $transformedData[] = $structuredDataService->transformSchema($schema, $contentEntry);
-                        }
-                    }
-                }
+                $transformedData = $structuredDataService->parseAndTransformSchemas($structuredData, $contentEntry);
 
                 return [
                     'id' => $entry->id(),

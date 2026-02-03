@@ -164,7 +164,7 @@ class ReplicatorFieldService
     {
         $allFields = [];
 
-        foreach ($nestedSets as $nestedSetHandle => $nestedSetConfig) {
+        foreach ($nestedSets as $nestedSetConfig) {
             if (! is_array($nestedSetConfig)) {
                 continue;
             }
@@ -173,8 +173,8 @@ class ReplicatorFieldService
             $nestedSetFields = is_array($nestedSetConfig['fields'] ?? null) ? $nestedSetConfig['fields'] : [];
             $fields = $this->parseSetFields($nestedSetFields);
             $allFields = array_merge($allFields, $fields);
-
             $deeperNestedSets = is_array($nestedSetConfig['sets'] ?? null) ? $nestedSetConfig['sets'] : [];
+            
             if (! empty($deeperNestedSets)) {
                 $deeperFields = $this->extractFieldsFromNestedSets($deeperNestedSets);
                 $allFields = array_merge($allFields, $deeperFields);
