@@ -92,7 +92,6 @@ class StructuredDataService
 
     /**
      * @param  mixed  $schemas
-     * @param  EntryContract|Page|LocalizedTerm|null  $item
      * @return array<int, array<string, mixed>>
      */
     public function parseAndTransformSchemas($schemas, EntryContract|Page|LocalizedTerm|null $item = null): array

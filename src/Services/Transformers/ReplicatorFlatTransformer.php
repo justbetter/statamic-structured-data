@@ -13,9 +13,6 @@ class ReplicatorFlatTransformer
 
     /**
      * @param  array<int|string, mixed>  $replicatorData
-     * @param  string|null  $setFilter
-     * @param  string  $keyField
-     * @param  string  $valueField
      * @return array<string, mixed>
      */
     public function transform(array $replicatorData, ?string $setFilter, string $keyField, string $valueField): array
@@ -32,9 +29,6 @@ class ReplicatorFlatTransformer
 
     /**
      * @param  mixed  $row
-     * @param  string|null  $setFilter
-     * @param  string  $keyField
-     * @param  string  $valueField
      * @return array<string, mixed>
      */
     protected function extractFlatDataFromRow($row, ?string $setFilter, string $keyField, string $valueField): array
@@ -73,10 +67,6 @@ class ReplicatorFlatTransformer
         return $this->extractFromNestedStructures($rowValues, $keyField, $valueField);
     }
 
-    /**
-     * @param  string|null  $rowSet
-     * @param  string|null  $setFilter
-     */
     protected function shouldSkipRowBySetFilter(?string $rowSet, ?string $setFilter): bool
     {
         return is_string($setFilter) && $setFilter !== '' && $rowSet !== $setFilter;
@@ -84,8 +74,6 @@ class ReplicatorFlatTransformer
 
     /**
      * @param  array<string, mixed>  $rowValues
-     * @param  string  $keyField
-     * @param  string  $valueField
      * @return array<string, mixed>
      */
     protected function extractFromNestedStructures(array $rowValues, string $keyField, string $valueField): array
@@ -105,8 +93,6 @@ class ReplicatorFlatTransformer
 
     /**
      * @param  array<string, mixed>  $rowValues
-     * @param  string  $keyField
-     * @param  string  $valueField
      * @return array<string, mixed>
      */
     protected function extractFromRowValues(array $rowValues, string $keyField, string $valueField): array
@@ -129,8 +115,6 @@ class ReplicatorFlatTransformer
 
     /**
      * @param  array<string, mixed>  $unwrapped
-     * @param  string  $keyField
-     * @param  string  $valueField
      * @return array<string, mixed>
      */
     protected function extractFromUnwrappedValue(array $unwrapped, string $keyField, string $valueField): array
@@ -148,8 +132,6 @@ class ReplicatorFlatTransformer
 
     /**
      * @param  array<int, array<string, mixed>>  $rows
-     * @param  string  $keyField
-     * @param  string  $valueField
      * @return array<string, mixed>
      */
     protected function extractFromReplicatorRowsArray(array $rows, string $keyField, string $valueField): array
@@ -166,8 +148,6 @@ class ReplicatorFlatTransformer
 
     /**
      * @param  mixed  $row
-     * @param  string  $keyField
-     * @param  string  $valueField
      * @return array<string, mixed>
      */
     protected function extractFromSingleReplicatorRow($row, string $keyField, string $valueField): array
@@ -194,8 +174,6 @@ class ReplicatorFlatTransformer
 
     /**
      * @param  array<string, mixed>  $rowValues
-     * @param  string  $keyField
-     * @param  string  $valueField
      * @return array<string, mixed>
      */
     protected function extractFieldsFromNestedReplicators(array $rowValues, string $keyField, string $valueField): array
@@ -215,6 +193,7 @@ class ReplicatorFlatTransformer
                 if (! empty($nestedResult)) {
                     $result = array_merge($result, $nestedResult);
                 }
+
                 continue;
             }
 
@@ -246,8 +225,6 @@ class ReplicatorFlatTransformer
 
     /**
      * @param  array<string, mixed>|mixed  $data
-     * @param  string  $keyField
-     * @param  string  $valueField
      * @return array<string, mixed>
      */
     protected function searchRecursivelyForFields($data, string $keyField, string $valueField): array
@@ -280,8 +257,6 @@ class ReplicatorFlatTransformer
 
     /**
      * @param  array<int, mixed>  $data
-     * @param  string  $keyField
-     * @param  string  $valueField
      * @return array<string, mixed>
      */
     protected function searchInIndexedArray(array $data, string $keyField, string $valueField): array
@@ -303,8 +278,6 @@ class ReplicatorFlatTransformer
 
     /**
      * @param  array<string, mixed>  $data
-     * @param  string  $keyField
-     * @param  string  $valueField
      * @return array<string, mixed>
      */
     protected function searchInAssociativeArray(array $data, string $keyField, string $valueField): array
@@ -331,8 +304,6 @@ class ReplicatorFlatTransformer
 
     /**
      * @param  array<string, mixed>  $row
-     * @param  string  $keyField
-     * @param  string  $valueField
      * @return array<string, mixed>
      */
     protected function extractFromNormalizedRow(array $row, string $keyField, string $valueField): array

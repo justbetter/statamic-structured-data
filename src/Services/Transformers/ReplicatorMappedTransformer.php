@@ -13,7 +13,6 @@ class ReplicatorMappedTransformer
 
     /**
      * @param  array<int|string, mixed>  $replicatorData
-     * @param  string|null  $setFilter
      * @param  array<int, array<string, mixed>>  $mappings
      * @param  mixed  $item
      * @return array<int, array<string, mixed>>
@@ -70,6 +69,7 @@ class ReplicatorMappedTransformer
 
             if ($mode === 'static') {
                 $mapped[$mappedKey] = $mapping['static'] ?? null;
+
                 continue;
             }
 
@@ -79,6 +79,7 @@ class ReplicatorMappedTransformer
                     'config' => $mapping['nested'] ?? [],
                 ];
                 $mapped[$mappedKey] = $this->transformNested($nestedField, $item, $rowValues);
+
                 continue;
             }
 

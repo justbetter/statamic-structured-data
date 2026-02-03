@@ -138,9 +138,9 @@ class ReplicatorFieldService
             $setDisplay = is_string($setConfig['display'] ?? null) ? $setConfig['display'] : $setHandle;
             $setFields = is_array($setConfig['fields'] ?? null) ? $setConfig['fields'] : [];
             $nestedSets = is_array($setConfig['sets'] ?? null) ? $setConfig['sets'] : [];
-            
+
             $fieldOptions = $this->parseSetFields($setFields);
-            
+
             if (! empty($nestedSets)) {
                 $nestedFields = $this->extractFieldsFromNestedSets($nestedSets);
                 $fieldOptions = array_merge($fieldOptions, $nestedFields);
@@ -174,7 +174,7 @@ class ReplicatorFieldService
             $fields = $this->parseSetFields($nestedSetFields);
             $allFields = array_merge($allFields, $fields);
             $deeperNestedSets = is_array($nestedSetConfig['sets'] ?? null) ? $nestedSetConfig['sets'] : [];
-            
+
             if (! empty($deeperNestedSets)) {
                 $deeperFields = $this->extractFieldsFromNestedSets($deeperNestedSets);
                 $allFields = array_merge($allFields, $deeperFields);

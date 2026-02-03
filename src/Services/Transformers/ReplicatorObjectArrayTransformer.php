@@ -5,7 +5,9 @@ namespace Justbetter\StatamicStructuredData\Services\Transformers;
 class ReplicatorObjectArrayTransformer implements FieldTransformerInterface
 {
     protected ReplicatorRowNormalizer $normalizer;
+
     protected ReplicatorMappedTransformer $mappedTransformer;
+
     protected ReplicatorFlatTransformer $flatTransformer;
 
     public function __construct()
