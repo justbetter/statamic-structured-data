@@ -38,6 +38,7 @@ class ReplicatorObjectArrayTransformer implements FieldTransformerInterface
         }
 
         $setFilter = is_string($config['set'] ?? null) ? $config['set'] : null;
+        /** @var array<int, array<string, mixed>> $mappings */
         $mappings = is_array($config['mappings'] ?? null) ? $config['mappings'] : [];
         $flat = isset($config['flat']) && $config['flat'] === true;
         $flatKeyField = is_string($config['flat_key_field'] ?? null) ? $config['flat_key_field'] : null;

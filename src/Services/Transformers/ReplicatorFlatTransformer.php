@@ -37,7 +37,8 @@ class ReplicatorFlatTransformer
         $directKey = $this->normalizer->unwrap($originalRow[$keyField] ?? null);
         $directValue = $this->normalizer->unwrap($originalRow[$valueField] ?? null);
 
-        if ($directKey !== null && $directKey !== '') {
+        if ($directKey !== null && $directKey !== '' && (is_string($directKey) || is_numeric($directKey))) {
+            /** @var array<string, mixed> */
             return [(string) $directKey => $directValue];
         }
 
@@ -46,7 +47,12 @@ class ReplicatorFlatTransformer
             return [];
         }
 
-        if ($this->shouldSkipRowBySetFilter($rowArray['set'] ?? null, $setFilter)) {
+        $rowSet = $rowArray['set'] ?? null;
+        if (! is_string($rowSet) && $rowSet !== null) {
+            $rowSet = null;
+        }
+
+        if ($this->shouldSkipRowBySetFilter($rowSet, $setFilter)) {
             return [];
         }
 
@@ -60,10 +66,12 @@ class ReplicatorFlatTransformer
             $value ??= $this->normalizer->unwrap($row[$valueField] ?? null);
         }
 
-        if ($key !== null && $key !== '') {
+        if ($key !== null && $key !== '' && (is_string($key) || is_numeric($key))) {
+            /** @var array<string, mixed> */
             return [(string) $key => $value];
         }
 
+        /** @var array<string, mixed> */
         return $this->extractFromNestedStructures($rowValues, $keyField, $valueField);
     }
 
@@ -114,12 +122,13 @@ class ReplicatorFlatTransformer
     }
 
     /**
-     * @param  array<string, mixed>  $unwrapped
+     * @param  array<int|string, mixed>  $unwrapped
      * @return array<string, mixed>
      */
     protected function extractFromUnwrappedValue(array $unwrapped, string $keyField, string $valueField): array
     {
         if (isset($unwrapped[0]) && is_array($unwrapped[0])) {
+            /** @var array<int, array<string, mixed>> $unwrapped */
             return $this->extractFromReplicatorRowsArray($unwrapped, $keyField, $valueField);
         }
 
@@ -165,7 +174,8 @@ class ReplicatorFlatTransformer
         $key = $this->normalizer->unwrap($nestedRowValues[$keyField] ?? null);
         $value = $this->normalizer->unwrap($nestedRowValues[$valueField] ?? null);
 
-        if ($key !== null && $key !== '') {
+        if ($key !== null && $key !== '' && (is_string($key) || is_numeric($key))) {
+            /** @var array<string, mixed> */
             return [(string) $key => $value];
         }
 
@@ -207,12 +217,13 @@ class ReplicatorFlatTransformer
     }
 
     /**
-     * @param  array<string, mixed>  $unwrappedValue
+     * @param  array<int|string, mixed>  $unwrappedValue
      * @return array<int, array<string, mixed>>|null
      */
     protected function getReplicatorRowsToProcess(array $unwrappedValue): ?array
     {
         if (isset($unwrappedValue[0]) && is_array($unwrappedValue[0])) {
+            /** @var array<int, array<string, mixed>> $unwrappedValue */
             return $unwrappedValue;
         }
 
@@ -236,7 +247,8 @@ class ReplicatorFlatTransformer
         $key = $this->normalizer->unwrap($data[$keyField] ?? null);
         $value = $this->normalizer->unwrap($data[$valueField] ?? null);
 
-        if ($key !== null && $key !== '') {
+        if ($key !== null && $key !== '' && (is_string($key) || is_numeric($key))) {
+            /** @var array<string, mixed> */
             return [(string) $key => $value];
         }
 
@@ -303,7 +315,7 @@ class ReplicatorFlatTransformer
     }
 
     /**
-     * @param  array<string, mixed>  $row
+     * @param  array<int|string, mixed>  $row
      * @return array<string, mixed>
      */
     protected function extractFromNormalizedRow(array $row, string $keyField, string $valueField): array
@@ -321,7 +333,8 @@ class ReplicatorFlatTransformer
         $nestedKey = $this->normalizer->unwrap($nestedValues[$keyField] ?? null);
         $nestedValue = $this->normalizer->unwrap($nestedValues[$valueField] ?? null);
 
-        if ($nestedKey !== null && $nestedKey !== '') {
+        if ($nestedKey !== null && $nestedKey !== '' && (is_string($nestedKey) || is_numeric($nestedKey))) {
+            /** @var array<string, mixed> */
             return [(string) $nestedKey => $nestedValue];
         }
 

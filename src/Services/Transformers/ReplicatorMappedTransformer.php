@@ -116,6 +116,7 @@ class ReplicatorMappedTransformer
         }
 
         $setFilter = is_string($config['set'] ?? null) ? $config['set'] : null;
+        /** @var array<int, array<string, mixed>> $mappings */
         $mappings = is_array($config['mappings'] ?? null) ? $config['mappings'] : [];
 
         $replicatorData = null;

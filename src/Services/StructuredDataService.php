@@ -5,6 +5,7 @@ namespace Justbetter\StatamicStructuredData\Services;
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
 use Justbetter\StatamicStructuredData\Services\Transformers\FieldTransformerFactory;
 use Statamic\Contracts\Entries\Entry as EntryContract;
+use Statamic\Contracts\Taxonomies\Term as TermContract;
 use Statamic\Entries\Entry as EntryModel;
 use Statamic\Facades\Entry as EntryFacade;
 use Statamic\Structures\Page;
@@ -94,7 +95,7 @@ class StructuredDataService
      * @param  mixed  $schemas
      * @return array<int, array<string, mixed>>
      */
-    public function parseAndTransformSchemas($schemas, EntryContract|Page|LocalizedTerm|null $item = null): array
+    public function parseAndTransformSchemas($schemas, EntryContract|Page|LocalizedTerm|TermContract|null $item = null): array
     {
         $parsedData = $this->parser->parse($schemas, $item);
         $transformedData = [];
@@ -114,7 +115,7 @@ class StructuredDataService
      * @param  array<string, mixed>  $schema
      * @return array<string, mixed>
      */
-    public function transformSchema(array $schema, EntryContract|Page|LocalizedTerm|null $item = null): array
+    public function transformSchema(array $schema, EntryContract|Page|LocalizedTerm|TermContract|null $item = null): array
     {
         $result = [];
 
@@ -164,7 +165,7 @@ class StructuredDataService
      * @param  array<string, mixed>  $field
      * @param  array<string, mixed>  $result
      */
-    protected function transformField(array $field, EntryContract|Page|LocalizedTerm|null $item = null, array &$result = []): mixed
+    protected function transformField(array $field, EntryContract|Page|LocalizedTerm|TermContract|null $item = null, array &$result = []): mixed
     {
         $type = $field['type'] ?? null;
 
