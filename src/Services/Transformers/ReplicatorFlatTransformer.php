@@ -30,8 +30,8 @@ class ReplicatorFlatTransformer
     protected function extractFlatDataFromRow(mixed $row, ?string $setFilter, string $keyField, string $valueField): array
     {
         $originalRow = is_array($row) ? $row : [];
-        $directKey = $this->normalizer->unwrap($originalRow[$keyField] ?? null);
-        $directValue = $this->normalizer->unwrap($originalRow[$valueField] ?? null);
+        $directKey = isset($originalRow[$keyField]) ? $this->normalizer->unwrap($originalRow[$keyField]) : null;
+        $directValue = isset($originalRow[$valueField]) ? $this->normalizer->unwrap($originalRow[$valueField]) : null;
 
         if ($this->isValidKey($directKey)) {
             /** @var array<string, mixed> */
@@ -54,12 +54,12 @@ class ReplicatorFlatTransformer
 
         $rowValues = is_array($rowArray['values']) ? $rowArray['values'] : [];
 
-        $key = $this->normalizer->unwrap($rowValues[$keyField] ?? null);
-        $value = $this->normalizer->unwrap($rowValues[$valueField] ?? null);
+        $key = isset($rowValues[$keyField]) ? $this->normalizer->unwrap($rowValues[$keyField]) : null;
+        $value = isset($rowValues[$valueField]) ? $this->normalizer->unwrap($rowValues[$valueField]) : null;
 
         if (($key === null || $value === null) && is_array($row)) {
-            $key ??= $this->normalizer->unwrap($row[$keyField] ?? null);
-            $value ??= $this->normalizer->unwrap($row[$valueField] ?? null);
+            $key ??= isset($row[$keyField]) ? $this->normalizer->unwrap($row[$keyField]) : null;
+            $value ??= isset($row[$valueField]) ? $this->normalizer->unwrap($row[$valueField]) : null;
         }
 
         if ($this->isValidKey($key)) {
@@ -167,8 +167,8 @@ class ReplicatorFlatTransformer
             return [];
         }
 
-        $key = $this->normalizer->unwrap($nestedRowValues[$keyField] ?? null);
-        $value = $this->normalizer->unwrap($nestedRowValues[$valueField] ?? null);
+        $key = isset($nestedRowValues[$keyField]) ? $this->normalizer->unwrap($nestedRowValues[$keyField]) : null;
+        $value = isset($nestedRowValues[$valueField]) ? $this->normalizer->unwrap($nestedRowValues[$valueField]) : null;
 
         if ($this->isValidKey($key)) {
             /** @var array<string, mixed> */
@@ -240,8 +240,8 @@ class ReplicatorFlatTransformer
             return [];
         }
 
-        $key = $this->normalizer->unwrap($data[$keyField] ?? null);
-        $value = $this->normalizer->unwrap($data[$valueField] ?? null);
+        $key = isset($data[$keyField]) ? $this->normalizer->unwrap($data[$keyField]) : null;
+        $value = isset($data[$valueField]) ? $this->normalizer->unwrap($data[$valueField]) : null;
 
         if ($this->isValidKey($key)) {
             /** @var array<string, mixed> */
@@ -326,8 +326,8 @@ class ReplicatorFlatTransformer
             return [];
         }
 
-        $nestedKey = $this->normalizer->unwrap($nestedValues[$keyField] ?? null);
-        $nestedValue = $this->normalizer->unwrap($nestedValues[$valueField] ?? null);
+        $nestedKey = isset($nestedValues[$keyField]) ? $this->normalizer->unwrap($nestedValues[$keyField]) : null;
+        $nestedValue = isset($nestedValues[$valueField]) ? $this->normalizer->unwrap($nestedValues[$valueField]) : null;
 
         if ($this->isValidKey($nestedKey)) {
             /** @var array<string, mixed> */
