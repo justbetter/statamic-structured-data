@@ -4,12 +4,9 @@ namespace Justbetter\StatamicStructuredData\Services\Transformers;
 
 class ReplicatorFlatTransformer
 {
-    protected ReplicatorRowNormalizer $normalizer;
-
-    public function __construct(ReplicatorRowNormalizer $normalizer)
-    {
-        $this->normalizer = $normalizer;
-    }
+    public function __construct(
+        protected ReplicatorRowNormalizer $normalizer
+    ) {}
 
     /**
      * @param  array<int|string, mixed>  $replicatorData
@@ -28,16 +25,15 @@ class ReplicatorFlatTransformer
     }
 
     /**
-     * @param  mixed  $row
      * @return array<string, mixed>
      */
-    protected function extractFlatDataFromRow($row, ?string $setFilter, string $keyField, string $valueField): array
+    protected function extractFlatDataFromRow(mixed $row, ?string $setFilter, string $keyField, string $valueField): array
     {
         $originalRow = is_array($row) ? $row : [];
         $directKey = $this->normalizer->unwrap($originalRow[$keyField] ?? null);
         $directValue = $this->normalizer->unwrap($originalRow[$valueField] ?? null);
 
-        if ($directKey !== null && $directKey !== '' && (is_string($directKey) || is_numeric($directKey))) {
+        if ($this->isValidKey($directKey)) {
             /** @var array<string, mixed> */
             return [(string) $directKey => $directValue];
         }
@@ -66,7 +62,7 @@ class ReplicatorFlatTransformer
             $value ??= $this->normalizer->unwrap($row[$valueField] ?? null);
         }
 
-        if ($key !== null && $key !== '' && (is_string($key) || is_numeric($key))) {
+        if ($this->isValidKey($key)) {
             /** @var array<string, mixed> */
             return [(string) $key => $value];
         }
@@ -174,7 +170,7 @@ class ReplicatorFlatTransformer
         $key = $this->normalizer->unwrap($nestedRowValues[$keyField] ?? null);
         $value = $this->normalizer->unwrap($nestedRowValues[$valueField] ?? null);
 
-        if ($key !== null && $key !== '' && (is_string($key) || is_numeric($key))) {
+        if ($this->isValidKey($key)) {
             /** @var array<string, mixed> */
             return [(string) $key => $value];
         }
@@ -247,7 +243,7 @@ class ReplicatorFlatTransformer
         $key = $this->normalizer->unwrap($data[$keyField] ?? null);
         $value = $this->normalizer->unwrap($data[$valueField] ?? null);
 
-        if ($key !== null && $key !== '' && (is_string($key) || is_numeric($key))) {
+        if ($this->isValidKey($key)) {
             /** @var array<string, mixed> */
             return [(string) $key => $value];
         }
@@ -333,11 +329,19 @@ class ReplicatorFlatTransformer
         $nestedKey = $this->normalizer->unwrap($nestedValues[$keyField] ?? null);
         $nestedValue = $this->normalizer->unwrap($nestedValues[$valueField] ?? null);
 
-        if ($nestedKey !== null && $nestedKey !== '' && (is_string($nestedKey) || is_numeric($nestedKey))) {
+        if ($this->isValidKey($nestedKey)) {
             /** @var array<string, mixed> */
             return [(string) $nestedKey => $nestedValue];
         }
 
         return $this->searchRecursivelyForFields($nestedValues, $keyField, $valueField);
+    }
+
+    /**
+     * @phpstan-assert-if-true string|int|float $key
+     */
+    protected function isValidKey(mixed $key): bool
+    {
+        return $key !== null && $key !== '' && (is_string($key) || is_numeric($key));
     }
 }

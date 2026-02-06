@@ -4,15 +4,13 @@ namespace Justbetter\StatamicStructuredData\Services\Transformers;
 
 class ReplicatorObjectArrayTransformer implements FieldTransformerInterface
 {
-    protected ReplicatorRowNormalizer $normalizer;
-
     protected ReplicatorMappedTransformer $mappedTransformer;
 
     protected ReplicatorFlatTransformer $flatTransformer;
 
-    public function __construct()
-    {
-        $this->normalizer = new ReplicatorRowNormalizer;
+    public function __construct(
+        protected ReplicatorRowNormalizer $normalizer
+    ) {
         $this->mappedTransformer = new ReplicatorMappedTransformer($this->normalizer);
         $this->flatTransformer = new ReplicatorFlatTransformer($this->normalizer);
     }

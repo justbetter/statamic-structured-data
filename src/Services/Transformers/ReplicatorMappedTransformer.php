@@ -4,12 +4,9 @@ namespace Justbetter\StatamicStructuredData\Services\Transformers;
 
 class ReplicatorMappedTransformer
 {
-    protected ReplicatorRowNormalizer $normalizer;
-
-    public function __construct(ReplicatorRowNormalizer $normalizer)
-    {
-        $this->normalizer = $normalizer;
-    }
+    public function __construct(
+        protected ReplicatorRowNormalizer $normalizer
+    ) {}
 
     /**
      * @param  array<int|string, mixed>  $replicatorData

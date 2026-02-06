@@ -32,8 +32,8 @@ class ReplicatorRowNormalizer
             $values = [];
         }
 
-        foreach ($values as $k => $v) {
-            $values[$k] = $this->unwrap($v);
+        foreach ($values as $key => $value) {
+            $values[$key] = $this->unwrap($value);
         }
 
         return [
