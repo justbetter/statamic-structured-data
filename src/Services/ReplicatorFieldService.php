@@ -91,10 +91,24 @@ class ReplicatorFieldService
     protected function normalizeField($field): ?array
     {
         if (is_object($field) && method_exists($field, 'toArray')) {
-            return $field->toArray();
+            $field = $field->toArray();
         }
 
-        return is_array($field) ? $field : null;
+        if (! is_array($field)) {
+            return null;
+        }
+
+        $normalized = [];
+
+        foreach ($field as $key => $value) {
+            if (! is_string($key)) {
+                return null;
+            }
+
+            $normalized[$key] = $value;
+        }
+
+        return $normalized;
     }
 
     /**
@@ -130,14 +144,21 @@ class ReplicatorFieldService
         $setOptions = [];
 
         foreach ($sets as $setHandle => $setConfig) {
-            if (! is_string($setHandle) || ! is_array($setConfig)) {
+            if (! is_array($setConfig)) {
                 continue;
             }
 
             /** @var array<string, mixed> $setConfig */
             $setDisplay = is_string($setConfig['display'] ?? null) ? $setConfig['display'] : $setHandle;
             $setFields = is_array($setConfig['fields'] ?? null) ? $setConfig['fields'] : [];
+            $nestedSets = is_array($setConfig['sets'] ?? null) ? $setConfig['sets'] : [];
+
             $fieldOptions = $this->parseSetFields($setFields);
+
+            if (! empty($nestedSets)) {
+                $nestedFields = $this->extractFieldsFromNestedSets($nestedSets);
+                $fieldOptions = array_merge($fieldOptions, $nestedFields);
+            }
 
             $setOptions[] = [
                 'value' => $setHandle,
@@ -147,6 +168,34 @@ class ReplicatorFieldService
         }
 
         return $setOptions;
+    }
+
+    /**
+     * @param  array<string, mixed>  $nestedSets
+     * @return array<int, array<string, mixed>>
+     */
+    protected function extractFieldsFromNestedSets(array $nestedSets): array
+    {
+        $allFields = [];
+
+        foreach ($nestedSets as $nestedSetConfig) {
+            if (! is_array($nestedSetConfig)) {
+                continue;
+            }
+
+            /** @var array<string, mixed> $nestedSetConfig */
+            $nestedSetFields = is_array($nestedSetConfig['fields'] ?? null) ? $nestedSetConfig['fields'] : [];
+            $fields = $this->parseSetFields($nestedSetFields);
+            $allFields = array_merge($allFields, $fields);
+            $deeperNestedSets = is_array($nestedSetConfig['sets'] ?? null) ? $nestedSetConfig['sets'] : [];
+
+            if (! empty($deeperNestedSets)) {
+                $deeperFields = $this->extractFieldsFromNestedSets($deeperNestedSets);
+                $allFields = array_merge($allFields, $deeperFields);
+            }
+        }
+
+        return $allFields;
     }
 
     /**
@@ -164,13 +213,10 @@ class ReplicatorFieldService
                 continue;
             }
 
+            /** @var string $setFieldHandle */
+            /** @var array<string, mixed> $setFieldConfig */
             [$setFieldHandle, $setFieldConfig] = $fieldData;
 
-            if (! is_string($setFieldHandle)) {
-                continue;
-            }
-
-            /** @var array<string, mixed> $setFieldConfig */
             $setFieldDisplay = is_string($setFieldConfig['display'] ?? null) ? $setFieldConfig['display'] : $setFieldHandle;
             $setFieldType = is_string($setFieldConfig['type'] ?? null) ? $setFieldConfig['type'] : null;
 
@@ -194,16 +240,29 @@ class ReplicatorFieldService
     protected function extractFieldData($setFieldKey, $setFieldData): ?array
     {
         if (is_array($setFieldData) && isset($setFieldData['handle'])) {
+            $handle = $setFieldData['handle'];
+
+            if (! is_string($handle)) {
+                return null;
+            }
+
+            $fieldConfig = is_array($setFieldData['field'] ?? null) ? $setFieldData['field'] : [];
+            /** @var array<string, mixed> $fieldConfig */
+            $fieldConfig = $fieldConfig;
+
             return [
-                $setFieldData['handle'],
-                $setFieldData['field'] ?? [],
+                $handle,
+                $fieldConfig,
             ];
         }
 
         if (is_string($setFieldKey) && is_array($setFieldData)) {
+            /** @var array<string, mixed> $config */
+            $config = $setFieldData;
+
             return [
                 $setFieldKey,
-                $setFieldData,
+                $config,
             ];
         }
 
@@ -212,7 +271,7 @@ class ReplicatorFieldService
 
     protected function isFieldTypeEligible(?string $fieldType): bool
     {
-        if (! is_string($fieldType)) {
+        if ($fieldType === null) {
             return false;
         }
 

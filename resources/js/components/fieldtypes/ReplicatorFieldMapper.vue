@@ -27,7 +27,44 @@
             </div>
         </div>
 
-        <div class="border rounded p-3">
+        <div class="border rounded p-3 bg-gray-50">
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                    type="checkbox"
+                    v-model="localConfig.flat"
+                    class="rounded"
+                />
+                <span class="text-gray-700 font-medium">{{ __('Flat Mode') }}</span>
+            </label>
+            <p class="text-xs text-gray-600 mt-1 ml-6">
+                {{ __('Create a flat object where each replicator row becomes a key-value pair.') }}
+            </p>
+        </div>
+
+        <div v-if="localConfig.flat" class="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded p-3 bg-blue-50">
+            <div>
+                <label class="text-gray-600 mb-1 block">{{ __('Key Field') }}</label>
+                <v-select
+                    v-model="localConfig.flat_key_field"
+                    :options="flatFieldOptions"
+                    @input="(val) => { localConfig.flat_key_field = val ? val.value : ''; }"
+                    :placeholder="__('Select field to use as key')"
+                />
+                <p class="text-xs text-gray-500 mt-1">{{ __('Field value will be used as the object key') }}</p>
+            </div>
+            <div>
+                <label class="text-gray-600 mb-1 block">{{ __('Value Field') }}</label>
+                <v-select
+                    v-model="localConfig.flat_value_field"
+                    :options="flatFieldOptions"
+                    @input="(val) => { localConfig.flat_value_field = val ? val.value : ''; }"
+                    :placeholder="__('Select field to use as value')"
+                />
+                <p class="text-xs text-gray-500 mt-1">{{ __('Field value will be used as the object value') }}</p>
+            </div>
+        </div>
+
+        <div v-if="!localConfig.flat" class="border rounded p-3">
             <div class="flex items-center justify-between mb-2">
                 <h4 class="font-semibold text-gray-700">{{ __('Field Mappings') }}</h4>
                 <button class="btn-primary text-sm" @click="addMapping">{{ __('Add Mapping') }}</button>
@@ -158,6 +195,9 @@ export default {
                 value: set.value,
                 label: set.label
             }));
+        },
+        flatFieldOptions() {
+            return this.getFieldOptionsForMapping({});
         }
     },
     watch: {
@@ -189,7 +229,10 @@ export default {
             const base = {
                 replicator_field: '',
                 set: '',
-                mappings: []
+                mappings: [],
+                flat: false,
+                flat_key_field: '',
+                flat_value_field: ''
             };
 
             if (!config || typeof config !== 'object') {
@@ -201,7 +244,10 @@ export default {
                 set: config.set || '',
                 mappings: Array.isArray(config.mappings)
                     ? JSON.parse(JSON.stringify(config.mappings))
-                    : []
+                    : [],
+                flat: config.flat === true,
+                flat_key_field: config.flat_key_field || '',
+                flat_value_field: config.flat_value_field || ''
             };
         },
         addMapping() {
