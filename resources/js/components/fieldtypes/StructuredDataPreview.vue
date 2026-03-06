@@ -39,8 +39,7 @@
                 </div>
 
                 <div v-show="!template.isCollapsed">
-                    <pre v-if="isPrettyPrint" class="structured-data-preview-code p-4 rounded overflow-auto">{{ formatJson(template.structuredData) }}</pre>
-                    <pre v-else class="structured-data-preview-code p-4 rounded overflow-auto">{{ JSON.stringify(template.structuredData) }}</pre>
+                    <pre class="structured-data-preview-code p-4 rounded overflow-auto">{{ JSON.stringify(template.structuredData, null, isPrettyPrint ? 2 : 0) }}</pre>
                 </div>
             </div>
         </div>
@@ -48,8 +47,6 @@
 </template>
 
 <script>
-import { formatSchemaJson } from '../../utils/schema';
-
 export default {
     mixins: [Fieldtype],
 
@@ -115,9 +112,6 @@ export default {
             }
         },
 
-        formatJson(data) {
-            return formatSchemaJson(data);
-        }
     }
 }
 </script>
