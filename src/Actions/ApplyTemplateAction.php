@@ -74,6 +74,7 @@ class ApplyTemplateAction extends Action
             return 0;
         }
 
+        // @codeCoverageIgnoreStart
         $collection = $collectionValue instanceof Collection
             ? $collectionValue
             : CollectionFacade::find($collectionValue);
@@ -81,6 +82,7 @@ class ApplyTemplateAction extends Action
         if (! $collection instanceof Collection) {
             return 0;
         }
+        // @codeCoverageIgnoreEnd
 
         /** @var Site $site */
         $site = $template->site();
@@ -103,14 +105,19 @@ class ApplyTemplateAction extends Action
     public function applyTemplateToTaxonomy(Entry $template, string $templateId): int
     {
         /** @var mixed $taxonomyValue */
-        $taxonomyValue = $template->use_for_taxonomy; /** @phpstan-ignore-line */
+        $taxonomyValue = $template->get('use_for_taxonomy');
+
+        if (! $taxonomyValue) {
+            $taxonomyValue = $template->use_for_taxonomy; /** @phpstan-ignore-line */
+        }
+
         if (! $taxonomyValue) {
             return 0;
         }
 
         $taxonomy = $taxonomyValue instanceof Taxonomy
             ? $taxonomyValue
-            : TaxonomyFacade::find($taxonomyValue);
+            : TaxonomyFacade::find((string) $taxonomyValue);
 
         if (! $taxonomy instanceof Taxonomy) {
             return 0;

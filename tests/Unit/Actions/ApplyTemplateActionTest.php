@@ -276,19 +276,19 @@ class ApplyTemplateActionTest extends TestCase
             $mock->shouldReceive('get')->andReturn(collect([$term1]));
         });
 
-        $taxonomyMock = Mockery::mock($taxonomy)->makePartial();
-        $taxonomyMock->shouldReceive('queryTerms')->andReturn($query);
+        $taxonomyMock = $this->mock(Taxonomy::class, function ($mock) use ($query): void {
+            $mock->shouldReceive('queryTerms')->andReturn($query);
+        });
 
-        $template = (new Entry)
-            ->collection($templatesCollection)
-            ->id('template-123')
-            ->set('blueprint_type', 'taxonomy')
-            ->set('use_for_taxonomy', $taxonomyMock);
+        /** @var Entry $template */
+        $template = $this->mock(Entry::class, function ($mock) use ($taxonomyMock, $site): void {
+            $mock->shouldReceive('site')->andReturn($site);
+            $mock->shouldReceive('get')->with('use_for_taxonomy')->andReturn($taxonomyMock);
+        });
 
-        /** @var \Statamic\Entries\Entry $template */
         $action = new ApplyTemplateAction;
         $result = $action->applyTemplateToTaxonomy($template, 'template-123');
 
-        $this->assertGreaterThanOrEqual(0, $result);
+        $this->assertSame(1, $result);
     }
 }

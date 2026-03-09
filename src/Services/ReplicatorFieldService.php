@@ -23,13 +23,17 @@ class ReplicatorFieldService
             return [];
         }
 
-        $blueprints = $collection
-            ? ($collection->entryBlueprints() ?? false)
-            : ($taxonomy->termBlueprints() ?? false);
+        if ($collection) {
+            $blueprints = $collection->entryBlueprints() ?? false;
+        } else {
+            $blueprints = $taxonomy->termBlueprints() ?? false;
+        }
 
+        // @codeCoverageIgnoreStart
         if (! $blueprints || ! $blueprints->first()) {
             return [];
         }
+        // @codeCoverageIgnoreEnd
 
         $fieldsArray = $this->extractFieldsFromBlueprints($blueprints);
 

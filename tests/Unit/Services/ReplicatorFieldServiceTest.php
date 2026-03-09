@@ -62,6 +62,31 @@ class ReplicatorFieldServiceTest extends TestCase
     }
 
     #[Test]
+    public function it_uses_taxonomy_when_collection_is_null(): void
+    {
+        /** @var Taxonomy $taxonomy */
+        $taxonomy = TaxonomyFacade::make('categories');
+        $taxonomy->save();
+
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+
+        $template = (new Entry)
+            ->collection($templatesCollection)
+            ->id('template-123');
+
+        $taxonomyMock = Mockery::mock($taxonomy)->makePartial();
+        $taxonomyMock->shouldReceive('termBlueprints')->andReturn(collect([]));
+
+        $template->use_for_taxonomy = $taxonomyMock;
+
+        $service = new ReplicatorFieldService;
+        $result = $service->getReplicatorFields($template);
+
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
     public function get_replicator_fields_extracts_replicator_fields_from_blueprints(): void
     {
         $collection = CollectionFacade::make('blog');
