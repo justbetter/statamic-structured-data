@@ -36,7 +36,7 @@ class AvailableVariablesFieldtype extends Fieldtype
         ];
     }
 
-    /** @return array<string, array<int, array<string, mixed>>> */
+    /** @return array<string, array<int, mixed>> */
     protected function getAvailableVariables(): array
     {
         return [
@@ -152,7 +152,7 @@ class AvailableVariablesFieldtype extends Fieldtype
         return array_merge($baseFields, $collectionFields);
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /** @return array<int, mixed> */
     protected function getGlobalVariables(): array
     {
         /** @var SupportCollection<int, array<string, mixed>> $variables */
