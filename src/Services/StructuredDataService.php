@@ -5,6 +5,7 @@ namespace Justbetter\StatamicStructuredData\Services;
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
 use Justbetter\StatamicStructuredData\Services\Transformers\FieldTransformerFactory;
 use Statamic\Contracts\Entries\Entry as EntryContract;
+use Statamic\Contracts\Taxonomies\Term as TermContract;
 use Statamic\Entries\Entry as EntryModel;
 use Statamic\Facades\Entry as EntryFacade;
 use Statamic\Structures\Page;
@@ -92,11 +93,37 @@ class StructuredDataService
     }
 
     /**
+     * @param  mixed  $schemas
+     * @return array<int, array<string, mixed>>
+     */
+    public function parseAndTransformSchemas($schemas, EntryContract|Page|LocalizedTerm|TermContract|null $item = null): array
+    {
+        if (! $item instanceof EntryContract && ! $item instanceof TermContract) {
+            return [];
+        }
+
+        $parsedData = $this->parser->parse($schemas, $item);
+        $transformedData = [];
+
+        if (is_array($parsedData)) {
+            foreach ($parsedData as $schema) {
+                if (is_array($schema)) {
+                    /** @var array<string, mixed> $schema */
+                    $transformedData[] = $this->transformSchema($schema, $item);
+                }
+            }
+        }
+
+        return $transformedData;
+    }
+
+    /**
      * @param  array<string, mixed>  $schema
      * @return array<string, mixed>
      */
-    public function transformSchema(array $schema, EntryContract|Page|LocalizedTerm|null $item = null): array
+    public function transformSchema(array $schema, EntryContract|Page|LocalizedTerm|TermContract|null $item = null): array
     {
+        /** @var array<string, mixed> $result */
         $result = [];
 
         if (isset($schema['specialProps']) && is_array($schema['specialProps'])) {
@@ -114,17 +141,20 @@ class StructuredDataService
 
         if (isset($schema['fields']) && is_array($schema['fields'])) {
             foreach ($schema['fields'] as $field) {
-                if (! is_array($field) || ! isset($field['key'])) {
+                if (! is_array($field) || ! isset($field['key']) || ! is_string($field['key']) || $field['key'] === '') {
                     continue;
                 }
 
                 /** @var array<string, mixed> $field */
+                /** @var string $key */
                 $key = $field['key'];
-                if (! is_string($key)) {
+                $transformedValue = $this->transformField($field, $item, $result);
+
+                if ($transformedValue === null) {
                     continue;
                 }
 
-                $result[$key] = $this->transformField($field, $item);
+                $result[$key] = $transformedValue;
             }
         }
 
@@ -132,9 +162,22 @@ class StructuredDataService
     }
 
     /**
-     * @param  array<string, mixed>  $field
+     * @param  array<mixed, mixed>  $array
      */
-    protected function transformField(array $field, EntryContract|Page|LocalizedTerm|null $item = null): mixed
+    protected function isAssociativeArray(array $array): bool
+    {
+        if (empty($array)) {
+            return false;
+        }
+
+        return array_keys($array) !== range(0, count($array) - 1);
+    }
+
+    /**
+     * @param  array<string, mixed>  $field
+     * @param  array<string, mixed>  $result
+     */
+    protected function transformField(array $field, EntryContract|Page|LocalizedTerm|TermContract|null $item = null, array &$result = []): mixed
     {
         $type = $field['type'] ?? null;
 
@@ -160,8 +203,25 @@ class StructuredDataService
 
         // Use transformer factory for all other field types
         $transformer = $this->transformerFactory->getTransformer(is_string($type) ? $type : null);
+        $transformedValue = $transformer->transform($field, $item);
 
-        return $transformer->transform($field, $item);
+        // Handle flat mode for replicator_object_array
+        /** @var array<string, mixed>|null $config */
+        $config = $field['config'] ?? null;
+
+        if ($type === 'replicator_object_array'
+            && is_array($config)
+            && ($config['flat'] ?? false) === true
+            && is_array($transformedValue)
+            && $this->isAssociativeArray($transformedValue)) {
+            /** @var array<string, mixed> $merged */
+            $merged = array_merge($result, $transformedValue);
+            $result = $merged;
+
+            return null;
+        }
+
+        return $transformedValue;
     }
 
     /**

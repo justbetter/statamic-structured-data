@@ -4,6 +4,8 @@ namespace Justbetter\StatamicStructuredData\Tests\Unit\Services;
 
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
 use Justbetter\StatamicStructuredData\Services\StructuredDataService;
+use Justbetter\StatamicStructuredData\Services\Transformers\FieldTransformerFactory;
+use Justbetter\StatamicStructuredData\Services\Transformers\FieldTransformerInterface;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
@@ -450,6 +452,113 @@ class StructuredDataServiceTest extends TestCase
 
         $this->assertIsArray($result);
         $this->assertCount(2, $result);
+    }
+
+    #[Test]
+    public function parse_and_transform_schemas_returns_empty_array_for_invalid_item(): void
+    {
+        $parser = $this->mock(StructuredDataParser::class);
+        /** @var StructuredDataParser $parser */
+        $service = new StructuredDataService($parser);
+
+        $schemas = [
+            ['fields' => []],
+        ];
+
+        $result = $service->parseAndTransformSchemas($schemas, null);
+
+        $this->assertSame([], $result);
+    }
+
+    #[Test]
+    public function parse_and_transform_schemas_transforms_valid_schemas(): void
+    {
+        $parser = $this->mock(StructuredDataParser::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('parse')->andReturn([
+                [
+                    'specialProps' => ['type' => 'Article'],
+                    'fields' => [
+                        ['key' => 'name', 'type' => 'text', 'value' => 'Test Name'],
+                    ],
+                ],
+            ]);
+        });
+
+        /** @var StructuredDataParser $parser */
+        $service = new StructuredDataService($parser);
+
+        $entry = $this->createBlogEntry();
+        $schemas = [['fields' => []]];
+
+        $result = $service->parseAndTransformSchemas($schemas, $entry);
+
+        $this->assertCount(1, $result);
+        $this->assertSame('Test Name', $result[0]['name']);
+    }
+
+    #[Test]
+    public function transform_schema_skips_fields_when_transformed_value_is_null_in_flat_mode(): void
+    {
+        $parser = $this->mock(StructuredDataParser::class);
+        /** @var StructuredDataParser $parser */
+        $service = new StructuredDataService($parser);
+
+        $stubTransformer = new class implements FieldTransformerInterface
+        {
+            public function transform(array $field, $item = null): mixed
+            {
+                return ['merged_key' => 'merged_value'];
+            }
+        };
+
+        $stubFactory = new class($stubTransformer) extends FieldTransformerFactory
+        {
+            public function __construct(private FieldTransformerInterface $transformer) {}
+
+            public function getTransformer(?string $type): FieldTransformerInterface
+            {
+                return $this->transformer;
+            }
+        };
+
+        $reflection = new \ReflectionClass($service);
+        $property = $reflection->getProperty('transformerFactory');
+        $property->setAccessible(true);
+        $property->setValue($service, $stubFactory);
+
+        $schema = [
+            'fields' => [
+                [
+                    'key' => 'flat_field',
+                    'type' => 'replicator_object_array',
+                    'config' => [
+                        'flat' => true,
+                    ],
+                ],
+            ],
+        ];
+
+        $result = $service->transformSchema($schema);
+
+        $this->assertArrayHasKey('merged_key', $result);
+        $this->assertSame('merged_value', $result['merged_key']);
+        $this->assertArrayNotHasKey('flat_field', $result);
+    }
+
+    #[Test]
+    public function is_associative_array_helper_behaves_as_expected(): void
+    {
+        $parser = $this->mock(StructuredDataParser::class);
+        /** @var StructuredDataParser $parser */
+        $service = new StructuredDataService($parser);
+
+        $reflection = new \ReflectionClass($service);
+        $method = $reflection->getMethod('isAssociativeArray');
+        $method->setAccessible(true);
+
+        $this->assertFalse($method->invoke($service, []));
+        $this->assertFalse($method->invoke($service, [1, 2, 3]));
+        $this->assertTrue($method->invoke($service, ['a' => 1, 'b' => 2]));
     }
 
     #[Test]

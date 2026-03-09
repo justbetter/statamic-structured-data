@@ -7,9 +7,9 @@ use Justbetter\StatamicStructuredData\Jobs\ApplyTemplateToItemJob;
 use Statamic\Actions\Action;
 use Statamic\Entries\Collection;
 use Statamic\Entries\Entry;
+use Statamic\Sites\Site;
 use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
-use Statamic\Sites\Site;
 use Statamic\Taxonomies\LocalizedTerm;
 use Statamic\Taxonomies\Taxonomy;
 
@@ -68,8 +68,8 @@ class ApplyTemplateAction extends Action
 
     public function applyTemplateToCollection(Entry $template, string $templateId): int
     {
-        $collectionValue = $template->get('use_for_collection');
-
+        /** @var mixed $collectionValue */
+        $collectionValue = $template->use_for_collection; /** @phpstan-ignore-line */
         if (! $collectionValue) {
             return 0;
         }
@@ -102,8 +102,8 @@ class ApplyTemplateAction extends Action
 
     public function applyTemplateToTaxonomy(Entry $template, string $templateId): int
     {
-        $taxonomyValue = $template->get('use_for_taxonomy');
-
+        /** @var mixed $taxonomyValue */
+        $taxonomyValue = $template->use_for_taxonomy; /** @phpstan-ignore-line */
         if (! $taxonomyValue) {
             return 0;
         }
@@ -126,7 +126,7 @@ class ApplyTemplateAction extends Action
 
         $count = 0;
 
-        $terms->each(function (LocalizedTerm $term) use ($templateId, &$count) {
+        $terms->each(function (LocalizedTerm $term) use ($templateId, &$count): void {
             ApplyTemplateToItemJob::dispatch($term->id(), 'term', $templateId);
             $count++;
         });

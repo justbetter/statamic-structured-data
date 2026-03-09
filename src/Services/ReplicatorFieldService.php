@@ -4,17 +4,21 @@ namespace Justbetter\StatamicStructuredData\Services;
 
 use Illuminate\Support\Collection as SupportCollection;
 use Statamic\Contracts\Entries\Entry as EntryContract;
+use Statamic\Entries\Collection;
+use Statamic\Entries\Entry;
 use Statamic\Fields\Blueprint;
+use Statamic\Taxonomies\Taxonomy;
 
 class ReplicatorFieldService
 {
     /** @return array<int, array<string, mixed>> */
     public function getReplicatorFields(EntryContract $dataTemplate): array
     {
-        /** @var \Statamic\Entries\Entry $dataTemplate */
-        $collection = $dataTemplate->get('use_for_collection');
-        $taxonomy = $dataTemplate->get('use_for_taxonomy');
-
+        /** @var Entry $dataTemplate */
+        /** @var ?Collection $collection */
+        $collection = $dataTemplate->use_for_collection; /** @phpstan-ignore-line */
+        /** @var ?Taxonomy $taxonomy */
+        $taxonomy = $dataTemplate->use_for_taxonomy; /** @phpstan-ignore-line */
         if (! $collection && ! $taxonomy) {
             return [];
         }
@@ -90,22 +94,24 @@ class ReplicatorFieldService
     protected function normalizeField($field): ?array
     {
         if (is_object($field) && method_exists($field, 'toArray')) {
-            /** @var array<string, mixed>|null $result */
-            $result = $field->toArray();
-            if (is_array($result)) {
-                /** @var array<string, mixed> $result */
-                return $result;
-            }
+            $field = $field->toArray();
+        }
 
+        if (! is_array($field)) {
             return null;
         }
 
-        if (is_array($field)) {
-            /** @var array<string, mixed> $field */
-            return $field;
+        $normalized = [];
+
+        foreach ($field as $key => $value) {
+            if (! is_string($key)) {
+                return null;
+            }
+
+            $normalized[$key] = $value;
         }
 
-        return null;
+        return $normalized;
     }
 
     /**
@@ -149,7 +155,14 @@ class ReplicatorFieldService
             /** @var array<string, mixed> $setConfig */
             $setDisplay = is_string($setConfig['display'] ?? null) ? $setConfig['display'] : $setHandle;
             $setFields = is_array($setConfig['fields'] ?? null) ? $setConfig['fields'] : [];
+            $nestedSets = is_array($setConfig['sets'] ?? null) ? $setConfig['sets'] : [];
+
             $fieldOptions = $this->parseSetFields($setFields);
+
+            if (! empty($nestedSets)) {
+                $nestedFields = $this->extractFieldsFromNestedSets($nestedSets);
+                $fieldOptions = array_merge($fieldOptions, $nestedFields);
+            }
 
             $setOptions[] = [
                 'value' => $setHandle,
@@ -159,6 +172,34 @@ class ReplicatorFieldService
         }
 
         return $setOptions;
+    }
+
+    /**
+     * @param  array<string, mixed>  $nestedSets
+     * @return array<int, array<string, mixed>>
+     */
+    protected function extractFieldsFromNestedSets(array $nestedSets): array
+    {
+        $allFields = [];
+
+        foreach ($nestedSets as $nestedSetConfig) {
+            if (! is_array($nestedSetConfig)) {
+                continue;
+            }
+
+            /** @var array<string, mixed> $nestedSetConfig */
+            $nestedSetFields = is_array($nestedSetConfig['fields'] ?? null) ? $nestedSetConfig['fields'] : [];
+            $fields = $this->parseSetFields($nestedSetFields);
+            $allFields = array_merge($allFields, $fields);
+            $deeperNestedSets = is_array($nestedSetConfig['sets'] ?? null) ? $nestedSetConfig['sets'] : [];
+
+            if (! empty($deeperNestedSets)) {
+                $deeperFields = $this->extractFieldsFromNestedSets($deeperNestedSets);
+                $allFields = array_merge($allFields, $deeperFields);
+            }
+        }
+
+        return $allFields;
     }
 
     /**
@@ -176,6 +217,8 @@ class ReplicatorFieldService
                 continue;
             }
 
+            /** @var string $setFieldHandle */
+            /** @var array<string, mixed> $setFieldConfig */
             [$setFieldHandle, $setFieldConfig] = $fieldData;
 
             /** @phpstan-ignore-next-line */
@@ -206,14 +249,16 @@ class ReplicatorFieldService
      */
     protected function extractFieldData($setFieldKey, $setFieldData): ?array
     {
-        // Handle list array format: [['handle' => 'text', 'field' => [...]]]
         if (is_array($setFieldData) && isset($setFieldData['handle'])) {
             $handle = $setFieldData['handle'];
+
             if (! is_string($handle)) {
                 return null;
             }
-            /** @var array<string, mixed> $fieldConfig */
+
             $fieldConfig = is_array($setFieldData['field'] ?? null) ? $setFieldData['field'] : [];
+            /** @var array<string, mixed> $fieldConfig */
+            $fieldConfig = $fieldConfig;
 
             return [
                 $handle,
@@ -221,12 +266,13 @@ class ReplicatorFieldService
             ];
         }
 
-        // Handle associative array format: ['text' => ['type' => ...]]
         if (is_string($setFieldKey) && is_array($setFieldData)) {
-            /** @var array<string, mixed> $setFieldData */
+            /** @var array<string, mixed> $config */
+            $config = $setFieldData;
+
             return [
                 $setFieldKey,
-                $setFieldData,
+                $config,
             ];
         }
 
@@ -235,7 +281,7 @@ class ReplicatorFieldService
 
     protected function isFieldTypeEligible(?string $fieldType): bool
     {
-        if (! is_string($fieldType)) {
+        if ($fieldType === null) {
             return false;
         }
 

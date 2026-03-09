@@ -93,7 +93,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $collectionMock = Mockery::mock($collection)->makePartial();
         $collectionMock->shouldReceive('entryBlueprints')->andReturn(collect([]));
 
-        $entry->set('use_for_collection', $collectionMock);
+        $entry->use_for_collection = $collectionMock;
         $entryMock = $entry;
 
         /** @var Field $fieldMock */
@@ -153,7 +153,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $taxonomyMock = Mockery::mock($taxonomy)->makePartial();
         $taxonomyMock->shouldReceive('termBlueprints')->andReturn(collect([]));
 
-        $entry->set('use_for_taxonomy', $taxonomyMock);
+        $entry->use_for_taxonomy = $taxonomyMock;
         $entryMock = $entry;
 
         /** @var Field $fieldMock */
@@ -604,7 +604,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
             ->collection($templatesCollection)
             ->id('template-123');
 
-        $entry->set('use_for_collection', $collection);
+        $entry->use_for_collection = $collection;
         $entryMock = $entry;
 
         /** @var Field $fieldMock */
@@ -652,7 +652,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
             ->collection($templatesCollection)
             ->id('template-123');
 
-        $entry->set('use_for_collection', $collectionMock);
+        $entry->use_for_collection = $collectionMock;
         $entryMock = $entry;
 
         /** @var Field $fieldMock */
@@ -690,7 +690,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $taxonomyMock = Mockery::mock($taxonomy)->makePartial();
         $taxonomyMock->shouldReceive('termBlueprints')->andReturn(collect([null]));
 
-        $entry->set('use_for_taxonomy', $taxonomyMock);
+        $entry->use_for_taxonomy = $taxonomyMock;
         $entryMock = $entry;
 
         /** @var Field $fieldMock */
@@ -733,7 +733,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
             ->collection($templatesCollection)
             ->id('template-123');
 
-        $entry->set('use_for_taxonomy', $taxonomyMock);
+        $entry->use_for_taxonomy = $taxonomyMock;
         $entryMock = $entry;
 
         /** @var Field $fieldMock */
@@ -784,7 +784,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
             ->collection($templatesCollection)
             ->id('template-123');
 
-        $entry->set('use_for_taxonomy', $taxonomy);
+        $entry->use_for_taxonomy = $taxonomy;
         $entryMock = $entry;
 
         /** @var Field $fieldMock */

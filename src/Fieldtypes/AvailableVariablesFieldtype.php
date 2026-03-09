@@ -3,10 +3,13 @@
 namespace Justbetter\StatamicStructuredData\Fieldtypes;
 
 use Illuminate\Support\Collection as SupportCollection;
-use Statamic\Facades\Collection;
+use Statamic\Entries\Collection;
+use Statamic\Entries\Entry;
+use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\GlobalSet;
 use Statamic\Fields\Fieldtype;
 use Statamic\Globals\GlobalSet as StatamicGlobalSet;
+use Statamic\Taxonomies\Taxonomy;
 
 class AvailableVariablesFieldtype extends Fieldtype
 {
@@ -68,10 +71,11 @@ class AvailableVariablesFieldtype extends Fieldtype
     /** @return array<int, array<string, mixed>> */
     protected function getEntryFields(): array
     {
+        /** @var ?Entry $dataTemplate */
         $dataTemplate = $this->field->parent();
-        $collection = $dataTemplate?->get('use_for_collection');
-
-        if (! $collection) {
+        /** @var ?Collection $collection */
+        $collection = $dataTemplate?->get('use_for_collection') ?? $dataTemplate?->use_for_collection; /** @phpstan-ignore-line */
+        if (! $collection instanceof Collection) {
             return [];
         }
 
@@ -109,10 +113,11 @@ class AvailableVariablesFieldtype extends Fieldtype
     /** @return array<int, array<string, mixed>> */
     protected function getTermFields(): array
     {
+        /** @var ?Entry $dataTemplate */
         $dataTemplate = $this->field->parent();
-        $taxonomy = $dataTemplate?->get('use_for_taxonomy');
-
-        if (! $taxonomy) {
+        /** @var ?Taxonomy $taxonomy */
+        $taxonomy = $dataTemplate?->get('use_for_taxonomy') ?? $dataTemplate?->use_for_taxonomy; /** @phpstan-ignore-line */
+        if (! $taxonomy instanceof Taxonomy) {
             return [];
         }
 
@@ -182,7 +187,7 @@ class AvailableVariablesFieldtype extends Fieldtype
             return [];
         }
 
-        $collection = Collection::find($collectionHandle);
+        $collection = CollectionFacade::find($collectionHandle);
 
         if (! $collection) {
             return [];

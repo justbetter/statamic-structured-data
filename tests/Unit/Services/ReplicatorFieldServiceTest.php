@@ -44,15 +44,15 @@ class ReplicatorFieldServiceTest extends TestCase
 
         $template = (new Entry)
             ->collection($templatesCollection)
-            ->id('template-123')
-            ->set('use_for_taxonomy', $taxonomy);
+            ->id('template-123');
 
         $taxonomyMock = Mockery::mock($taxonomy)->makePartial();
         $taxonomyMock->shouldReceive('termBlueprints')->andReturn(collect([]));
 
         /** @var \Statamic\Entries\Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
-        $templateMock->set('use_for_taxonomy', $taxonomyMock);
+        /** @phpstan-ignore-next-line */
+        $templateMock->shouldReceive('get')->with('use_for_taxonomy')->andReturn($taxonomyMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
@@ -131,13 +131,14 @@ class ReplicatorFieldServiceTest extends TestCase
 
         $collectionMock = $this->mock(Collection::class, function ($mock) use ($blueprint): void {
             $mock->shouldReceive('entryBlueprints')->andReturn(collect([$blueprint]));
+            $mock->shouldReceive('toArray')->andReturn([]);
         });
 
         $template = (new Entry)
             ->collection($templatesCollection)
             ->id('template-123');
 
-        $template->set('use_for_collection', $collectionMock);
+        $template->use_for_collection = $collectionMock;
 
         $service = new ReplicatorFieldService;
         $result = $service->getReplicatorFields($template);
@@ -345,6 +346,24 @@ class ReplicatorFieldServiceTest extends TestCase
     }
 
     #[Test]
+    public function normalize_field_returns_null_when_array_has_non_string_keys(): void
+    {
+        $service = new ReplicatorFieldService;
+        $reflection = new \ReflectionClass($service);
+        $method = $reflection->getMethod('normalizeField');
+        $method->setAccessible(true);
+
+        $array = [
+            'valid' => 'value',
+            0 => 'invalid',
+        ];
+
+        $result = $method->invoke($service, $array);
+
+        $this->assertNull($result);
+    }
+
+    #[Test]
     public function build_replicator_field_returns_null_when_no_handle(): void
     {
         $service = new ReplicatorFieldService;
@@ -408,6 +427,47 @@ class ReplicatorFieldServiceTest extends TestCase
         $firstResult = $result[0];
         $this->assertEquals('text', $firstResult['value']);
         $this->assertEquals('Text Block', $firstResult['label']);
+    }
+
+    #[Test]
+    public function parse_sets_handles_nested_sets(): void
+    {
+        $service = new ReplicatorFieldService;
+        $reflection = new \ReflectionClass($service);
+        $method = $reflection->getMethod('parseSets');
+        $method->setAccessible(true);
+
+        $sets = [
+            'parent' => [
+                'display' => 'Parent',
+                'fields' => [
+                    'parent_field' => ['type' => 'text', 'display' => 'Parent Field'],
+                ],
+                'sets' => [
+                    [
+                        'fields' => [
+                            'child_field' => ['type' => 'text', 'display' => 'Child Field'],
+                        ],
+                        'sets' => [
+                            [
+                                'fields' => [
+                                    'grandchild_field' => ['type' => 'text', 'display' => 'Grandchild Field'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $result = $method->invoke($service, $sets);
+
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+        /** @var array<int, array<string, mixed>> $result */
+        /** @var array<int, array<string, mixed>> $fields */
+        $fields = $result[0]['fields'];
+        $this->assertCount(3, $fields);
     }
 
     #[Test]
@@ -603,6 +663,30 @@ class ReplicatorFieldServiceTest extends TestCase
     }
 
     #[Test]
+    public function extract_fields_from_nested_sets_skips_non_array_configs(): void
+    {
+        $service = new ReplicatorFieldService;
+        $reflection = new \ReflectionClass($service);
+        $method = $reflection->getMethod('extractFieldsFromNestedSets');
+        $method->setAccessible(true);
+
+        $nestedSets = [
+            'invalid',
+            [
+                'fields' => [
+                    'field_one' => ['type' => 'text', 'display' => 'Field One'],
+                ],
+            ],
+        ];
+
+        /** @var array<int, array<string, mixed>> $result */
+        $result = $method->invoke($service, $nestedSets);
+
+        $this->assertCount(1, $result);
+        $this->assertSame('field_one', $result[0]['value']);
+    }
+
+    #[Test]
     public function parse_set_fields_skips_fields_with_non_string_handle(): void
     {
         $service = new ReplicatorFieldService;
@@ -670,7 +754,8 @@ class ReplicatorFieldServiceTest extends TestCase
 
         /** @var \Statamic\Entries\Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
-        $templateMock->set('use_for_collection', $collectionMock);
+        /** @phpstan-ignore-next-line */
+        $templateMock->shouldReceive('get')->with('use_for_collection')->andReturn($collectionMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
@@ -698,8 +783,9 @@ class ReplicatorFieldServiceTest extends TestCase
         /** @var \Statamic\Entries\Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
-        $templateMock->use_for_collection = null;
-        $templateMock->set('use_for_taxonomy', $taxonomyMock);
+        $templateMock->shouldReceive('get')->with('use_for_collection')->andReturn(null);
+        /** @phpstan-ignore-next-line */
+        $templateMock->shouldReceive('get')->with('use_for_taxonomy')->andReturn($taxonomyMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
@@ -784,8 +870,9 @@ class ReplicatorFieldServiceTest extends TestCase
         /** @var \Statamic\Entries\Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
-        $templateMock->use_for_collection = null;
-        $templateMock->set('use_for_taxonomy', $taxonomyMock);
+        $templateMock->shouldReceive('get')->with('use_for_collection')->andReturn(null);
+        /** @phpstan-ignore-next-line */
+        $templateMock->shouldReceive('get')->with('use_for_taxonomy')->andReturn($taxonomyMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
@@ -813,7 +900,8 @@ class ReplicatorFieldServiceTest extends TestCase
 
         /** @var \Statamic\Entries\Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
-        $templateMock->set('use_for_collection', $collectionMock);
+        /** @phpstan-ignore-next-line */
+        $templateMock->shouldReceive('get')->with('use_for_collection')->andReturn($collectionMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
@@ -841,7 +929,8 @@ class ReplicatorFieldServiceTest extends TestCase
 
         /** @var \Statamic\Entries\Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
-        $templateMock->set('use_for_collection', $collectionMock);
+        /** @phpstan-ignore-next-line */
+        $templateMock->shouldReceive('get')->with('use_for_collection')->andReturn($collectionMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
@@ -896,8 +985,9 @@ class ReplicatorFieldServiceTest extends TestCase
         /** @var \Statamic\Entries\Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
-        $templateMock->use_for_collection = null;
-        $templateMock->set('use_for_taxonomy', $taxonomyMock);
+        $templateMock->shouldReceive('get')->with('use_for_collection')->andReturn(null);
+        /** @phpstan-ignore-next-line */
+        $templateMock->shouldReceive('get')->with('use_for_taxonomy')->andReturn($taxonomyMock);
 
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */

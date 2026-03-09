@@ -12,25 +12,14 @@ class DefaultFieldTransformer implements FieldTransformerInterface
     {
         $type = $field['type'] ?? null;
 
-        if ($type === 'array' && isset($field['values'])) {
-            return $field['values'];
-        }
-
-        if ($type === 'object' && isset($field['value'])) {
-            return $field['value'];
-        }
-
-        if ($type === 'object_array' && isset($field['values'])) {
-            return $field['values'];
-        }
-
-        if ($type === 'numeric' && isset($field['value'])) {
-            $value = $field['value'];
-            if (is_numeric($value)) {
-                return (float) $value;
-            }
-        }
-
-        return $field['value'] ?? null;
+        return match ($type) {
+            'array' => isset($field['values']) ? $field['values'] : null,
+            'object' => isset($field['value']) ? $field['value'] : null,
+            'object_array' => isset($field['values']) ? $field['values'] : null,
+            'numeric' => isset($field['value'])
+                ? (is_numeric($field['value']) ? (float) $field['value'] : $field['value'])
+                : null,
+            default => $field['value'] ?? null,
+        };
     }
 }
