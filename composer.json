@@ -44,6 +44,7 @@
         "test": "phpunit",
         "analyse": "phpstan",
         "style": "pint --test",
+        "coverage": "XDEBUG_MODE=coverage php vendor/bin/pest --coverage --min=100",
         "quality": [
             "@test",
             "@analyse",
