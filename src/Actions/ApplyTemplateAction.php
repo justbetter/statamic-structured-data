@@ -7,9 +7,9 @@ use Justbetter\StatamicStructuredData\Jobs\ApplyTemplateToItemJob;
 use Statamic\Actions\Action;
 use Statamic\Entries\Collection;
 use Statamic\Entries\Entry;
-use Statamic\Sites\Site;
 use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
+use Statamic\Sites\Site;
 use Statamic\Taxonomies\LocalizedTerm;
 use Statamic\Taxonomies\Taxonomy;
 
