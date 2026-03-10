@@ -246,8 +246,7 @@
     </div>
 </template>
 
-<script setup>
-import { computed, reactive, ref, watch } from 'vue';
+<script>
 import { Fieldtype } from '@statamic/cms';
 import { Button, Card, Input, Label, Select, DragHandle, ConfirmationModal } from '@statamic/cms/ui';
 import StructuredDataObject from '../StructuredDataObject.vue';
@@ -256,405 +255,394 @@ import PresetStack from '../PresetStack.vue';
 import { formatSchemaJson } from '../../utils/schema';
 import draggable from 'vuedraggable';
 
-let nextFieldId = 1;
+export default {
+    name: 'StructuredDataBuilder',
+    components: {
+        Button,
+        Card,
+        Input,
+        Label,
+        Select,
+        DragHandle,
+        ConfirmationModal,
+        StructuredDataObject,
+        ReplicatorFieldMapper,
+        PresetStack,
+        draggable,
+    },
+    mixins: [Fieldtype],
+    data() {
+        const initialSchemas = Array.isArray(this.value) && this.value.length > 0
+            ? this.value
+            : [this.createEmptySchema()];
 
-const fieldtypeProps = defineProps(Fieldtype.props);
-const { value, meta, config } = fieldtypeProps;
+        this.ensureFieldIds(initialSchemas);
 
-const emit = defineEmits(Fieldtype.emits);
-const { expose, update } = Fieldtype.use(emit, fieldtypeProps);
-
-defineExpose(expose);
-
-const createEmptySchema = () => {
-    return {
-        specialProps: {
-            context: 'http://schema.org',
-            type: '',
-            id: '',
-        },
-        fields: [],
-    };
-};
-
-const ensureFieldIds = schemasToNormalize => {
-    schemasToNormalize.forEach(schema => {
-        schema.fields.forEach(field => {
-            if (!field.__id) {
-                field.__id = `field-${nextFieldId}`;
-                nextFieldId = nextFieldId + 1;
-            }
-        });
-    });
-};
-
-const initialSchemas = Array.isArray(value) && value.length > 0 ? value : [createEmptySchema()];
-
-ensureFieldIds(initialSchemas);
-
-const schemas = ref(JSON.parse(JSON.stringify(initialSchemas)));
-const showPreview = ref(false);
-const showPresetModal = ref(false);
-const collapsedSchemas = reactive({});
-const confirmRemoveSchemaOpen = ref(false);
-const schemaIndexToRemove = ref(null);
-const confirmRemoveFieldOpen = ref(false);
-const fieldRemoveContext = ref({
-    schema: null,
-    fieldIndex: null,
-});
-const confirmRemoveArrayValueOpen = ref(false);
-const arrayRemoveContext = ref({
-    field: null,
-    valueIndex: null,
-});
-
-const baseUrl = computed(() => {
-    if (!config || !config.base_url) {
-        return '';
-    }
-
-    return config.base_url;
-});
-
-const preview = computed(() => {
-    return formatSchemaJson(schemas.value);
-});
-
-const selectOptions = computed(() => {
-    return [
-        { value: 'string', label: 'String' },
-        { value: 'numeric', label: 'Numeric' },
-        { value: 'array', label: 'Array' },
-        { value: 'object', label: 'Object' },
-        { value: 'object_array', label: 'Object Array' },
-        { value: 'data_object', label: 'Data Object (Term)' },
-        { value: 'replicator_object_array', label: 'Replicator Object Array' },
-    ];
-});
-
-const taxonomyTerms = computed(() => {
-    if (!meta || !meta.taxonomy_terms) {
-        return [];
-    }
-
-    return meta.taxonomy_terms;
-});
-
-const taxonomyTermOptions = computed(() => {
-    return taxonomyTerms.value.map(term => {
         return {
-            label: term.title,
-            value: `@dataObject::${term.slug}`,
-        };
-    });
-});
-
-const presets = computed(() => {
-    if (!meta || !meta.presets) {
-        return [];
-    }
-
-    return meta.presets;
-});
-
-const presetsEnabled = computed(() => {
-    if (!meta) {
-        return false;
-    }
-
-    return meta.presets_enabled === true;
-});
-
-const replicatorFields = computed(() => {
-    if (!meta || !meta.replicator_fields) {
-        return [];
-    }
-
-    return meta.replicator_fields;
-});
-
-watch(
-    () => value,
-    newValue => {
-        const normalized = Array.isArray(newValue) && newValue.length > 0 ? newValue : [createEmptySchema()];
-        ensureFieldIds(normalized);
-        const newJson = JSON.stringify(normalized);
-        const currentJson = JSON.stringify(schemas.value);
-
-        if (newJson !== currentJson) {
-            schemas.value = JSON.parse(newJson);
-        }
-    },
-    { deep: true },
-);
-
-watch(
-    schemas,
-    newSchemas => {
-        ensureFieldIds(newSchemas);
-        update(JSON.parse(JSON.stringify(newSchemas)));
-    },
-    { deep: true },
-);
-
-const addSchema = () => {
-    schemas.value.push(createEmptySchema());
-};
-
-const addField = schema => {
-    schema.fields.push({
-        __id: `field-${nextFieldId}`,
-        key: '',
-        type: 'string',
-        value: '',
-        values: [],
-        fields: [],
-        config: {},
-    });
-    nextFieldId = nextFieldId + 1;
-};
-
-const moveFieldUp = (fieldIndex, schema) => {
-    if (fieldIndex <= 0) {
-        return;
-    }
-
-    const updatedFields = [...schema.fields];
-    const previousField = updatedFields[fieldIndex - 1];
-
-    updatedFields[fieldIndex - 1] = updatedFields[fieldIndex];
-    updatedFields[fieldIndex] = previousField;
-
-    // eslint-disable-next-line no-param-reassign
-    schema.fields = updatedFields;
-};
-
-const moveFieldDown = (fieldIndex, schema) => {
-    if (fieldIndex >= schema.fields.length - 1) {
-        return;
-    }
-
-    const updatedFields = [...schema.fields];
-    const nextField = updatedFields[fieldIndex + 1];
-
-    updatedFields[fieldIndex + 1] = updatedFields[fieldIndex];
-    updatedFields[fieldIndex] = nextField;
-
-    // eslint-disable-next-line no-param-reassign
-    schema.fields = updatedFields;
-};
-
-const removeField = (schema, fieldIndex) => {
-    schema.fields.splice(fieldIndex, 1);
-};
-
-const addArrayValue = field => {
-    if (!field.values) {
-        // eslint-disable-next-line no-param-reassign
-        field.values = [];
-    }
-
-    if (field.type === 'object_array') {
-        field.values.push({
-            specialProps: {
-                type: '',
-                id: '',
+            nextFieldId: 1,
+            schemas: JSON.parse(JSON.stringify(initialSchemas)),
+            showPreview: false,
+            showPresetModal: false,
+            collapsedSchemas: {},
+            confirmRemoveSchemaOpen: false,
+            schemaIndexToRemove: null,
+            confirmRemoveFieldOpen: false,
+            fieldRemoveContext: {
+                schema: null,
+                fieldIndex: null,
             },
-            fields: [],
-        });
-
-        return;
-    }
-
-    field.values.push('');
-};
-
-const removeArrayValue = (field, valueIndex) => {
-    field.values.splice(valueIndex, 1);
-};
-
-const validateKey = field => {
-    field.key = field.key.replace(/[^a-zA-Z0-9@]/g, '');
-};
-
-const suggestedId = schema => {
-    if (!schema.specialProps.type) {
-        return '';
-    }
-
-    return `{{ site:url }}/#${schema.specialProps.type}`;
-};
-
-const useDefaultId = schema => {
-    // eslint-disable-next-line no-param-reassign
-    schema.specialProps.id = suggestedId(schema);
-};
-
-const handleTypeChange = field => {
-    if (field.type === 'object') {
-        // eslint-disable-next-line no-param-reassign
-        field.value = {
-            specialProps: {
-                type: '',
-                id: '',
+            confirmRemoveArrayValueOpen: false,
+            arrayRemoveContext: {
+                field: null,
+                valueIndex: null,
             },
-            fields: [],
         };
+    },
+    computed: {
+        baseUrl() {
+            if (!this.config || !this.config.base_url) {
+                return '';
+            }
 
-        return;
-    }
+            return this.config.base_url;
+        },
+        preview() {
+            return formatSchemaJson(this.schemas);
+        },
+        selectOptions() {
+            return [
+                { value: 'string', label: 'String' },
+                { value: 'numeric', label: 'Numeric' },
+                { value: 'array', label: 'Array' },
+                { value: 'object', label: 'Object' },
+                { value: 'object_array', label: 'Object Array' },
+                { value: 'data_object', label: 'Data Object (Term)' },
+                { value: 'replicator_object_array', label: 'Replicator Object Array' },
+            ];
+        },
+        taxonomyTerms() {
+            if (!this.meta || !this.meta.taxonomy_terms) {
+                return [];
+            }
 
-    if (field.type === 'array') {
-        // eslint-disable-next-line no-param-reassign
-        field.values = [];
+            return this.meta.taxonomy_terms;
+        },
+        taxonomyTermOptions() {
+            return this.taxonomyTerms.map(term => ({
+                label: term.title,
+                value: `@dataObject::${term.slug}`,
+            }));
+        },
+        presets() {
+            if (!this.meta || !this.meta.presets) {
+                return [];
+            }
 
-        return;
-    }
+            return this.meta.presets;
+        },
+        presetsEnabled() {
+            if (!this.meta) {
+                return false;
+            }
 
-    if (field.type === 'object_array') {
-        // eslint-disable-next-line no-param-reassign
-        field.values = [];
+            return this.meta.presets_enabled === true;
+        },
+        replicatorFields() {
+            if (!this.meta || !this.meta.replicator_fields) {
+                return [];
+            }
 
-        return;
-    }
+            return this.meta.replicator_fields;
+        },
+    },
+    watch: {
+        value: {
+            deep: true,
+            handler(newValue) {
+                const normalized = Array.isArray(newValue) && newValue.length > 0
+                    ? newValue
+                    : [this.createEmptySchema()];
 
-    if (field.type === 'data_object') {
-        // eslint-disable-next-line no-param-reassign
-        field.value = '';
+                this.ensureFieldIds(normalized);
 
-        return;
-    }
+                const newJson = JSON.stringify(normalized);
+                const currentJson = JSON.stringify(this.schemas);
 
-    if (field.type === 'replicator_object_array') {
-        // eslint-disable-next-line no-param-reassign
-        field.config = {
-            replicator_field: '',
-            set: '',
-            mappings: [],
-        };
-        // eslint-disable-next-line no-param-reassign
-        field.values = [];
+                if (newJson !== currentJson) {
+                    this.schemas = JSON.parse(newJson);
+                }
+            },
+        },
+        schemas: {
+            deep: true,
+            handler(newSchemas) {
+                this.ensureFieldIds(newSchemas);
+                this.update(JSON.parse(JSON.stringify(newSchemas)));
+            },
+        },
+    },
+    methods: {
+        createEmptySchema() {
+            return {
+                specialProps: {
+                    context: 'http://schema.org',
+                    type: '',
+                    id: '',
+                },
+                fields: [],
+            };
+        },
+        ensureFieldIds(schemasToNormalize) {
+            schemasToNormalize.forEach(schema => {
+                schema.fields.forEach(field => {
+                    if (!field.__id) {
+                        // eslint-disable-next-line no-param-reassign
+                        field.__id = `field-${this.nextFieldId}`;
+                        this.nextFieldId = this.nextFieldId + 1;
+                    }
+                });
+            });
+        },
+        addSchema() {
+            this.schemas.push(this.createEmptySchema());
+        },
+        addField(schema) {
+            schema.fields.push({
+                __id: `field-${this.nextFieldId}`,
+                key: '',
+                type: 'string',
+                value: '',
+                values: [],
+                fields: [],
+                config: {},
+            });
+            this.nextFieldId = this.nextFieldId + 1;
+        },
+        moveFieldUp(fieldIndex, schema) {
+            if (fieldIndex <= 0) {
+                return;
+            }
 
-        return;
-    }
+            const updatedFields = [...schema.fields];
+            const previousField = updatedFields[fieldIndex - 1];
 
-    // eslint-disable-next-line no-param-reassign
-    field.value = '';
-};
+            updatedFields[fieldIndex - 1] = updatedFields[fieldIndex];
+            updatedFields[fieldIndex] = previousField;
 
-const togglePreview = () => {
-    showPreview.value = !showPreview.value;
-};
+            // eslint-disable-next-line no-param-reassign
+            schema.fields = updatedFields;
+        },
+        moveFieldDown(fieldIndex, schema) {
+            if (fieldIndex >= schema.fields.length - 1) {
+                return;
+            }
 
-const toggleSchema = schemaIndex => {
-    const currentState = collapsedSchemas[schemaIndex] === true;
+            const updatedFields = [...schema.fields];
+            const nextField = updatedFields[fieldIndex + 1];
 
-    collapsedSchemas[schemaIndex] = !currentState;
-};
+            updatedFields[fieldIndex + 1] = updatedFields[fieldIndex];
+            updatedFields[fieldIndex] = nextField;
 
-const isSchemaCollapsed = schemaIndex => {
-    if (collapsedSchemas[schemaIndex]) {
-        return true;
-    }
+            // eslint-disable-next-line no-param-reassign
+            schema.fields = updatedFields;
+        },
+        removeField(schema, fieldIndex) {
+            schema.fields.splice(fieldIndex, 1);
+        },
+        addArrayValue(field) {
+            if (!field.values) {
+                // eslint-disable-next-line no-param-reassign
+                field.values = [];
+            }
 
-    return false;
-};
+            if (field.type === 'object_array') {
+                field.values.push({
+                    specialProps: {
+                        type: '',
+                        id: '',
+                    },
+                    fields: [],
+                });
 
-const requestRemoveSchema = schemaIndex => {
-    schemaIndexToRemove.value = schemaIndex;
-    confirmRemoveSchemaOpen.value = true;
-};
+                return;
+            }
 
-const confirmRemoveSchema = () => {
-    if (schemaIndexToRemove.value === null) {
-        return;
-    }
+            field.values.push('');
+        },
+        removeArrayValue(field, valueIndex) {
+            field.values.splice(valueIndex, 1);
+        },
+        validateKey(field) {
+            field.key = field.key.replace(/[^a-zA-Z0-9@]/g, '');
+        },
+        suggestedId(schema) {
+            if (!schema.specialProps.type) {
+                return '';
+            }
 
-    schemas.value.splice(schemaIndexToRemove.value, 1);
-    schemaIndexToRemove.value = null;
-};
+            return `{{ site:url }}/#${schema.specialProps.type}`;
+        },
+        useDefaultId(schema) {
+            // eslint-disable-next-line no-param-reassign
+            schema.specialProps.id = this.suggestedId(schema);
+        },
+        handleTypeChange(field) {
+            if (field.type === 'object') {
+                // eslint-disable-next-line no-param-reassign
+                field.value = {
+                    specialProps: {
+                        type: '',
+                        id: '',
+                    },
+                    fields: [],
+                };
 
-const requestRemoveField = (schema, fieldIndex) => {
-    fieldRemoveContext.value = {
-        schema,
-        fieldIndex,
-    };
-    confirmRemoveFieldOpen.value = true;
-};
+                return;
+            }
 
-const confirmRemoveField = () => {
-    const context = fieldRemoveContext.value;
+            if (field.type === 'array') {
+                // eslint-disable-next-line no-param-reassign
+                field.values = [];
 
-    if (!context || !context.schema || context.fieldIndex === null) {
-        return;
-    }
+                return;
+            }
 
-    removeField(context.schema, context.fieldIndex);
+            if (field.type === 'object_array') {
+                // eslint-disable-next-line no-param-reassign
+                field.values = [];
 
-    fieldRemoveContext.value = {
-        schema: null,
-        fieldIndex: null,
-    };
-};
+                return;
+            }
 
-const requestRemoveArrayValue = (field, valueIndex) => {
-    arrayRemoveContext.value = {
-        field,
-        valueIndex,
-    };
-    confirmRemoveArrayValueOpen.value = true;
-};
+            if (field.type === 'data_object') {
+                // eslint-disable-next-line no-param-reassign
+                field.value = '';
 
-const confirmRemoveArrayValue = () => {
-    const context = arrayRemoveContext.value;
+                return;
+            }
 
-    if (!context || !context.field || context.valueIndex === null) {
-        return;
-    }
+            if (field.type === 'replicator_object_array') {
+                // eslint-disable-next-line no-param-reassign
+                field.config = {
+                    replicator_field: '',
+                    set: '',
+                    mappings: [],
+                };
+                // eslint-disable-next-line no-param-reassign
+                field.values = [];
 
-    removeArrayValue(context.field, context.valueIndex);
+                return;
+            }
 
-    arrayRemoveContext.value = {
-        field: null,
-        valueIndex: null,
-    };
-};
+            // eslint-disable-next-line no-param-reassign
+            field.value = '';
+        },
+        togglePreview() {
+            this.showPreview = !this.showPreview;
+        },
+        toggleSchema(schemaIndex) {
+            const currentState = this.collapsedSchemas[schemaIndex] === true;
 
-const handlePresetSelected = presetEvent => {
-    const { preset, action } = presetEvent;
-    const presetSchema = JSON.parse(JSON.stringify(preset.schema));
+            this.$set(this.collapsedSchemas, schemaIndex, !currentState);
+        },
+        isSchemaCollapsed(schemaIndex) {
+            if (this.collapsedSchemas[schemaIndex]) {
+                return true;
+            }
 
-    if (action === 'merge' || action === 'add') {
-        schemas.value.push(presetSchema);
+            return false;
+        },
+        requestRemoveSchema(schemaIndex) {
+            this.schemaIndexToRemove = schemaIndex;
+            this.confirmRemoveSchemaOpen = true;
+        },
+        confirmRemoveSchema() {
+            if (this.schemaIndexToRemove === null) {
+                return;
+            }
 
-        return;
-    }
+            this.schemas.splice(this.schemaIndexToRemove, 1);
+            this.schemaIndexToRemove = null;
+            this.confirmRemoveSchemaOpen = false;
+        },
+        requestRemoveField(schema, fieldIndex) {
+            this.fieldRemoveContext = {
+                schema,
+                fieldIndex,
+            };
+            this.confirmRemoveFieldOpen = true;
+        },
+        confirmRemoveField() {
+            const context = this.fieldRemoveContext;
 
-    if (action === 'override') {
-        schemas.value = [presetSchema];
-    }
-};
+            if (!context || !context.schema || context.fieldIndex === null) {
+                return;
+            }
 
-const getFieldByInput = inputElement => {
-    const fieldElement = inputElement.closest('.field');
+            this.removeField(context.schema, context.fieldIndex);
 
-    if (!fieldElement) {
-        return null;
-    }
+            this.fieldRemoveContext = {
+                schema: null,
+                fieldIndex: null,
+            };
+            this.confirmRemoveFieldOpen = false;
+        },
+        requestRemoveArrayValue(field, valueIndex) {
+            this.arrayRemoveContext = {
+                field,
+                valueIndex,
+            };
+            this.confirmRemoveArrayValueOpen = true;
+        },
+        confirmRemoveArrayValue() {
+            const context = this.arrayRemoveContext;
 
-    const schemaIndex = fieldElement.dataset.schemaIndex;
-    const fieldIndex = fieldElement.dataset.fieldIndex;
+            if (!context || !context.field || context.valueIndex === null) {
+                return;
+            }
 
-    if (schemaIndex === undefined || fieldIndex === undefined) {
-        return null;
-    }
+            this.removeArrayValue(context.field, context.valueIndex);
 
-    return schemas.value[schemaIndex].fields[fieldIndex];
-};
+            this.arrayRemoveContext = {
+                field: null,
+                valueIndex: null,
+            };
+            this.confirmRemoveArrayValueOpen = false;
+        },
+        handlePresetSelected(presetEvent) {
+            const { preset, action } = presetEvent;
+            const presetSchema = JSON.parse(JSON.stringify(preset.schema));
 
-const onEnd = dragEvent => {
-    return dragEvent;
+            if (action === 'merge' || action === 'add') {
+                this.schemas.push(presetSchema);
+
+                return;
+            }
+
+            if (action === 'override') {
+                this.schemas = [presetSchema];
+            }
+        },
+        getFieldByInput(inputElement) {
+            const fieldElement = inputElement.closest('.field');
+
+            if (!fieldElement) {
+                return null;
+            }
+
+            const schemaIndex = fieldElement.dataset.schemaIndex;
+            const fieldIndex = fieldElement.dataset.fieldIndex;
+
+            if (schemaIndex === undefined || fieldIndex === undefined) {
+                return null;
+            }
+
+            return this.schemas[schemaIndex].fields[fieldIndex];
+        },
+        onEnd(dragEvent) {
+            return dragEvent;
+        },
+    },
 };
 </script>
 
