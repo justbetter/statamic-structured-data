@@ -6,14 +6,14 @@
             @click="toggleVariables"
         >
             <div class="flex items-center gap-2">
-                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                <h3 class="text-xs font-semibold uppercase tracking-wide">
                     {{ __('Available Variables') }}
                 </h3>
             </div>
             <Button
                 variant="ghost"
                 size="xs"
-                class="flex items-center gap-1 text-xs text-gray-500"
+                class="flex items-center gap-1 text-xs"
                 :aria-expanded="!variablesCollapsed"
             >
                 <div :class="['chevron', { 'chevron-up': !variablesCollapsed }]"></div>
@@ -26,7 +26,7 @@
         >
             <div
                 v-if="!hasVariables"
-                class="text-xs text-gray-500"
+                class="text-xs"
             >
                 {{ __('No variables available for this collection.') }}
             </div>
@@ -40,7 +40,7 @@
                 >
                     <div v-if="variablesType.length">
                         <Label
-                            class="mb-1.5 text-[0.65rem] font-semibold uppercase tracking-wide text-gray-500"
+                            class="mb-1.5 text-[0.65rem] font-semibold uppercase tracking-wide"
                             :text="section"
                         />
 
