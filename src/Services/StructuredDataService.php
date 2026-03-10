@@ -205,7 +205,7 @@ class StructuredDataService
         $transformer = $this->transformerFactory->getTransformer(is_string($type) ? $type : null);
         $transformedValue = $transformer->transform($field, $item);
 
-        // Handle flat mode for replicator_object_array
+        // Handle flat mode for replicator_object_array: keep flat object under the field key
         /** @var array<string, mixed>|null $config */
         $config = $field['config'] ?? null;
 
@@ -214,11 +214,7 @@ class StructuredDataService
             && ($config['flat'] ?? false) === true
             && is_array($transformedValue)
             && $this->isAssociativeArray($transformedValue)) {
-            /** @var array<string, mixed> $merged */
-            $merged = array_merge($result, $transformedValue);
-            $result = $merged;
-
-            return null;
+            return $transformedValue;
         }
 
         return $transformedValue;

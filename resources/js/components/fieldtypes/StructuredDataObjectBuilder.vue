@@ -1,73 +1,68 @@
 <template>
     <div class="structured-data-builder">
         <div class="flex-1">
-            <div v-if="schema" class="structured-data-schema mb-6 rounded-lg shadow-sm border">
-                <div class="px-4 py-2 bg-gray-50 border-b rounded-t-lg flex justify-between items-center">
-                    <div class="flex items-center gap-2 cursor-pointer">
-                        <h3 class="font-bold text-lg">{{ __('Object Data Builder') }}</h3>
-                    </div>
+            <Card
+                v-if="schema"
+                class="structured-data-schema mb-6"
+            >
+                <div class="flex items-center gap-2 mb-3 cursor-pointer">
+                    <h3 class="font-bold text-lg">{{ __('Object Data Builder') }}</h3>
                 </div>
-                <div class="p-4">
+                <div>
                     <div class="space-y-3">
                         <h4 class="text-gray-600 mb-2">{{ __('Fields') }}</h4>
-                        <div v-for="(field, index) in schema.fields" :key="index" class="mb-2 border rounded bg-gray-50">
+                        <div v-for="(field, index) in schema.fields" :key="index" class="mb-2 border rounded">
                             <div class="p-3">
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <div class="col-span-2">
-                                        <label class="text-gray-600 mb-1 block">{{ __('Key') }}</label>
-                                        <input
-                                            type="text"
+                                        <Label class="mb-1.5">{{ __('Key') }}</Label>
+                                        <Input
                                             v-model="field.key"
-                                            class="input-text w-full"
-                                            @input="validateKey(field)"
+                                            @update:model-value="() => validateKey(field)"
                                         />
                                     </div>
                                     <div>
-                                        <label class="text-gray-600 mb-1 block">{{ __('Type') }}</label>
-                                        <v-select
+                                        <Label class="mb-1.5">{{ __('Type') }}</Label>
+                                        <Select
                                             v-model="field.type"
                                             :options="selectOptions"
-                                            @input="(value) => { field.type = value.value; handleTypeChange(field); }"
+                                            @update:model-value="() => handleTypeChange(field)"
                                         />
                                     </div>
                                 </div>
                                 <div class="mt-3">
-                                    <input
+                                    <Input
                                         v-if="field.type === 'string'"
-                                        type="text"
                                         v-model="field.value"
-                                        class="input-text w-full"
                                         :placeholder="'Enter value'"
                                     />
-                                    <input
+                                    <Input
                                         v-if="field.type === 'numeric'"
                                         type="number"
                                         v-model="field.value"
-                                        class="input-text w-full"
                                         :placeholder="'Enter value'"
                                     />
                                     <div v-else-if="field.type === 'array'" class="mt-2">
                                         <div class="flex flex-col gap-2 space-y-2">
-                                            <div v-for="(value, valueIndex) in field.values" :key="valueIndex" class="flex items-center gap-2">
-                                                <input
-                                                    type="text"
+                        <div v-for="(value, valueIndex) in field.values" :key="valueIndex" class="flex items-center gap-2">
+                                                <Input
                                                     v-model="field.values[valueIndex]"
-                                                    class="input-text flex-1"
                                                 />
-                                                <button
+                                                <Button
                                                     @click="removeArrayValue(field, valueIndex)"
-                                                    class="btn-danger inline-flex items-center px-2 py-1"
+                                                    class="inline-flex items-center px-2 py-1"
                                                 >
                                                     <span>{{ __('Remove') }}</span>
-                                                </button>
+                                                </Button>
                                             </div>
                                         </div>
-                                        <button
+                                        <Button
                                             @click="addArrayValue(field)"
-                                            class="btn-primary mt-2 text-sm"
+                                            class="mt-2 text-sm"
+                                            variant="primary"
                                         >
                                             {{ __('Add Value') }}
-                                        </button>
+                                        </Button>
                                     </div>
                                     <div v-else-if="field.type === 'object'" class="mt-2">
                                         <structured-data-object
@@ -85,169 +80,190 @@
                                     </div>
                                 </div>
                                 <div class="flex justify-end mt-3">
-                                    <button
+                                    <Button
                                         @click="removeField(index)"
-                                        class="btn-danger"
                                     >
                                         {{ __('Remove Field') }}
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
-                        <button @click="addField()" class="btn-primary mt-2">
+                        <Button @click="addField()" variant="primary" class="mt-2">
                             {{ __('Add Field') }}
-                        </button>
+                        </Button>
                     </div>
                 </div>
-            </div>
+            </Card>
 
             <div class="flex gap-2 mt-4">
-                <button class="btn" @click="togglePreview">
+                <Button @click="togglePreview">
                     {{ showPreview ? __('Hide Preview') : __('Show Preview') }}
-                </button>
+                </Button>
             </div>
 
             <div v-if="showPreview" class="mt-4">
-                <pre class="bg-gray-50 p-4 rounded-lg overflow-x-auto">{{ preview }}</pre>
+                <pre class="p-4 rounded-lg overflow-x-auto">{{ preview }}</pre>
             </div>
         </div>
     </div>
 </template>
 
-<script>
+<script setup>
+import { computed, ref, watch } from 'vue';
+import { Fieldtype } from '@statamic/cms';
+import { Button, Card, Input, Label, Select } from '@statamic/cms/ui';
 import StructuredDataObject from '../StructuredDataObject.vue';
 import ReplicatorFieldMapper from './ReplicatorFieldMapper.vue';
 import { formatSchemaJson } from '../../utils/schema';
 
-export default {
-    name: 'StructuredDataObjectBuilder',
-    mixins: [Fieldtype],
+const fieldtypeProps = defineProps(Fieldtype.props);
+const { value, meta, config } = fieldtypeProps;
 
-    components: {
-        'structured-data-object': StructuredDataObject,
-        'replicator-field-mapper': ReplicatorFieldMapper
-    },
+const emit = defineEmits(Fieldtype.emits);
+const { expose, update } = Fieldtype.use(emit, fieldtypeProps);
 
-    props: {
-        value: {
-            type: Object,
-            default: () => ({
-                fields: []
-            })
-        },
-        baseUrl: {
-            type: String,
-            default: ''
-        },
-        meta: {
-            type: Object,
-            default: () => ({})
-        }
-    },
+defineExpose(expose);
 
-    data() {
-        return {
-            schema: this.value || {
-                fields: []
-            },
-            showPreview: false,
-            collapsedSchemas: {}
-        }
-    },
+const createEmptySchema = () => {
+    return {
+        fields: [],
+    };
+};
 
-    computed: {
-        baseUrl() {
-            return this.config?.base_url || '';
-        },
+const initialSchema = value && typeof value === 'object' ? value : createEmptySchema();
 
-        preview() {
-            return formatSchemaJson(this.schema);
-        },
+const schema = ref(JSON.parse(JSON.stringify(initialSchema)));
+const showPreview = ref(false);
 
-        selectOptions() {
-            return [
-                { value: 'string', label: 'String' },
-                { value: 'numeric', label: 'Numeric' },
-                { value: 'array', label: 'Array' },
-                { value: 'object', label: 'Object' },
-                { value: 'replicator_object_array', label: 'Replicator Object Array' }
-            ];
-        },
-        replicatorFields() {
-            return this.meta?.replicator_fields || [];
-        }
-    },
-
-    watch: {
-        schema: {
-            deep: true,
-            handler(val) {
-                this.$emit('input', val);
-            }
-        }
-    },
-
-    methods: {
-        addField() {
-            this.schema.fields.push({
-                key: '',
-                type: 'string',
-                value: '',
-                values: [],
-                fields: []
-            });
-        },
-
-        removeField(index) {
-            this.schema.fields.splice(index, 1);
-        },
-
-        addArrayValue(field) {
-            if (!field.values) {
-                field.values = [];
-            }
-            field.values.push('');
-        },
-
-        removeArrayValue(field, index) {
-            field.values.splice(index, 1);
-        },
-
-        validateKey(field) {
-            field.key = field.key.replace(/[^a-zA-Z0-9@]/g, '');
-        },
-
-        handleTypeChange(field) {
-            if (field.type === 'object') {
-                field.value = {
-                    specialProps: {
-                        type: '',
-                        id: ''
-                    },
-                    fields: []
-                };
-            } else if (field.type === 'array') {
-                field.values = [];
-            } else if (field.type === 'replicator_object_array') {
-                field.config = {
-                    replicator_field: '',
-                    set: '',
-                    mappings: []
-                };
-                field.values = [];
-            } else {
-                field.value = '';
-            }
-        },
-
-        togglePreview() {
-            this.showPreview = !this.showPreview;
-        },
+const baseUrl = computed(() => {
+    if (!config || !config.base_url) {
+        return '';
     }
-}
+
+    return config.base_url;
+});
+
+const preview = computed(() => {
+    return formatSchemaJson(schema.value);
+});
+
+const selectOptions = computed(() => {
+    return [
+        { value: 'string', label: 'String' },
+        { value: 'numeric', label: 'Numeric' },
+        { value: 'array', label: 'Array' },
+        { value: 'object', label: 'Object' },
+        { value: 'replicator_object_array', label: 'Replicator Object Array' },
+    ];
+});
+
+const replicatorFields = computed(() => {
+    if (!meta || !meta.replicator_fields) {
+        return [];
+    }
+
+    return meta.replicator_fields;
+});
+
+watch(
+    () => value,
+    newValue => {
+        const normalized = newValue && typeof newValue === 'object' ? newValue : createEmptySchema();
+        const newJson = JSON.stringify(normalized);
+        const currentJson = JSON.stringify(schema.value);
+
+        if (newJson !== currentJson) {
+            schema.value = JSON.parse(newJson);
+        }
+    },
+    { deep: true },
+);
+
+watch(
+    schema,
+    newSchema => {
+        update(JSON.parse(JSON.stringify(newSchema)));
+    },
+    { deep: true },
+);
+
+const addField = () => {
+    schema.value.fields.push({
+        key: '',
+        type: 'string',
+        value: '',
+        values: [],
+        fields: [],
+    });
+};
+
+const removeField = fieldIndex => {
+    schema.value.fields.splice(fieldIndex, 1);
+};
+
+const addArrayValue = field => {
+    if (!field.values) {
+        // eslint-disable-next-line no-param-reassign
+        field.values = [];
+    }
+
+    field.values.push('');
+};
+
+const removeArrayValue = (field, valueIndex) => {
+    field.values.splice(valueIndex, 1);
+};
+
+const validateKey = field => {
+    field.key = field.key.replace(/[^a-zA-Z0-9@]/g, '');
+};
+
+const handleTypeChange = field => {
+    if (field.type === 'object') {
+        // eslint-disable-next-line no-param-reassign
+        field.value = {
+            specialProps: {
+                type: '',
+                id: '',
+            },
+            fields: [],
+        };
+
+        return;
+    }
+
+    if (field.type === 'array') {
+        // eslint-disable-next-line no-param-reassign
+        field.values = [];
+
+        return;
+    }
+
+    if (field.type === 'replicator_object_array') {
+        // eslint-disable-next-line no-param-reassign
+        field.config = {
+            replicator_field: '',
+            set: '',
+            mappings: [],
+        };
+        // eslint-disable-next-line no-param-reassign
+        field.values = [];
+
+        return;
+    }
+
+    // eslint-disable-next-line no-param-reassign
+    field.value = '';
+};
+
+const togglePreview = () => {
+    showPreview.value = !showPreview.value;
+};
 </script>
 
 <style>
+@reference "../../../css/statamic-structured-data.css";
+
 .structured-data-builder {
     max-width: 800px;
 }

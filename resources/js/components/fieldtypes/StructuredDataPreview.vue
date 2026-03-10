@@ -1,122 +1,168 @@
 <template>
-    <div class="structured-data-preview mt-4" v-if="hasTemplates">
+    <div
+        v-if="hasTemplates"
+        class="structured-data-preview mt-4"
+    >
         <div class="flex justify-end items-center mb-4">
             <div class="flex gap-2">
-                <button
-                    class="btn"
-                    @click="showPreview = !showPreview"
-                >
+                <Button @click="togglePreview">
                     {{ showPreview ? __('Hide Preview') : __('Show Preview') }}
-                </button>
-                <button
-                    class="btn"
-                    @click="isPrettyPrint = !isPrettyPrint"
+                </Button>
+                <Button
                     v-if="showPreview"
+                    @click="togglePrettyPrint"
                 >
                     {{ isPrettyPrint ? __('Raw') : __('Pretty') }}
-                </button>
+                </Button>
             </div>
         </div>
 
-        <div v-if="loading" class="text-center py-4">
-            <loading-graphic />
+        <div
+            v-if="loading"
+            class="text-center py-4 text-gray-500"
+        >
+            {{ __('Loading structured data preview...') }}
         </div>
 
-        <div v-else-if="error" class="text-red-500 py-4">
+        <div
+            v-else-if="error"
+            class="text-red-500 py-4"
+        >
             {{ error }}
         </div>
 
-        <div v-else-if="showPreview" class="space-y-4">
-            <div v-for="template in selectedTemplates" :key="template.id" class="border rounded p-4">
+        <div
+            v-else-if="showPreview"
+            class="space-y-4"
+        >
+            <div
+                v-for="template in selectedTemplates"
+                :key="template.id"
+                class="border rounded p-4"
+            >
                 <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-bold">{{ template.title }}</h4>
-                    <button
-                        class="btn-close"
-                        @click="template.isCollapsed = !template.isCollapsed"
-                    >
+                    <h4 class="font-bold">
+                        {{ template.title }}
+                    </h4>
+                    <Button @click="toggleTemplateCollapse(template)">
                         {{ template.isCollapsed ? '+' : '-' }}
-                    </button>
+                    </Button>
                 </div>
 
                 <div v-show="!template.isCollapsed">
-                    <pre class="structured-data-preview-code p-4 rounded overflow-auto">{{ JSON.stringify(template.structuredData, null, isPrettyPrint ? 2 : 0) }}</pre>
+                    <pre class="structured-data-preview-code p-4 rounded overflow-auto">
+                        {{ JSON.stringify(template.structuredData, null, isPrettyPrint ? 2 : 0) }}
+                    </pre>
                 </div>
             </div>
         </div>
     </div>
 </template>
 
-<script>
-export default {
-    mixins: [Fieldtype],
+<script setup>
+import { ref, computed, watch, getCurrentInstance } from 'vue';
+import { Fieldtype } from '@statamic/cms';
+import { Button, injectPublishContext } from '@statamic/cms/ui';
 
-    data() {
-        return {
-            selectedTemplates: [],
-            showPreview: true,
-            isPrettyPrint: true,
-            loading: false,
-            error: null
-        }
-    },
+const fieldtypeProps = defineProps(Fieldtype.props);
+const { value, meta, config } = fieldtypeProps;
 
-    computed: {
-        hasTemplates() {
-            return this.templateIds && this.templateIds.length > 0;
-        },
+const emit = defineEmits(Fieldtype.emits);
+const { expose } = Fieldtype.use(emit, fieldtypeProps);
 
-        templateIds() {
-            return this.$store.state.publish.base.values?.structured_data_templates || [];
-        },
+defineExpose(expose);
 
-        currentEntryId() {
-            return this.$store.state.publish.base.values.id;
-        }
-    },
+const { values } = injectPublishContext();
+const { proxy } = getCurrentInstance();
 
-    watch: {
-        templateIds: {
-            immediate: true,
-            handler(newValue) {
-                if (!newValue || !newValue.length) {
-                    this.selectedTemplates = [];
-                    return;
-                }
-                this.fetchTemplateData(newValue);
-            }
-        }
-    },
+const axiosInstance = proxy?.$axios ?? window?.axios ?? window?.Statamic?.$axios;
 
-    methods: {
-        async fetchTemplateData(templateIds) {
-            this.loading = true;
-            this.error = null;
+const selectedTemplates = ref([]);
+const showPreview = ref(true);
+const isPrettyPrint = ref(true);
+const loading = ref(false);
+const error = ref(null);
 
-            try {
-                const response = await this.$axios.get(`/cp/justbetter/structured-data`, {
-                    params: {
-                        ids: templateIds,
-                        entry_id: this.currentEntryId
-                    }
-                });
+const templateIds = computed(() => {
+    const publishValues = values.value || {};
 
-                this.selectedTemplates = response.data.map(template => ({
-                    ...template,
-                    isCollapsed: false
-                }));
-            } catch (error) {
-                console.error('Error fetching template data:', error);
-                this.error = 'Failed to load template data. Please try again.';
-            } finally {
-                this.loading = false;
-            }
-        },
+    return publishValues.structured_data_templates || [];
+});
 
+const currentEntryId = computed(() => {
+    const publishValues = values.value || {};
+
+    return publishValues.id;
+});
+
+const hasTemplates = computed(() => {
+    return templateIds.value && templateIds.value.length > 0;
+});
+
+const togglePreview = () => {
+    showPreview.value = !showPreview.value;
+};
+
+const togglePrettyPrint = () => {
+    isPrettyPrint.value = !isPrettyPrint.value;
+};
+
+const toggleTemplateCollapse = template => {
+    template.isCollapsed = !template.isCollapsed;
+};
+
+const fetchTemplateData = async templateIdsToFetch => {
+    if (!axiosInstance) {
+        error.value = 'Failed to load template data. Please try again.';
+
+        // eslint-disable-next-line no-console
+        console.error('Axios instance is not available for StructuredDataPreview.');
+
+        return;
     }
-}
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+        const response = await axiosInstance.get('/cp/justbetter/structured-data', {
+            params: {
+                ids: templateIdsToFetch,
+                entry_id: currentEntryId.value,
+            },
+        });
+
+        selectedTemplates.value = response.data.map(template => ({
+            ...template,
+            isCollapsed: false,
+        }));
+    } catch (fetchError) {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching template data:', fetchError);
+        error.value = 'Failed to load template data. Please try again.';
+    } finally {
+        loading.value = false;
+    }
+};
+
+watch(
+    templateIds,
+    newTemplateIds => {
+        if (!newTemplateIds || !newTemplateIds.length) {
+            selectedTemplates.value = [];
+
+            return;
+        }
+
+        fetchTemplateData(newTemplateIds);
+    },
+    { immediate: true },
+);
 </script>
 
 <style>
+@reference "../../../css/statamic-structured-data.css";
+
 .structured-data-preview pre {
     max-height: 400px;
 }

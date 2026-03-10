@@ -1,111 +1,196 @@
 <template>
-    <div class="variables-panel">
-        <div @click="toggleVariables" class="p-2 border-b flex justify-between items-center bg-gray-50 cursor-pointer">
-            <h3 class="font-bold">{{ __('Available Variables') }}</h3>
-            <div class="text-gray-500 hover:text-gray-700 rotate-180">
-                <div :class="['chevron', { 'chevron-up': !variablesCollapsed }]"></div>
+    <Card class="variables-panel p-0!">
+        <div
+            class="flex items-center justify-between px-3 py-2 border-b cursor-pointer"
+            :class="{ 'border-b-0': variablesCollapsed }"
+            @click="toggleVariables"
+        >
+            <div class="flex items-center gap-2">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                    {{ __('Available Variables') }}
+                </h3>
             </div>
+            <Button
+                variant="ghost"
+                size="xs"
+                class="flex items-center gap-1 text-xs text-gray-500"
+                :aria-expanded="!variablesCollapsed"
+            >
+                <div :class="['chevron', { 'chevron-up': !variablesCollapsed }]"></div>
+            </Button>
         </div>
-        <div v-if="!variablesCollapsed" class="structured-data-variables-list py-4">
-            <div v-if="!hasVariables" class="text-gray-500 text-sm">
+
+        <div
+            v-if="!variablesCollapsed"
+            class="structured-data-variables-list max-h-80 overflow-y-auto px-3 py-3"
+        >
+            <div
+                v-if="!hasVariables"
+                class="text-xs text-gray-500"
+            >
                 {{ __('No variables available for this collection.') }}
             </div>
-            <div v-else class="grid grid-cols-2">
-                <div v-for="(variablesType, section) in variables" :key="variablesType">
-                    <div v-if="variablesType.length" class="mb-4">
-                        <h4 class="font-semibold mb-2 text-gray-700 capitalize" v-text="section"></h4>
+            <div
+                v-else
+                class="grid grid-cols-1 gap-3"
+            >
+                <div
+                    v-for="(variablesType, section) in variables"
+                    :key="section"
+                >
+                    <div v-if="variablesType.length">
+                        <Label
+                            class="mb-1.5 text-[0.65rem] font-semibold uppercase tracking-wide text-gray-500"
+                            :text="section"
+                        />
+
                         <div
-                            v-for="variable in variablesType" :key="variable.name"
-                            class="variable-item p-1 rounded"
+                            v-for="variable in variablesType"
+                            :key="variable.name"
+                            class="mb-1"
                         >
                             <div v-if="variable.children && variable.children.length">
-                                <div class="mb-2 cursor-pointer flex justify-between items-center text-sm" @click="toggleChildren(variable.name)">
-                                    <div>{{ variable.description }}</div>
-                                    <div>{{ showChildren[variable.name] ? '▼' : '►' }}</div>
-                                </div>
-                                <div v-if="showChildren[variable.name]">
-                                    <div
-                                        v-for="childVariable in variable.children" :key="childVariable.name"
-                                        class="variable-item p-1 cursor-pointer rounded"
-                                        @click="copyVariable('{{ ' + childVariable.name + ' }}', $event)"
-                                    >
-                                        <div class="text-sm">{{ childVariable.description }}</div>
-                                        <div class="text-xs text-gray-500">{{ childVariable.name }}</div>
+                                <Label
+                                    @click.stop="toggleChildren(variable.name)"
+                                    class="cursor-pointer"
+                                >
+                                    <div class="flex flex-col justify-between text-left">
+                                        <span class="font-bold">
+                                            {{ variable.description }}
+                                        </span>
+                                        <span class="font-medium text-xs">
+                                            {{ showChildren[variable.name] ? '▼' : '►' }}
+                                        </span>
                                     </div>
+                                </Label>
+
+                                <div
+                                    v-if="showChildren[variable.name]"
+                                    class="mt-1 space-y-1"
+                                >
+                                    <Label
+                                        v-for="childVariable in variable.children"
+                                        :key="childVariable.name"
+                                        @click.stop="copyVariable('{{ ' + childVariable.name + ' }}', $event)"
+                                        class="cursor-pointer"
+                                    >
+                                        <div class="flex flex-col items-start">
+                                            <span class="font-bold">
+                                                {{ childVariable.description }}
+                                            </span>
+                                            <span class="font-medium">
+                                                {{ childVariable.name }}
+                                            </span>
+                                        </div>
+                                    </Label>
                                 </div>
                             </div>
-                            <div v-else @click="copyVariable('{{ ' + variable.name + ' }}', $event)" class="variable-item cursor-pointer">
-                                <div class="text-sm">{{ variable.description }}</div>
-                                <div class="text-xs text-gray-500">{{ variable.name }}</div>
+                            <div v-else>
+                                <Label
+                                    @click.stop="copyVariable('{{ ' + variable.name + ' }}', $event)"
+                                    class="cursor-pointer"
+                                >
+                                    <div class="flex flex-col items-start">
+                                        <span class="font-bold">
+                                            {{ variable.description }}
+                                        </span>
+                                        <span class="font-normal">
+                                            {{ variable.name }}
+                                        </span>
+                                    </div>
+                                </Label>
                             </div>
                         </div>
+                        <Separator />
                     </div>
                 </div>
             </div>
         </div>
-        <div v-show="tooltipVisible" class="tooltip" :style="tooltipStyle">{{ __('Copied!') }}</div>
-    </div>
+
+        <div
+            v-show="tooltipVisible"
+            class="tooltip"
+            :style="tooltipStyle"
+        >
+            {{ __('Copied!') }}
+        </div>
+    </Card>
 </template>
 
-<script>
-export default {
-    mixins: [Fieldtype],
+<script setup>
+import { computed, reactive, ref } from 'vue';
+import { Fieldtype } from '@statamic/cms';
+import { Button, Card, Label, Separator } from '@statamic/cms/ui';
 
-    data() {
+const fieldtypeProps = defineProps(Fieldtype.props);
+const { meta } = fieldtypeProps;
+
+const emit = defineEmits(Fieldtype.emits);
+const { expose } = Fieldtype.use(emit, fieldtypeProps);
+
+defineExpose(expose);
+
+const showChildren = reactive({});
+const variablesCollapsed = ref(false);
+const tooltipVisible = ref(false);
+const tooltipStyle = reactive({
+    position: 'absolute',
+    top: '0',
+    left: '0',
+});
+
+const variables = computed(() => {
+    if (!meta || !meta.variables) {
         return {
-            showChildren: {},
-            variablesCollapsed: false,
-            tooltipVisible: false,
-            tooltipStyle: {
-                position: 'absolute',
-                top: '0',
-                left: '0',
-            }
-        }
-    },
-
-    computed: {
-        variables() {
-            return this.meta?.variables || {
-                config: {},
-                entry: [],
-                term: []
-            };
-        },
-
-        hasVariables() {
-            return Object.keys(this.variables).length > 0;
-        }
-    },
-
-    methods: {
-        toggleVariables() {
-            this.variablesCollapsed = !this.variablesCollapsed;
-        },
-
-        toggleChildren(variableName) {
-            this.$set(this.showChildren, variableName, !this.showChildren[variableName]);
-        },
-
-        copyVariable(variable, event) {
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(variable).then(() => {
-                    console.log('Variable copied to clipboard:', variable);
-                    this.tooltipVisible = true;
-                    this.tooltipStyle.top = `${event.layerY}px`;
-                    this.tooltipStyle.left = `${event.layerX}px`;
-                    setTimeout(() => {
-                        this.tooltipVisible = false;
-                    }, 2000);
-                }).catch(err => {
-                    console.error('Could not copy text: ', err);
-                });
-            } else {
-                console.warn('Clipboard API not supported or not running in a secure context.');
-            }
-        }
+            config: {},
+            entry: [],
+            term: [],
+        };
     }
-}
+
+    return meta.variables;
+});
+
+const hasVariables = computed(() => {
+    return Object.keys(variables.value).length > 0;
+});
+
+const toggleVariables = () => {
+    variablesCollapsed.value = !variablesCollapsed.value;
+};
+
+const toggleChildren = variableName => {
+    const currentState = showChildren[variableName] === true;
+
+    showChildren[variableName] = !currentState;
+};
+
+const copyVariable = (variable, event) => {
+    if (!navigator.clipboard) {
+        // eslint-disable-next-line no-console
+        console.warn('Clipboard API not supported or not running in a secure context.');
+
+        return;
+    }
+
+    navigator.clipboard
+        .writeText(variable)
+        .then(() => {
+            // eslint-disable-next-line no-console
+            console.log('Variable copied to clipboard:', variable);
+            tooltipVisible.value = true;
+            tooltipStyle.top = `${event.layerY}px`;
+            tooltipStyle.left = `${event.layerX}px`;
+
+            window.setTimeout(() => {
+                tooltipVisible.value = false;
+            }, 2000);
+        })
+        .catch(copyError => {
+            // eslint-disable-next-line no-console
+            console.error('Could not copy text: ', copyError);
+        });
+};
 </script>
 
 <style scoped>
@@ -114,7 +199,7 @@ export default {
     transition: height 0.2s ease-in-out;
 }
 .variable-item {
-    transition: background-color 0.2s ease-in-out;
+    transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 .chevron {
     width: 10px;

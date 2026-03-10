@@ -12,13 +12,23 @@ use Statamic\Taxonomies\Taxonomy;
 class ReplicatorFieldService
 {
     /** @return array<int, array<string, mixed>> */
-    public function getReplicatorFields(EntryContract $dataTemplate): array
+    public function getReplicatorFields(EntryContract|Collection|Taxonomy $dataTemplate): array
     {
-        /** @var Entry $dataTemplate */
         /** @var ?Collection $collection */
-        $collection = $dataTemplate->use_for_collection; /** @phpstan-ignore-line */
         /** @var ?Taxonomy $taxonomy */
-        $taxonomy = $dataTemplate->use_for_taxonomy; /** @phpstan-ignore-line */
+        $collection = null;
+        $taxonomy = null;
+
+        if ($dataTemplate instanceof Collection) {
+            $collection = $dataTemplate;
+        } elseif ($dataTemplate instanceof Taxonomy) {
+            $taxonomy = $dataTemplate;
+        } else {
+            /** @var Entry $dataTemplate */
+            $collection = $dataTemplate->use_for_collection ?? null; /** @phpstan-ignore-line */
+            $taxonomy = $dataTemplate->use_for_taxonomy ?? null; /** @phpstan-ignore-line */
+        }
+
         if (! $collection && ! $taxonomy) {
             return [];
         }

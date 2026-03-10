@@ -74,7 +74,7 @@ class AvailableVariablesFieldtype extends Fieldtype
         /** @var ?Entry $dataTemplate */
         $dataTemplate = $this->field->parent();
         /** @var ?Collection $collection */
-        $collection = $dataTemplate?->get('use_for_collection') ?? $dataTemplate?->use_for_collection; /** @phpstan-ignore-line */
+        $collection = $dataTemplate?->use_for_collection; /** @phpstan-ignore-line */
         if (! $collection instanceof Collection) {
             return [];
         }
@@ -116,7 +116,7 @@ class AvailableVariablesFieldtype extends Fieldtype
         /** @var ?Entry $dataTemplate */
         $dataTemplate = $this->field->parent();
         /** @var ?Taxonomy $taxonomy */
-        $taxonomy = $dataTemplate?->get('use_for_taxonomy') ?? $dataTemplate?->use_for_taxonomy; /** @phpstan-ignore-line */
+        $taxonomy = $dataTemplate?->use_for_taxonomy; /** @phpstan-ignore-line */
         if (! $taxonomy instanceof Taxonomy) {
             return [];
         }

@@ -1,55 +1,11 @@
+@import "@statamic/cms/tailwind.css";
+
 .structured-data-builder,
 .structured-data-object {
     @apply max-w-full;
-}
-
-.structured-data-builder .card,
-.structured-data-object .card {
-    @apply bg-white rounded shadow-sm;
-}
-
-.structured-data-builder .input-text,
-.structured-data-object .input-text {
-    @apply w-full px-2 py-1 border rounded;
-}
-
-.structured-data-builder .select-input,
-.structured-data-object .select-input {
-    @apply w-full px-2 py-1 border rounded;
-}
-
-.structured-data-builder .btn,
-.structured-data-object .btn {
-    @apply bg-gray-200 px-3 py-1 rounded hover:bg-gray-300;
-}
-
-.structured-data-builder .btn-close,
-.structured-data-object .btn-close {
-    @apply px-2 py-1 text-gray-500 hover:text-gray-700;
 }
 
 .structured-data-builder pre,
 .structured-data-object pre {
     @apply font-mono text-sm;
 }
-
-.structured-data-preview-code {
-    @apply bg-gray-100 dark:bg-gray-800;
-}
-
-.structured-data-schema {
-    @apply bg-white dark:bg-transparent;
-}
-
-.structured-data-schema-field-header {
-    @apply bg-gray-100 dark:bg-transparent;
-}
-
-.structured-data-variables-list {
-    @apply bg-white dark:bg-transparent;
-}
-
-.structured-data-variables-list .variable-item {
-    @apply hover:bg-gray-100 dark:hover:bg-gray-800;
-}
-

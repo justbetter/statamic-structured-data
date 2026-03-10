@@ -13,7 +13,7 @@
     "require": {
         "php": "^8.4|^8.5",
         "laravel/framework": "^12.0",
-        "statamic/cms": "^5.0"
+        "statamic/cms": "^6.0"
     },
     "require-dev": {
         "larastan/larastan": "^3.4",
