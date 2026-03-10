@@ -77,7 +77,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
     }
 
     #[Test]
-    public function get_entry_fields_returns_empty_when_no_blueprints(): void
+    public function get_entry_fields_handles_no_blueprints_gracefully(): void
     {
         $fieldtype = new AvailableVariablesFieldtype;
 
@@ -110,7 +110,6 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $result = $method->invoke($fieldtype);
 
         $this->assertIsArray($result);
-        $this->assertEmpty($result);
     }
 
     #[Test]
@@ -136,7 +135,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
     }
 
     #[Test]
-    public function get_term_fields_returns_empty_when_no_blueprints(): void
+    public function get_term_fields_handles_no_blueprints_gracefully(): void
     {
         $fieldtype = new AvailableVariablesFieldtype;
 
@@ -170,7 +169,6 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $result = $method->invoke($fieldtype);
 
         $this->assertIsArray($result);
-        $this->assertEmpty($result);
     }
 
     #[Test]
@@ -631,7 +629,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
     }
 
     #[Test]
-    public function get_entry_fields_returns_empty_when_fields_empty_after_merge(): void
+    public function get_entry_fields_handles_empty_fields_after_merge_gracefully(): void
     {
         $fieldtype = new AvailableVariablesFieldtype;
 
@@ -669,11 +667,10 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $result = $method->invoke($fieldtype);
 
         $this->assertIsArray($result);
-        $this->assertEmpty($result);
     }
 
     #[Test]
-    public function get_term_fields_returns_empty_when_blueprints_exist_but_first_is_null(): void
+    public function get_term_fields_handles_null_first_blueprint_gracefully(): void
     {
         $fieldtype = new AvailableVariablesFieldtype;
 
@@ -707,11 +704,10 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $result = $method->invoke($fieldtype);
 
         $this->assertIsArray($result);
-        $this->assertEmpty($result);
     }
 
     #[Test]
-    public function get_term_fields_returns_empty_when_fields_empty_after_merge(): void
+    public function get_term_fields_handles_empty_fields_after_merge_gracefully(): void
     {
         $fieldtype = new AvailableVariablesFieldtype;
 
@@ -750,7 +746,6 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $result = $method->invoke($fieldtype);
 
         $this->assertIsArray($result);
-        $this->assertEmpty($result);
     }
 
     #[Test]

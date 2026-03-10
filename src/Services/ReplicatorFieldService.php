@@ -15,8 +15,8 @@ class ReplicatorFieldService
     public function getReplicatorFields(EntryContract|Collection|Taxonomy $dataTemplate): array
     {
         /** @var ?Collection $collection */
-        /** @var ?Taxonomy $taxonomy */
         $collection = null;
+        /** @var ?Taxonomy $taxonomy */
         $taxonomy = null;
 
         if ($dataTemplate instanceof Collection) {
@@ -25,8 +25,8 @@ class ReplicatorFieldService
             $taxonomy = $dataTemplate;
         } else {
             /** @var Entry $dataTemplate */
-            $collection = $dataTemplate->use_for_collection ?? null; /** @phpstan-ignore-line */
-            $taxonomy = $dataTemplate->use_for_taxonomy ?? null; /** @phpstan-ignore-line */
+            $collection = $dataTemplate->use_for_collection ?? null;
+            $taxonomy = $dataTemplate->use_for_taxonomy ?? null;
         }
 
         if (! $collection && ! $taxonomy) {
@@ -34,16 +34,18 @@ class ReplicatorFieldService
         }
 
         if ($collection) {
-            $blueprints = $collection->entryBlueprints() ?? false;
+            /** @var SupportCollection<int, Blueprint>|array<int, Blueprint>|null $entryBlueprints */
+            $entryBlueprints = $collection->entryBlueprints();
+            $blueprints = collect($entryBlueprints)->filter();
         } else {
-            $blueprints = $taxonomy->termBlueprints() ?? false;
+            /** @var SupportCollection<int, Blueprint>|array<int, Blueprint>|null $termBlueprints */
+            $termBlueprints = $taxonomy->termBlueprints();
+            $blueprints = collect($termBlueprints)->filter();
         }
 
-        // @codeCoverageIgnoreStart
-        if (! $blueprints || ! $blueprints->first()) {
+        if ($blueprints->isEmpty()) {
             return [];
         }
-        // @codeCoverageIgnoreEnd
 
         $fieldsArray = $this->extractFieldsFromBlueprints($blueprints);
 

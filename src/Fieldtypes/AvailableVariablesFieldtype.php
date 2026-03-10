@@ -79,11 +79,9 @@ class AvailableVariablesFieldtype extends Fieldtype
             return [];
         }
 
-        $blueprints = $collection->entryBlueprints();
-
-        if (! $blueprints || ! $blueprints->first()) {
-            return [];
-        }
+        /** @var \Illuminate\Support\Collection<int, \Statamic\Fields\Blueprint>|array<int, \Statamic\Fields\Blueprint>|null $entryBlueprints */
+        $entryBlueprints = $collection->entryBlueprints();
+        $blueprints = collect($entryBlueprints)->filter();
 
         /** @var array<int, array<string, mixed>> $fieldsArray */
         $fieldsArray = $blueprints->reduce(function (array $carry, $blueprint): array {
@@ -94,18 +92,14 @@ class AvailableVariablesFieldtype extends Fieldtype
 
         $fields = collect($fieldsArray);
 
-        if ($fields->isEmpty()) {
-            return [];
-        }
-
-        $baseFields = [['name' => 'absolute_url', 'description' => 'Full URL']];
-
         $collectionFields = $fields->map(function (array $field) {
             return $this->setFieldData($field);
         })
             ->filter()
             ->values()
             ->all();
+
+        $baseFields = [['name' => 'absolute_url', 'description' => 'Full URL']];
 
         return array_merge($baseFields, $collectionFields);
     }
@@ -121,11 +115,9 @@ class AvailableVariablesFieldtype extends Fieldtype
             return [];
         }
 
-        $blueprints = $taxonomy->termBlueprints();
-
-        if (! $blueprints || ! $blueprints->first()) {
-            return [];
-        }
+        /** @var \Illuminate\Support\Collection<int, \Statamic\Fields\Blueprint>|array<int, \Statamic\Fields\Blueprint>|null $termBlueprints */
+        $termBlueprints = $taxonomy->termBlueprints();
+        $blueprints = collect($termBlueprints)->filter();
 
         /** @var array<int, array<string, mixed>> $fieldsArray */
         $fieldsArray = $blueprints->reduce(function (array $carry, $blueprint): array {
@@ -136,18 +128,14 @@ class AvailableVariablesFieldtype extends Fieldtype
 
         $fields = collect($fieldsArray);
 
-        if ($fields->isEmpty()) {
-            return [];
-        }
-
-        $baseFields = [['name' => 'absolute_url', 'description' => 'Full URL']];
-
         $collectionFields = $fields->map(function (array $field) {
             return $this->setFieldData($field);
         })
             ->filter()
             ->values()
             ->all();
+
+        $baseFields = [['name' => 'absolute_url', 'description' => 'Full URL']];
 
         return array_merge($baseFields, $collectionFields);
     }
