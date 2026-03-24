@@ -167,6 +167,8 @@ export default {
         Stack,
     },
 
+    emits: ['close', 'preset-selected'],
+
     props: {
         visible: {
             type: Boolean,
