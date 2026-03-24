@@ -13,6 +13,8 @@ use Statamic\Entries\Entry;
 use Statamic\Facades\Blueprint as BlueprintFacade;
 use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
+use Statamic\Facades\Term;
+use Statamic\Sites\Site;
 use Statamic\Taxonomies\LocalizedTerm;
 use Statamic\Taxonomies\Taxonomy;
 
@@ -22,7 +24,7 @@ class StructuredDataControllerTest extends TestCase
     public function parse_antlers_in_data_calls_parser(): void
     {
         $parser = $this->mock(StructuredDataParser::class, function (MockInterface $mock): void {
-            $mock->shouldReceive('parse')->with('{{ title }}', \Mockery::type(Entry::class))->andReturn('Parsed Title');
+            $mock->shouldReceive('parse')->with('{{ title }}', Mockery::type(Entry::class))->andReturn('Parsed Title');
         });
 
         /** @var StructuredDataParser $parser */
@@ -56,7 +58,7 @@ class StructuredDataControllerTest extends TestCase
         $entryMock = Mockery::mock($entry)->makePartial();
         $entryMock->shouldReceive('toAugmentedArray')->andReturn(['title' => 'Test Entry']);
 
-        $site = $this->mock(\Statamic\Sites\Site::class, function ($mock) {
+        $site = $this->mock(Site::class, function ($mock) {
             $mock->shouldReceive('toAugmentedArray')->andReturn(['handle' => 'default', 'name' => 'Default']);
         });
 
@@ -87,7 +89,7 @@ class StructuredDataControllerTest extends TestCase
         ]);
 
         \Statamic\Facades\Entry::shouldReceive('find')->with('nonexistent')->andReturn(null);
-        \Statamic\Facades\Term::shouldReceive('find')->with('nonexistent')->andReturn(null);
+        Term::shouldReceive('find')->with('nonexistent')->andReturn(null);
 
         $response = $controller->getTemplates($request);
 
@@ -181,7 +183,7 @@ class StructuredDataControllerTest extends TestCase
         ]);
 
         \Statamic\Facades\Entry::shouldReceive('find')->with('test-term')->andReturn(null);
-        \Statamic\Facades\Term::shouldReceive('find')->with('test-term')->andReturn($contentTerm);
+        Term::shouldReceive('find')->with('test-term')->andReturn($contentTerm);
         \Statamic\Facades\Entry::shouldReceive('find')->with('template-123')->andReturn($templateEntry);
 
         $response = $controller->getTemplates($request);

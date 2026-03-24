@@ -24,23 +24,39 @@ export function formatOutput(schema) {
             } else if (field.type === 'object_array' && field.values) {
                 result[field.key] = field.values.map(value => formatOutput(value));
             } else if (field.type === 'replicator_object_array' && field.config) {
-                const sample = {};
-                const mappings = Array.isArray(field.config.mappings) ? field.config.mappings : [];
-                mappings.forEach(mapping => {
-                    if (!mapping.key) {
-                        return;
-                    }
-                    if (mapping.mode === 'static') {
-                        sample[mapping.key] = mapping.static ?? '';
-                    } else if (mapping.mode === 'field') {
-                        sample[mapping.key] = `{{ ${mapping.field || 'field'} }}`;
-                    } else if (mapping.mode === 'nested_replicator') {
-                        sample[mapping.key] = [{}];
-                    } else {
-                        sample[mapping.key] = '';
-                    }
-                });
-                result[field.key] = [sample];
+                const config = field.config || {};
+
+                if (config.flat === true && config.flat_key_field && config.flat_value_field) {
+                    // In flat mode, each replicator row becomes a key/value pair.
+                    // For preview purposes, show an example object using the configured fields.
+                    const exampleKey = `{{ ${config.flat_key_field} }}`;
+                    const exampleValue = `{{ ${config.flat_value_field} }}`;
+                    result[field.key] = [
+                        {
+                            [exampleKey]: exampleValue,
+                        },
+                    ];
+                } else {
+                    const sample = {};
+                    const mappings = Array.isArray(config.mappings) ? config.mappings : [];
+
+                    mappings.forEach(mapping => {
+                        if (!mapping.key) {
+                            return;
+                        }
+                        if (mapping.mode === 'static') {
+                            sample[mapping.key] = mapping.static ?? '';
+                        } else if (mapping.mode === 'field') {
+                            sample[mapping.key] = `{{ ${mapping.field || 'field'} }}`;
+                        } else if (mapping.mode === 'nested_replicator') {
+                            sample[mapping.key] = [{}];
+                        } else {
+                            sample[mapping.key] = '';
+                        }
+                    });
+
+                    result[field.key] = [sample];
+                }
             } else {
                 result[field.key] = field.value ?? null;
             }

@@ -1,66 +1,72 @@
 <template>
-    <div class="structured-data-object">
+    <Card class="structured-data-object">
         <div class="mb-4">
             <div class="mb-2">
-                <label class="block mb-1">@type</label>
-                <input
-                    type="text"
+                <Label class="mb-1.5">@type</Label>
+                <Input
                     v-model="objectData.specialProps.type"
-                    class="input-text"
                     placeholder="e.g. Organization, Product, BlogPosting"
                 />
             </div>
 
             <div class="mb-2">
-                <label class="block mb-1">@id</label>
+                <Label class="mb-1.5">@id</Label>
                 <div class="flex">
-                    <input type="text" v-model="objectData.specialProps.id" class="input-text flex-1" :placeholder="suggestedId" />
-                    <button class="btn ml-2" @click="useDefaultId">{{ __('Use Default') }}</button>
+                    <Input v-model="objectData.specialProps.id" class="flex-1" :placeholder="suggestedId" />
+                    <Button class="ml-2" @click="useDefaultId">{{ __('Use Default') }}</Button>
                 </div>
             </div>
         </div>
 
         <div>
             <div v-for="(field, index) in objectData.fields" :key="index" class="mb-4 border-b pb-4">
-                    <div class="flex items-start gap-2">
+                <div class="flex items-start gap-2">
                     <div class="flex-1">
-                        <label class="block mb-1">{{ __('Key') }}</label>
-                        <input
-                            type="text"
+                        <Label class="mb-1.5">{{ __('Key') }}</Label>
+                        <Input
                             v-model="field.key"
-                            class="input-text"
-                            @input="validateKey(field)"
+                            @update:model-value="() => validateKey(field)"
                         />
                     </div>
 
                     <div class="w-32">
-                        <label class="block mb-1">Type</label>
-                        <v-select
+                        <Label class="mb-1.5">Type</Label>
+                        <Select
                             v-model="field.type"
                             :options="selectOptions"
-                            @input="(value) => { field.type = value.value; handleTypeChange(field); }"
+                            @update:model-value="() => handleTypeChange(field)"
                         />
                     </div>
 
-
-                    <button class="btn-close mt-6" @click="removeField(index)">&times;</button>
+                    <Button
+                        variant="danger"
+                        class="mt-6"
+                        @click="requestRemoveField(index)"
+                    >
+                        <Icon name="x" />
+                    </Button>
                 </div>
 
                 <div class="mt-2">
                     <div v-if="field.type === 'string'">
-                        <input type="text" v-model="field.value" class="input-text w-full" />
+                        <Input v-model="field.value" />
                     </div>
 
                     <div v-else-if="field.type === 'numeric'">
-                        <input type="number" v-model="field.value" class="input-text w-full" />
+                        <Input type="number" v-model="field.value" />
                     </div>
 
                     <div v-else-if="field.type === 'array'" class="space-y-2">
                         <div v-for="(value, valueIndex) in field.values" :key="valueIndex" class="flex gap-2">
-                            <input type="text" v-model="field.values[valueIndex]" class="input-text flex-1" />
-                            <button class="btn-close" @click="removeArrayValue(field, valueIndex)">&times;</button>
+                            <Input v-model="field.values[valueIndex]" />
+                            <Button
+                                variant="danger"
+                                @click="requestRemoveArrayValue(field, valueIndex)"
+                            >
+                                <Icon name="x" />
+                            </Button>
                         </div>
-                        <button class="btn" @click="addArrayValue(field)">{{ __('Add Value') }}</button>
+                        <Button @click="addArrayValue(field)" variant="primary">{{ __('Add Value') }}</Button>
                     </div>
 
                     <div v-else-if="field.type === 'object'" class="mt-2 border rounded p-4">
@@ -81,22 +87,44 @@
                 </div>
             </div>
 
-            <button class="btn" @click="addField">{{ __('Add Property') }}</button>
+            <Button @click="addField" variant="primary">{{ __('Add Property') }}</Button>
         </div>
-    </div>
+
+        <ConfirmationModal
+            v-if="confirmRemoveFieldOpen"
+            v-model:open="confirmRemoveFieldOpen"
+            :body-text="__('Are you sure you want to remove this field? This action cannot be undone.')"
+            @confirm="confirmRemoveField"
+        />
+
+        <ConfirmationModal
+            v-if="confirmRemoveArrayValueOpen"
+            v-model:open="confirmRemoveArrayValueOpen"
+            :body-text="__('Are you sure you want to remove this value? This action cannot be undone.')"
+            @confirm="confirmRemoveArrayValue"
+        />
+    </Card>
 </template>
 
 <script>
+import { Button, Card, ConfirmationModal, Icon, Input, Label, Select } from '@statamic/cms/ui';
 import ReplicatorFieldMapper from './fieldtypes/ReplicatorFieldMapper.vue';
 
 export default {
     name: 'StructuredDataObject',
     components: {
         'replicator-field-mapper': ReplicatorFieldMapper,
+        Button,
+        Card,
+        ConfirmationModal,
+        Icon,
+        Input,
+        Label,
+        Select,
     },
 
     props: {
-        value: {
+        modelValue: {
             type: Object,
             default: () => ({
                 specialProps: {
@@ -122,8 +150,15 @@ export default {
 
     data() {
         return {
-            objectData: JSON.parse(JSON.stringify(this.value))
-        }
+            objectData: JSON.parse(JSON.stringify(this.modelValue)),
+            confirmRemoveFieldOpen: false,
+            fieldIndexToRemove: null,
+            confirmRemoveArrayValueOpen: false,
+            arrayRemoveContext: {
+                field: null,
+                valueIndex: null,
+            },
+        };
     },
 
     computed: {
@@ -151,9 +186,9 @@ export default {
             deep: true,
             handler(val) {
                 const newVal = JSON.stringify(val);
-                const oldVal = JSON.stringify(this.value);
+                const oldVal = JSON.stringify(this.modelValue);
                 if (newVal !== oldVal) {
-                    this.$emit('input', JSON.parse(JSON.stringify(val)));
+                    this.$emit('update:modelValue', JSON.parse(JSON.stringify(val)));
                 }
             }
         },
@@ -164,7 +199,7 @@ export default {
             }
         },
 
-        value: {
+        modelValue: {
             deep: true,
             handler(val) {
                 const newVal = JSON.stringify(val);
@@ -232,12 +267,50 @@ export default {
             } else {
                 field.value = '';
             }
+        },
+
+        requestRemoveField(index) {
+            this.fieldIndexToRemove = index;
+            this.confirmRemoveFieldOpen = true;
+        },
+
+        confirmRemoveField() {
+            if (this.fieldIndexToRemove === null) {
+                return;
+            }
+
+            this.removeField(this.fieldIndexToRemove);
+            this.fieldIndexToRemove = null;
+        },
+
+        requestRemoveArrayValue(field, valueIndex) {
+            this.arrayRemoveContext = {
+                field,
+                valueIndex,
+            };
+            this.confirmRemoveArrayValueOpen = true;
+        },
+
+        confirmRemoveArrayValue() {
+            const context = this.arrayRemoveContext;
+
+            if (!context || !context.field || context.valueIndex === null) {
+                return;
+            }
+
+            this.removeArrayValue(context.field, context.valueIndex);
+            this.arrayRemoveContext = {
+                field: null,
+                valueIndex: null,
+            };
         }
     }
 }
 </script>
 
 <style>
+@reference "../../css/statamic-structured-data.css";
+
 .structured-data-object {
     max-width: 800px;
 }

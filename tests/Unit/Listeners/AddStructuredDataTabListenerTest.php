@@ -100,7 +100,7 @@ class AddStructuredDataTabListenerTest extends TestCase
             }));
         });
 
-        /** @var \Statamic\Fields\Blueprint $blueprint */
+        /** @var Blueprint $blueprint */
         $listener = new AddStructuredDataTabListener;
         $listener->handleCollectionBlueprintFound($blueprint);
 
@@ -119,7 +119,7 @@ class AddStructuredDataTabListenerTest extends TestCase
             }));
         });
 
-        /** @var \Statamic\Fields\Blueprint $blueprint */
+        /** @var Blueprint $blueprint */
         $listener = new AddStructuredDataTabListener;
         $listener->handleTaxonomyBlueprintFound($blueprint);
 
@@ -136,7 +136,7 @@ class AddStructuredDataTabListenerTest extends TestCase
             $mock->shouldReceive('setContents')->never();
         });
 
-        /** @var \Statamic\Fields\Blueprint $blueprint */
+        /** @var Blueprint $blueprint */
         $listener = new AddStructuredDataTabListener;
         $listener->handleCollectionBlueprintFound($blueprint);
 
@@ -153,7 +153,7 @@ class AddStructuredDataTabListenerTest extends TestCase
             $mock->shouldReceive('setContents')->never();
         });
 
-        /** @var \Statamic\Fields\Blueprint $blueprint */
+        /** @var Blueprint $blueprint */
         $listener = new AddStructuredDataTabListener;
         $listener->handleTaxonomyBlueprintFound($blueprint);
 

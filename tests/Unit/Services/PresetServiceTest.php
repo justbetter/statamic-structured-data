@@ -2,6 +2,7 @@
 
 namespace Justbetter\StatamicStructuredData\Tests\Unit\Services;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Justbetter\StatamicStructuredData\Services\PresetService;
@@ -28,7 +29,7 @@ class PresetServiceTest extends TestCase
 
         $result = $service->getAvailablePresets();
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertEmpty($result);
     }
 
@@ -39,7 +40,7 @@ class PresetServiceTest extends TestCase
 
         $result = $service->getAvailablePresets();
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertNotEmpty($result);
     }
 
@@ -99,7 +100,7 @@ class PresetServiceTest extends TestCase
 
         $result = $service->getAvailablePresets();
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertNotEmpty($result);
 
         $customPresetResult = $service->getPresetByName('custom_test');
@@ -125,7 +126,7 @@ class PresetServiceTest extends TestCase
 
         $result = $service->getAvailablePresets();
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertEmpty($result);
 
         File::deleteDirectory($tempDir);
@@ -146,7 +147,7 @@ class PresetServiceTest extends TestCase
 
         $result = $service->getAvailablePresets();
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertEmpty($result);
 
         File::deleteDirectory($tempDir);
@@ -168,7 +169,7 @@ class PresetServiceTest extends TestCase
 
         $result = $service->getAvailablePresets();
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertEmpty($result);
 
         File::deleteDirectory($tempDir);
@@ -193,7 +194,7 @@ class PresetServiceTest extends TestCase
 
         $result = $service->getAvailablePresets();
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertEmpty($result);
 
         File::deleteDirectory($tempDir);
@@ -222,7 +223,7 @@ class PresetServiceTest extends TestCase
 
         $result = $service->getAvailablePresets();
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertEmpty($result);
 
         File::deleteDirectory($tempDir);
@@ -240,7 +241,7 @@ class PresetServiceTest extends TestCase
 
         $result = $service->getAvailablePresets();
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertEmpty($result);
     }
 
@@ -253,7 +254,7 @@ class PresetServiceTest extends TestCase
 
         $result = $service->getAvailablePresets();
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertNotEmpty($result);
     }
 
@@ -271,7 +272,7 @@ class PresetServiceTest extends TestCase
 
         $result = $service->getAvailablePresets();
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertEmpty($result);
 
         $property->setValue($service, $originalPath);
@@ -296,7 +297,7 @@ class PresetServiceTest extends TestCase
         $service = new PresetService;
         $result = $service->getAvailablePresets();
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertEmpty($result);
 
         File::deleteDirectory($tempDir);
@@ -323,7 +324,7 @@ class PresetServiceTest extends TestCase
 
         try {
             $result = $service->getAvailablePresets();
-            $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+            $this->assertInstanceOf(Collection::class, $result);
         } finally {
             chmod($presetFile, 0644);
             File::deleteDirectory($tempDir);
@@ -348,7 +349,7 @@ class PresetServiceTest extends TestCase
 
         try {
             $result = $service->getAvailablePresets();
-            $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+            $this->assertInstanceOf(Collection::class, $result);
         } finally {
             chmod($presetFile, 0644);
             File::deleteDirectory($tempDir);

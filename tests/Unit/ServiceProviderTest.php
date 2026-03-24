@@ -2,6 +2,7 @@
 
 namespace Justbetter\StatamicStructuredData\Tests\Unit;
 
+use Illuminate\Contracts\Foundation\Application;
 use Justbetter\StatamicStructuredData\ServiceProvider;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -16,11 +17,11 @@ class ServiceProviderTest extends TestCase
     #[Test]
     public function boot_collections_skips_when_running_in_console(): void
     {
-        $appMock = $this->mock(\Illuminate\Contracts\Foundation\Application::class, function ($mock): void {
+        $appMock = $this->mock(Application::class, function ($mock): void {
             $mock->shouldReceive('runningInConsole')->andReturn(true);
         });
 
-        /** @var \Illuminate\Contracts\Foundation\Application $appMock */
+        /** @var Application $appMock */
         $provider = new ServiceProvider($appMock);
         $result = $provider->bootCollections();
 
@@ -30,14 +31,14 @@ class ServiceProviderTest extends TestCase
     #[Test]
     public function boot_collections_skips_when_collection_exists(): void
     {
-        $appMock = $this->mock(\Illuminate\Contracts\Foundation\Application::class, function ($mock): void {
+        $appMock = $this->mock(Application::class, function ($mock): void {
             $mock->shouldReceive('runningInConsole')->andReturn(false);
         });
         $existingCollection = CollectionFacade::make('structured_data_templates');
         $existingCollection->save();
         CollectionFacade::shouldReceive('find')->with('structured_data_templates')->andReturn($existingCollection);
 
-        /** @var \Illuminate\Contracts\Foundation\Application $appMock */
+        /** @var Application $appMock */
         $provider = new ServiceProvider($appMock);
         $result = $provider->bootCollections();
 
@@ -47,7 +48,7 @@ class ServiceProviderTest extends TestCase
     #[Test]
     public function boot_collections_creates_collection_when_not_exists(): void
     {
-        $appMock = $this->mock(\Illuminate\Contracts\Foundation\Application::class, function ($mock): void {
+        $appMock = $this->mock(Application::class, function ($mock): void {
             $mock->shouldReceive('runningInConsole')->andReturn(false);
         });
         CollectionFacade::shouldReceive('find')->with('structured_data_templates')->andReturn(null);
@@ -64,7 +65,7 @@ class ServiceProviderTest extends TestCase
             'default' => $site,
         ]));
 
-        /** @var \Illuminate\Contracts\Foundation\Application $appMock */
+        /** @var Application $appMock */
         $provider = new ServiceProvider($appMock);
         $result = $provider->bootCollections();
 
@@ -74,11 +75,11 @@ class ServiceProviderTest extends TestCase
     #[Test]
     public function boot_taxonomies_skips_when_running_in_console(): void
     {
-        $appMock = $this->mock(\Illuminate\Contracts\Foundation\Application::class, function ($mock): void {
+        $appMock = $this->mock(Application::class, function ($mock): void {
             $mock->shouldReceive('runningInConsole')->andReturn(true);
         });
 
-        /** @var \Illuminate\Contracts\Foundation\Application $appMock */
+        /** @var Application $appMock */
         $provider = new ServiceProvider($appMock);
         $result = $provider->bootTaxonomies();
 
@@ -88,15 +89,15 @@ class ServiceProviderTest extends TestCase
     #[Test]
     public function boot_taxonomies_skips_when_taxonomy_exists(): void
     {
-        $appMock = $this->mock(\Illuminate\Contracts\Foundation\Application::class, function ($mock): void {
+        $appMock = $this->mock(Application::class, function ($mock): void {
             $mock->shouldReceive('runningInConsole')->andReturn(false);
         });
-        /** @var \Statamic\Taxonomies\Taxonomy $existingTaxonomy */
+        /** @var TaxonomyModel $existingTaxonomy */
         $existingTaxonomy = Taxonomy::make('structured_data_objects');
         $existingTaxonomy->save();
         Taxonomy::shouldReceive('find')->with('structured_data_objects')->andReturn($existingTaxonomy);
 
-        /** @var \Illuminate\Contracts\Foundation\Application $appMock */
+        /** @var Application $appMock */
         $provider = new ServiceProvider($appMock);
         $result = $provider->bootTaxonomies();
 
@@ -106,7 +107,7 @@ class ServiceProviderTest extends TestCase
     #[Test]
     public function boot_taxonomies_creates_taxonomy_when_not_exists(): void
     {
-        $appMock = $this->mock(\Illuminate\Contracts\Foundation\Application::class, function ($mock): void {
+        $appMock = $this->mock(Application::class, function ($mock): void {
             $mock->shouldReceive('runningInConsole')->andReturn(false);
         });
         Taxonomy::shouldReceive('find')->with('structured_data_objects')->andReturn(null);
@@ -123,7 +124,7 @@ class ServiceProviderTest extends TestCase
             'default' => $site,
         ]));
 
-        /** @var \Illuminate\Contracts\Foundation\Application $appMock */
+        /** @var Application $appMock */
         $provider = new ServiceProvider($appMock);
         $result = $provider->bootTaxonomies();
 

@@ -13,6 +13,7 @@ use Statamic\Entries\Entry as EntryModel;
 use Statamic\Facades\Entry;
 use Statamic\Facades\Site;
 use Statamic\Facades\Term;
+use Statamic\Fields\Field;
 use Statamic\Http\Controllers\CP\CpController;
 
 class StructuredDataController extends CpController
@@ -119,7 +120,7 @@ class StructuredDataController extends CpController
 
         $blueprint = $entry->blueprint();
         $fieldsCollection = $blueprint->fields()->all();
-        /** @var array<int, \Statamic\Fields\Field> $fields */
+        /** @var array<int, Field> $fields */
         $fields = array_values(is_array($fieldsCollection) ? $fieldsCollection : $fieldsCollection->all());
 
         $variables['entry'] = array_values(array_map(function ($field): array {

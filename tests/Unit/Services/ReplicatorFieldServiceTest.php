@@ -34,6 +34,20 @@ class ReplicatorFieldServiceTest extends TestCase
     }
 
     #[Test]
+    public function get_replicator_fields_returns_empty_array_when_called_with_collection_and_no_blueprints(): void
+    {
+        /** @var Collection&MockInterface $collectionMock */
+        $collectionMock = $this->mock(Collection::class, function ($mock): void {
+            $mock->shouldReceive('entryBlueprints')->andReturn(collect([]));
+        });
+
+        $service = new ReplicatorFieldService;
+        $result = $service->getReplicatorFields($collectionMock);
+
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
     public function get_replicator_fields_handles_taxonomy(): void
     {
         /** @var Taxonomy $taxonomy */
@@ -49,7 +63,7 @@ class ReplicatorFieldServiceTest extends TestCase
         $taxonomyMock = Mockery::mock($taxonomy)->makePartial();
         $taxonomyMock->shouldReceive('termBlueprints')->andReturn(collect([]));
 
-        /** @var \Statamic\Entries\Entry $templateMock */
+        /** @var Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
         $templateMock->shouldReceive('get')->with('use_for_taxonomy')->andReturn($taxonomyMock);
@@ -57,6 +71,20 @@ class ReplicatorFieldServiceTest extends TestCase
         $service = new ReplicatorFieldService;
         /** @var \Statamic\Contracts\Entries\Entry $templateMock */
         $result = $service->getReplicatorFields($templateMock);
+
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function get_replicator_fields_returns_empty_array_when_called_with_taxonomy_and_no_blueprints(): void
+    {
+        /** @var Taxonomy&MockInterface $taxonomyMock */
+        $taxonomyMock = $this->mock(Taxonomy::class, function ($mock): void {
+            $mock->shouldReceive('termBlueprints')->andReturn(collect([]));
+        });
+
+        $service = new ReplicatorFieldService;
+        $result = $service->getReplicatorFields($taxonomyMock);
 
         $this->assertEmpty($result);
     }
@@ -777,7 +805,7 @@ class ReplicatorFieldServiceTest extends TestCase
             $mock->shouldReceive('toArray')->andReturn([]);
         });
 
-        /** @var \Statamic\Entries\Entry $templateMock */
+        /** @var Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
         $templateMock->shouldReceive('get')->with('use_for_collection')->andReturn($collectionMock);
@@ -805,7 +833,7 @@ class ReplicatorFieldServiceTest extends TestCase
         $taxonomyMock = Mockery::mock($taxonomy)->makePartial();
         $taxonomyMock->shouldReceive('termBlueprints')->andReturn(collect([null]));
 
-        /** @var \Statamic\Entries\Entry $templateMock */
+        /** @var Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
         $templateMock->shouldReceive('get')->with('use_for_collection')->andReturn(null);
@@ -892,7 +920,7 @@ class ReplicatorFieldServiceTest extends TestCase
         $taxonomyMock = Mockery::mock($taxonomy)->makePartial();
         $taxonomyMock->shouldReceive('termBlueprints')->andReturn(null);
 
-        /** @var \Statamic\Entries\Entry $templateMock */
+        /** @var Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
         $templateMock->shouldReceive('get')->with('use_for_collection')->andReturn(null);
@@ -923,7 +951,7 @@ class ReplicatorFieldServiceTest extends TestCase
             $mock->shouldReceive('toArray')->andReturn([]);
         });
 
-        /** @var \Statamic\Entries\Entry $templateMock */
+        /** @var Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
         $templateMock->shouldReceive('get')->with('use_for_collection')->andReturn($collectionMock);
@@ -952,7 +980,7 @@ class ReplicatorFieldServiceTest extends TestCase
             $mock->shouldReceive('toArray')->andReturn([]);
         });
 
-        /** @var \Statamic\Entries\Entry $templateMock */
+        /** @var Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
         $templateMock->shouldReceive('get')->with('use_for_collection')->andReturn($collectionMock);
@@ -1007,7 +1035,7 @@ class ReplicatorFieldServiceTest extends TestCase
         $taxonomyMock = Mockery::mock($taxonomy)->makePartial();
         $taxonomyMock->shouldReceive('termBlueprints')->andReturn(collect([]));
 
-        /** @var \Statamic\Entries\Entry $templateMock */
+        /** @var Entry $templateMock */
         $templateMock = Mockery::mock($template)->makePartial();
         /** @phpstan-ignore-next-line */
         $templateMock->shouldReceive('get')->with('use_for_collection')->andReturn(null);

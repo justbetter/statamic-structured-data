@@ -2,11 +2,11 @@
     <div class="replicator-mapper space-y-3">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-                <label class="text-gray-600 mb-1 block">{{ __('Replicator Field') }}</label>
-                <v-select
+                <Label class="mb-1.5">{{ __('Replicator Field') }}</Label>
+                <Select
                     v-model="localConfig.replicator_field"
                     :options="replicatorFieldOptions"
-                    @input="(val) => { localConfig.replicator_field = val ? val.value : ''; localConfig.set = ''; }"
+                    @update:model-value="() => { localConfig.set = ''; }"
                     :placeholder="replicatorFieldOptions.length > 0 ? __('Select replicator field') : __('No replicator fields available')"
                     :disabled="replicatorFieldOptions.length === 0"
                 />
@@ -16,152 +16,174 @@
                 </div>
             </div>
             <div>
-                <label class="text-gray-600 mb-1 block">{{ __('Limit to Set (optional)') }}</label>
-                <v-select
+                <Label class="mb-1.5">{{ __('Limit to Set (optional)') }}</Label>
+                <Select
                     v-model="localConfig.set"
                     :options="setOptions"
-                    @input="(val) => { localConfig.set = val ? val.value : ''; }"
                     :placeholder="__('All sets')"
                     :clearable="true"
                 />
             </div>
         </div>
 
-        <div class="border rounded p-3 bg-gray-50">
-            <label class="flex items-center gap-2 cursor-pointer">
-                <input
-                    type="checkbox"
-                    v-model="localConfig.flat"
-                    class="rounded"
-                />
-                <span class="text-gray-700 font-medium">{{ __('Flat Mode') }}</span>
-            </label>
-            <p class="text-xs text-gray-600 mt-1 ml-6">
-                {{ __('Create a flat object where each replicator row becomes a key-value pair.') }}
-            </p>
-        </div>
+        <Panel>
+            <PanelHeader>
+                <div class="flex flex-col justify-center gap-2">
+                    <span>{{ __('Flat mode') }}</span>
+                
+                    <Description>
+                        <Checkbox 
+                            v-model="localConfig.flat" 
+                            :label="__('Create a flat object where each replicator row becomes a key-value pair.')" 
+                            class="items-center"
+                        />
+                    </Description>
+                </div>
+            </PanelHeader>
 
-        <div v-if="localConfig.flat" class="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded p-3 bg-blue-50">
-            <div>
-                <label class="text-gray-600 mb-1 block">{{ __('Key Field') }}</label>
-                <v-select
-                    v-model="localConfig.flat_key_field"
-                    :options="flatFieldOptions"
-                    @input="(val) => { localConfig.flat_key_field = val ? val.value : ''; }"
-                    :placeholder="__('Select field to use as key')"
-                />
-                <p class="text-xs text-gray-500 mt-1">{{ __('Field value will be used as the object key') }}</p>
-            </div>
-            <div>
-                <label class="text-gray-600 mb-1 block">{{ __('Value Field') }}</label>
-                <v-select
-                    v-model="localConfig.flat_value_field"
-                    :options="flatFieldOptions"
-                    @input="(val) => { localConfig.flat_value_field = val ? val.value : ''; }"
-                    :placeholder="__('Select field to use as value')"
-                />
-                <p class="text-xs text-gray-500 mt-1">{{ __('Field value will be used as the object value') }}</p>
-            </div>
-        </div>
+            <Card v-if="localConfig.flat">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <Label class="mb-1.5">{{ __('Key Field') }}</Label>
+                        <Select
+                            v-model="localConfig.flat_key_field"
+                            :options="flatFieldOptions"
+                            :placeholder="__('Select field to use as key')"
+                        />
+                        <p class="text-xs text-gray-500 mt-1">{{ __('Field value will be used as the object key') }}</p>
+                    </div>
+                    <div>
+                        <Label class="mb-1.5">{{ __('Value Field') }}</Label>
+                        <Select
+                            v-model="localConfig.flat_value_field"
+                            :options="flatFieldOptions"
+                            :placeholder="__('Select field to use as value')"
+                        />
+                        <p class="text-xs text-gray-500 mt-1">{{ __('Field value will be used as the object value') }}</p>
+                    </div>
+                </div>
+            </Card>
+        </Panel>
 
-        <div v-if="!localConfig.flat" class="border rounded p-3">
+        <Card v-if="!localConfig.flat" class="mt-3">
             <div class="flex items-center justify-between mb-2">
                 <h4 class="font-semibold text-gray-700">{{ __('Field Mappings') }}</h4>
-                <button class="btn-primary text-sm" @click="addMapping">{{ __('Add Mapping') }}</button>
+                <Button class="text-sm" @click="addMapping">{{ __('Add Mapping') }}</Button>
             </div>
 
             <div v-if="!localConfig.mappings.length" class="text-sm text-gray-500">
                 {{ __('No mappings yet. Add one to map replicator fields into your JSON-LD object.') }}
             </div>
 
-            <div
+            <Card
                 v-for="(mapping, index) in localConfig.mappings"
                 :key="index"
-                class="border rounded mb-3 p-3"
+                class="mb-3"
             >
                 <div class="flex items-start gap-2">
                     <div class="flex-1">
-                        <label class="text-gray-600 mb-1 block">{{ __('JSON-LD Key') }}</label>
-                        <input
-                            type="text"
+                        <Label class="mb-1.5">{{ __('JSON-LD Key') }}</Label>
+                        <Input
                             v-model="mapping.key"
-                            class="input-text w-full"
                             placeholder="e.g. name"
-                            @input="sanitizeKey(mapping)"
+                            @update:model-value="() => sanitizeKey(mapping)"
                         />
                     </div>
                     <div class="w-40">
-                        <label class="text-gray-600 mb-1 block">{{ __('Source') }}</label>
-                        <v-select
+                        <Label class="mb-1.5">{{ __('Source') }}</Label>
+                        <Select
                             v-model="mapping.mode"
                             :options="modeOptions"
-                            @input="(val) => { mapping.mode = val.value; }"
                         />
                     </div>
-                    <button class="btn-danger mt-6" @click="removeMapping(index)">{{ __('Remove') }}</button>
+                    <Button class="mt-6" variant="danger" @click="requestRemoveMapping(index)">{{ __('Remove') }}</Button>
                 </div>
 
                 <div class="mt-2">
                     <template v-if="mapping.mode === 'static'">
-                        <label class="text-gray-600 mb-1 block">{{ __('Static Value') }}</label>
-                        <input
-                            type="text"
+                        <Label class="mb-1.5">{{ __('Static Value') }}</Label>
+                        <Input
                             v-model="mapping.static"
-                            class="input-text w-full"
                             :placeholder="__('e.g. PropertyValue')"
                         />
                     </template>
 
                     <template v-else-if="mapping.mode === 'field'">
-                        <label class="text-gray-600 mb-1 block">{{ __('Replicator Field') }}</label>
-                        <v-select
+                        <Label class="mb-1.5">{{ __('Replicator Field') }}</Label>
+                        <Select
                             v-model="mapping.field"
                             :options="getFieldOptionsForMapping(mapping)"
-                            @input="(val) => { mapping.field = val ? val.value : ''; }"
                             :placeholder="__('Select field')"
                         />
                     </template>
 
                     <template v-else-if="mapping.mode === 'nested_replicator'">
-                        <div class="p-3 border rounded">
+                        <Card class="mt-2">
                             <replicator-field-mapper
                                 v-model="mapping.nested"
                                 :replicator-fields="replicatorFields"
                             />
-                        </div>
+                        </Card>
                     </template>
                 </div>
-            </div>
-        </div>
+            </Card>
+        </Card>
+
+        <ConfirmationModal
+            v-if="confirmRemoveMappingOpen"
+            v-model:open="confirmRemoveMappingOpen"
+            :body-text="__('Are you sure you want to remove this mapping? This action cannot be undone.')"
+            @confirm="confirmRemoveMapping"
+        />
     </div>
 </template>
 
 <script>
+import { Button, Card, Checkbox, ConfirmationModal, Description, Heading, Input, Label, Panel, PanelHeader, Select } from '@statamic/cms/ui';
+
 export default {
     name: 'ReplicatorFieldMapper',
+    components: {
+        Button,
+        Card,
+        Checkbox,
+        Description,
+        Heading,
+        Input,
+        Label,
+        Panel,
+        PanelHeader,
+        Select,
+    },
     props: {
-        value: {
+        modelValue: {
             type: Object,
             default: () => ({
                 replicator_field: '',
                 set: '',
-                mappings: []
-            })
+                mappings: [],
+                flat: false,
+                flat_key_field: '',
+                flat_value_field: '',
+            }),
         },
         replicatorFields: {
             type: Array,
-            default: () => []
-        }
+            default: () => [],
+        },
     },
+    emits: ['update:modelValue'],
     data() {
         return {
-            localConfig: this.normalizeConfig(this.value),
+            localConfig: this.normalizeConfig(this.modelValue),
             modeOptions: [
                 { value: 'field', label: 'From Replicator Field' },
                 { value: 'static', label: 'Static Value' },
                 { value: 'nested_replicator', label: 'Nested Replicator' },
             ],
-        }
+            confirmRemoveMappingOpen: false,
+            mappingIndexToRemove: null,
+        };
     },
     computed: {
         availableReplicatorFields() {
@@ -205,24 +227,25 @@ export default {
             deep: true,
             handler(val) {
                 const newVal = JSON.stringify(val);
-                const oldVal = JSON.stringify(this.value);
+                const oldVal = JSON.stringify(this.modelValue);
 
                 if (newVal !== oldVal) {
-                    this.$emit('input', JSON.parse(newVal));
+                    this.$emit('update:modelValue', JSON.parse(newVal));
                 }
-            }
+            },
         },
-        value: {
+        modelValue: {
             deep: true,
             handler(val) {
-                const newVal = JSON.stringify(this.normalizeConfig(val));
+                const normalized = this.normalizeConfig(val);
+                const newVal = JSON.stringify(normalized);
                 const oldVal = JSON.stringify(this.localConfig);
 
                 if (newVal !== oldVal) {
                     this.localConfig = JSON.parse(newVal);
                 }
-            }
-        }
+            },
+        },
     },
     methods: {
         normalizeConfig(config) {
@@ -247,7 +270,7 @@ export default {
                     : [],
                 flat: config.flat === true,
                 flat_key_field: config.flat_key_field || '',
-                flat_value_field: config.flat_value_field || ''
+                flat_value_field: config.flat_value_field || '',
             };
         },
         addMapping() {
@@ -265,6 +288,18 @@ export default {
         },
         removeMapping(index) {
             this.localConfig.mappings.splice(index, 1);
+        },
+        requestRemoveMapping(index) {
+            this.mappingIndexToRemove = index;
+            this.confirmRemoveMappingOpen = true;
+        },
+        confirmRemoveMapping() {
+            if (this.mappingIndexToRemove === null) {
+                return;
+            }
+
+            this.removeMapping(this.mappingIndexToRemove);
+            this.mappingIndexToRemove = null;
         },
         sanitizeKey(mapping) {
             mapping.key = mapping.key.replace(/[^a-zA-Z0-9@]/g, '');

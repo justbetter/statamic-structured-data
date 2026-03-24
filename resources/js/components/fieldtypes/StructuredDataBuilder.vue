@@ -1,8 +1,12 @@
 <template>
     <div class="structured-data-builder">
         <div class="flex-1">
-            <div v-for="(schema, schemaIndex) in schemas" :key="schemaIndex" class="structured-data-schema mb-6 rounded-lg shadow-sm border">
-                <div class="px-4 py-2 bg-gray-50 border-b rounded-t-lg flex justify-between items-center">
+            <Card
+                v-for="(schema, schemaIndex) in schemas"
+                :key="schemaIndex"
+                class="structured-data-schema mb-6"
+            >
+                <div class="flex justify-between items-center mb-3">
                     <div class="flex items-center gap-2 cursor-pointer" @click="toggleSchema(schemaIndex)">
                         <div class="chevron" :class="{ 'chevron-up': !isSchemaCollapsed(schemaIndex) }"></div>
                         <h3 class="font-bold text-lg">
@@ -10,43 +14,39 @@
                             <span v-else>{{ __('Schema') }} {{ schemaIndex + 1 }}</span>
                         </h3>
                     </div>
-                    <button
+                    <Button
                         v-if="schemas.length > 1"
-                            @click="removeSchema(schemaIndex)"
-                            class="btn-danger"
-                        >
+                        @click="requestRemoveSchema(schemaIndex)"
+                        variant="danger"
+                    >
                         {{ __('Remove Schema')}}
-                    </button>
+                    </Button>
                 </div>
 
-                <div v-show="!isSchemaCollapsed(schemaIndex)" class="p-4">
+                <div v-show="!isSchemaCollapsed(schemaIndex)">
                     <div class="space-y-3">
                         <div v-if="schema.specialProps">
                             <div class="mb-3">
-                                <label class="text-gray-600 mb-1 block">@context</label>
-                                <input type="text" v-model="schema.specialProps.context" class="input-text w-full bg-gray-50" readonly />
+                                <Label class="mb-1.5">@context</Label>
+                                <Input v-model="schema.specialProps.context" readonly />
                             </div>
 
                             <div class="mb-3">
-                                <label class="text-gray-600 mb-1 block">@type</label>
-                                <input
-                                    type="text"
+                                <Label class="mb-1.5">@type</Label>
+                                <Input
                                     v-model="schema.specialProps.type"
-                                    class="input-text w-full"
                                     placeholder="e.g. Organization, Product, BlogPosting"
                                 />
                             </div>
 
                             <div class="mb-4">
-                                <label class="text-gray-600 mb-1 block">@id</label>
+                                <Label class="mb-1.5">@id</Label>
                                 <div class="flex gap-2">
-                                    <input
-                                        type="text"
+                                    <Input
                                         v-model="schema.specialProps.id"
-                                        class="input-text flex-1"
                                         :placeholder="suggestedId(schema)"
                                     />
-                                    <button class="btn-primary" @click="useDefaultId(schema)">{{ __('Use Default') }}</button>
+                                    <Button @click="useDefaultId(schema)">{{ __('Use Default') }}</Button>
                                 </div>
                             </div>
                         </div>
@@ -54,436 +54,475 @@
                         <div class="mt-4">
                             <h4 class="text-gray-600 mb-2">{{ __('Fields') }}</h4>
 
-                            <draggable v-model="schema.fields" @end="onEnd" :key="schemaIndex" handle=".drag-handle">
-                                <div v-for="(field, index) in schema.fields" :key="index" class="mb-2 border rounded bg-gray-50">
-                                    <div class="structured-data-schema-field-header px-2 py-2 flex justify-between items-center border-b rounded-t-lg cursor-drag drag-handle">
-                                        <button v-show="index > 0" @click="moveFieldUp(index, schema)" class="btn btn-secondary">↑ {{ __('Move Up') }}</button>
-                                        <button v-show="index < schema.fields.length - 1" @click="moveFieldDown(index, schema)" class="btn btn-secondary">{{ __('Move Down') }} ↓</button>
-                                    </div>
-                                    <div class="p-3">
-                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                            <div class="col-span-2">
-                                                <label class="text-gray-600 mb-1 block">{{ __('Key') }}</label>
-                                                <input
-                                                    type="text"
-                                                    v-model="field.key"
-                                                    class="input-text w-full"
-                                                    @input="validateKey(field)"
-                                                />
+                            <draggable
+                                v-model="schema.fields"
+                                item-key="__id"
+                                @end="onEnd"
+                                :key="schemaIndex"
+                                handle=".drag-handle"
+                            >
+                                <template #item="{ element: field, index }">
+                                    <Card class="mb-2">
+                                        <div class="structured-data-schema-field-header px-2 py-2 flex justify-between items-center">
+                                            <div class="flex items-center gap-2">
+                                                <DragHandle class="drag-handle" />
+                                                <Button v-show="index > 0" @click="moveFieldUp(index, schema)" variant="subtle">↑ {{ __('Move Up') }}</Button>
                                             </div>
-
-                                            <div>
-                                                <label class="text-gray-600 mb-1 block">{{ __('Type') }}</label>
-                                                <v-select
-                                                    v-model="field.type"
-                                                    :options="selectOptions"
-                                                    @input="(value) => { field.type = value.value; handleTypeChange(field); }"
-                                                />
-                                            </div>
+                                            <Button v-show="index < schema.fields.length - 1" @click="moveFieldDown(index, schema)" variant="subtle">{{ __('Move Down') }} ↓</Button>
                                         </div>
-
-                                        <div class="mt-3">
-                                            <input
-                                                v-if="field.type === 'string'"
-                                                type="text"
-                                                v-model="field.value"
-                                                class="input-text w-full"
-                                                :placeholder="'Enter value'"
-                                            />
-
-                                            <input
-                                                v-if="field.type === 'numeric'"
-                                                type="number"
-                                                v-model="field.value"
-                                                class="input-text w-full"
-                                                :placeholder="'Enter value'"
-                                            />
-
-                                            <div v-else-if="field.type === 'array'" class="mt-2">
-                                                <div class="flex flex-col gap-2 space-y-2">
-                                                    <div v-for="(value, valueIndex) in field.values" :key="valueIndex" class="flex items-center gap-2">
-                                                        <input
-                                                            type="text"
-                                                            v-model="field.values[valueIndex]"
-                                                            class="input-text flex-1"
-                                                        />
-                                                        <button
-                                                            @click="removeArrayValue(field, valueIndex)"
-                                                            class="btn-danger inline-flex items-center px-2 py-1"
-                                                        >
-                                                            <span>{{ __('Remove') }}</span>
-                                                        </button>
-                                                    </div>
+                                        <div class="p-3">
+                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                <div class="col-span-2">
+                                                    <Label class="mb-1.5">{{ __('Key') }}</Label>
+                                                    <Input
+                                                        v-model="field.key"
+                                                        @update:model-value="() => validateKey(field)"
+                                                    />
                                                 </div>
-                                                <button
-                                                    @click="addArrayValue(field)"
-                                                    class="btn-primary mt-2 text-sm"
-                                                >
-                                                    {{ __('Add Value')}}
-                                                </button>
-                                            </div>
 
-                                            <div v-else-if="field.type === 'object'" class="mt-2">
-                                                <structured-data-object 
-                                                    v-model="field.value" 
-                                                    :replicator-fields="replicatorFields"
-                                                />
-                                            </div>
-
-                                            <div v-else-if="field.type === 'object_array'" class="mt-2">
-                                                <div class="flex flex-col gap-2 space-y-2">
-                                                    <div v-for="(value, valueIndex) in field.values" :key="valueIndex" class="flex flex-col gap-2">
-                                                        <structured-data-object v-model="field.values[valueIndex]" />
-                                                        <button
-                                                            @click="removeArrayValue(field, valueIndex)"
-                                                            class="btn-danger inline-flex self-end items-center px-2 py-1"
-                                                        >
-                                                            <span>{{ __('Remove') }}</span>
-                                                        </button>
-                                                    </div>
+                                                <div>
+                                                    <Label class="mb-1.5">{{ __('Type') }}</Label>
+                                                    <Select
+                                                        v-model="field.type"
+                                                        :options="selectOptions"
+                                                        @update:model-value="() => handleTypeChange(field)"
+                                                    />
                                                 </div>
-                                                <button
-                                                    @click="addArrayValue(field)"
-                                                    class="btn-primary mt-2 text-sm"
-                                                >
-                                                    {{ __('Add Value')}}
-                                                </button>
                                             </div>
 
-                                            <div v-else-if="field.type === 'data_object'" class="mt-2">
-                                                 <v-select
+                                                <div class="mt-3">
+                                                <Label class="mb-1.5">{{ __('Value') }}</Label>
+
+                                                <Input
+                                                    v-if="field.type === 'string'"
                                                     v-model="field.value"
-                                                    :options="taxonomyTermOptions"
-                                                    @input="(value) => { field.value = value.value; }"
+                                                    :placeholder="'Enter value'"
                                                 />
+
+                                                <Input
+                                                    v-if="field.type === 'numeric'"
+                                                    type="number"
+                                                    v-model="field.value"
+                                                    :placeholder="'Enter value'"
+                                                />
+
+                                                <div v-else-if="field.type === 'array'" class="mt-2">
+                                                    <div class="flex flex-col gap-2 space-y-2">
+                                                        <div v-for="(value, valueIndex) in field.values" :key="valueIndex" class="flex items-center gap-2">
+                                                            <Input
+                                                                v-model="field.values[valueIndex]"
+                                                            />
+                                                            <Button
+                                                                @click="requestRemoveArrayValue(field, valueIndex)"
+                                                                class="inline-flex items-center px-2 py-1"
+                                                                variant="danger"
+                                                            >
+                                                                <span>{{ __('Remove') }}</span>
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                    <Button
+                                                        @click="addArrayValue(field)"
+                                                        variant="primary"
+                                                        class="mt-2 text-sm"
+                                                    >
+                                                        {{ __('Add Value')}}
+                                                    </Button>
+                                                </div>
+
+                                                <div v-else-if="field.type === 'object'" class="mt-2">
+                                                    <structured-data-object 
+                                                        v-model="field.value" 
+                                                        :base-url="baseUrl"
+                                                        :replicator-fields="replicatorFields"
+                                                    />
+                                                </div>
+
+                                                <div v-else-if="field.type === 'object_array'" class="mt-2">
+                                                    <div class="flex flex-col gap-2 space-y-2">
+                                                        <div v-for="(value, valueIndex) in field.values" :key="valueIndex" class="flex flex-col gap-2">
+                                                            <structured-data-object 
+                                                                v-model="field.values[valueIndex]" 
+                                                                :base-url="baseUrl"
+                                                            />
+                                                            <div>
+                                                                <Button
+                                                                    @click="requestRemoveArrayValue(field, valueIndex)"
+                                                                    class="inline-flex self-end items-center px-2 py-1"
+                                                                    variant="danger"
+                                                                >
+                                                                    <span>{{ __('Remove') }}</span>
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <Button
+                                                        @click="addArrayValue(field)"
+                                                        class="mt-2 text-sm"
+                                                        variant="primary"
+                                                    >
+                                                        {{ __('Add Value')}}
+                                                    </Button>
+                                                </div>
+
+                                                <div v-else-if="field.type === 'data_object'" class="mt-2">
+                                                    <Select
+                                                        v-model="field.value"
+                                                        :options="taxonomyTermOptions"
+                                                    />
+                                                </div>
+
+                                                <div v-else-if="field.type === 'replicator_object_array'" class="mt-2">
+                                                    <replicator-field-mapper 
+                                                        v-model="field.config"
+                                                        :base-url="baseUrl" 
+                                                        :replicator-fields="replicatorFields"
+                                                    />
+                                                </div>
                                             </div>
 
-                                        <div v-else-if="field.type === 'replicator_object_array'" class="mt-2">
-                                            <replicator-field-mapper 
-                                                v-model="field.config" 
-                                                :replicator-fields="replicatorFields"
-                                            />
+                                            <div class="flex justify-end mt-3">
+                                                <Button variant="danger" @click="requestRemoveField(schema, index)">
+                                                    {{ __('Remove Field') }}
+                                                </Button>
+                                            </div>
                                         </div>
-                                        </div>
-
-                                        <div class="flex justify-end mt-3">
-                                            <button
-                                                @click="removeField(schema, index)"
-                                                class="btn-danger"
-                                            >
-                                                {{ __('Remove Field') }}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                    </Card>
+                                </template>
                             </draggable>
 
-                            <button @click="addField(schema)" class="btn-primary mt-2">
+                            <Button variant="primary" @click="addField(schema)" class="mt-2">
                                 {{ __('Add Field') }}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
-            </div>
+            </Card>
 
             <div class="flex gap-2 mt-4">
-                <button class="btn-primary" @click="addSchema">{{ __('Add Schema') }}</button>
-                <button 
+                <Button variant="primary" @click="addSchema">{{ __('Add Schema') }}</Button>
+                <Button 
                     v-if="presetsEnabled && presets.length > 0" 
-                    class="btn-preset" 
                     @click="showPresetModal = true"
+                    variant="primary"
                 >
                     {{ __('Add Preset') }}
-                </button>
-                <button class="btn" @click="togglePreview">
+                </Button>
+                <Button @click="togglePreview">
                     {{ showPreview ? __('Hide Preview') : __('Show Preview') }}
-                </button>
+                </Button>
             </div>
 
             <div v-if="showPreview" class="mt-4">
-                <pre class="bg-gray-50 p-4 rounded-lg overflow-x-auto">{{ preview }}</pre>
+                <pre class="p-4 rounded-lg overflow-x-auto">{{ preview }}</pre>
             </div>
         </div>
 
-        <preset-modal
+        <PresetStack
             :visible="showPresetModal"
             :presets="presets"
             :has-existing-schemas="schemas.length > 0"
             @close="showPresetModal = false"
             @preset-selected="handlePresetSelected"
         />
+
+        <ConfirmationModal
+            v-model:open="confirmRemoveSchemaOpen"
+            :body-text="__('Are you sure you want to remove this schema? This action cannot be undone.')"
+            @confirm="confirmRemoveSchema"
+        />
+
+        <ConfirmationModal
+            v-model:open="confirmRemoveFieldOpen"
+            :body-text="__('Are you sure you want to remove this field? This action cannot be undone.')"
+            @confirm="confirmRemoveField"
+        />
+
+        <ConfirmationModal
+            v-model:open="confirmRemoveArrayValueOpen"
+            :body-text="__('Are you sure you want to remove this value? This action cannot be undone.')"
+            @confirm="confirmRemoveArrayValue"
+        />
     </div>
 </template>
 
-<script>
+<script setup>
+import { computed, ref, watch } from 'vue';
+import { Fieldtype } from '@statamic/cms';
+import { Button, Card, Input, Label, Select, DragHandle, ConfirmationModal } from '@statamic/cms/ui';
 import StructuredDataObject from '../StructuredDataObject.vue';
 import ReplicatorFieldMapper from './ReplicatorFieldMapper.vue';
-import PresetModal from '../PresetModal.vue';
+import PresetStack from '../PresetStack.vue';
 import { formatSchemaJson } from '../../utils/schema';
 import draggable from 'vuedraggable';
 
-export default {
-    name: 'StructuredDataBuilder',
-    mixins: [Fieldtype],
+const fieldtypeProps = defineProps(Fieldtype.props);
+const { value, meta, config } = fieldtypeProps;
 
-    components: {
-        'structured-data-object': StructuredDataObject,
-        'replicator-field-mapper': ReplicatorFieldMapper,
-        'preset-modal': PresetModal,
-        draggable,
+const emit = defineEmits(Fieldtype.emits);
+const { expose, update } = Fieldtype.use(emit, fieldtypeProps);
+
+defineExpose(expose);
+
+let nextFieldId = 1;
+
+const createEmptySchema = () => ({
+    specialProps: {
+        context: 'http://schema.org',
+        type: '',
+        id: '',
     },
+    fields: [],
+});
 
-    props: {
-        value: {
-            type: Array,
-            default: () => [{
-                specialProps: {
-                    context: 'http://schema.org',
-                    type: '',
-                    id: ''
-                },
-                fields: []
-            }]
-        },
-        baseUrl: {
-            type: String,
-            default: ''
-        },
-        meta: {
-            type: Object,
-            default: () => ({})
+const ensureFieldIds = schemasToNormalize => {
+    schemasToNormalize.forEach(schema => {
+        schema.fields.forEach(field => {
+            if (!field.__id) {
+                field.__id = `field-${nextFieldId}`;
+                nextFieldId += 1;
+            }
+        });
+    });
+};
+
+const initialSchemas = Array.isArray(value) && value.length > 0
+    ? value
+    : [createEmptySchema()];
+
+ensureFieldIds(initialSchemas);
+
+const schemas = ref(JSON.parse(JSON.stringify(initialSchemas)));
+const showPreview = ref(false);
+const showPresetModal = ref(false);
+const collapsedSchemas = ref({});
+const confirmRemoveSchemaOpen = ref(false);
+const schemaIndexToRemove = ref(null);
+const confirmRemoveFieldOpen = ref(false);
+const fieldRemoveContext = ref({ schema: null, fieldIndex: null });
+const confirmRemoveArrayValueOpen = ref(false);
+const arrayRemoveContext = ref({ field: null, valueIndex: null });
+
+const baseUrl = computed(() => config?.base_url ?? '');
+const preview = computed(() => formatSchemaJson(schemas.value));
+const selectOptions = computed(() => [
+    { value: 'string', label: 'String' },
+    { value: 'numeric', label: 'Numeric' },
+    { value: 'array', label: 'Array' },
+    { value: 'object', label: 'Object' },
+    { value: 'object_array', label: 'Object Array' },
+    { value: 'data_object', label: 'Data Object (Term)' },
+    { value: 'replicator_object_array', label: 'Replicator Object Array' },
+]);
+const taxonomyTermOptions = computed(() => (meta?.taxonomy_terms ?? []).map(term => ({
+    label: term.title,
+    value: `@dataObject::${term.slug}`,
+})));
+const presets = computed(() => meta?.presets ?? []);
+const presetsEnabled = computed(() => meta?.presets_enabled === true);
+const replicatorFields = computed(() => meta?.replicator_fields ?? []);
+
+watch(
+    () => value,
+    newValue => {
+        const normalized = Array.isArray(newValue) && newValue.length > 0
+            ? newValue
+            : [createEmptySchema()];
+
+        ensureFieldIds(normalized);
+
+        const newJson = JSON.stringify(normalized);
+        const currentJson = JSON.stringify(schemas.value);
+
+        if (newJson !== currentJson) {
+            schemas.value = JSON.parse(newJson);
         }
     },
+    { deep: true },
+);
 
-    data() {
-        return {
-            schemas: this.value.length ? this.value : [{
-                specialProps: {
-                    context: 'http://schema.org',
-                    type: '',
-                    id: ''
-                },
-                fields: []
-            }],
-            showPreview: false,
-            showPresetModal: false,
-            collapsedSchemas: {}
-        }
+watch(
+    schemas,
+    newSchemas => {
+        ensureFieldIds(newSchemas);
+        update(JSON.parse(JSON.stringify(newSchemas)));
     },
+    { deep: true },
+);
 
-    computed: {
-        baseUrl() {
-            return this.config?.base_url || '';
-        },
+const addSchema = () => {
+    schemas.value.push(createEmptySchema());
+};
 
-        preview() {
-            return formatSchemaJson(this.schemas);
-        },
+const addField = schema => {
+    schema.fields.push({
+        __id: `field-${nextFieldId}`,
+        key: '',
+        type: 'string',
+        value: '',
+        values: [],
+        fields: [],
+        config: {},
+    });
+    nextFieldId += 1;
+};
 
-        selectOptions() {
-            return [
-                { value: 'string', label: 'String' },
-                { value: 'numeric', label: 'Numeric' },
-                { value: 'array', label: 'Array' },
-                { value: 'object', label: 'Object' },
-                { value: 'object_array', label: 'Object Array' },
-                { value: 'data_object', label: 'Data Object (Term)' },
-                { value: 'replicator_object_array', label: 'Replicator Object Array' },
-            ];
-        },
+const moveFieldUp = (fieldIndex, schema) => {
+    if (fieldIndex <= 0) return;
 
-        taxonomyTerms() {
-            return this.meta?.taxonomy_terms || [];
-        },
+    const updatedFields = [...schema.fields];
+    const previousField = updatedFields[fieldIndex - 1];
 
-        taxonomyTermOptions() {
-            return this.taxonomyTerms.map(term => {
-                return {
-                    label: term.title,
-                    value: '@dataObject::' + term.slug
-                };
-            });
-        },
+    updatedFields[fieldIndex - 1] = updatedFields[fieldIndex];
+    updatedFields[fieldIndex] = previousField;
 
-        presets() {
-            return this.meta?.presets || [];
-        },
+    schema.fields = updatedFields;
+};
 
-        presetsEnabled() {
-            return this.meta?.presets_enabled || false;
-        },
-        replicatorFields() {
-            return this.meta?.replicator_fields || [];
-        }
-    },
+const moveFieldDown = (fieldIndex, schema) => {
+    if (fieldIndex >= schema.fields.length - 1) return;
 
-    watch: {
-        schemas: {
-            deep: true,
-            handler(val) {
-                this.$emit('input', val);
-            }
-        }
-    },
+    const updatedFields = [...schema.fields];
+    const nextField = updatedFields[fieldIndex + 1];
 
-    methods: {
-        addSchema() {
-            this.schemas.push({
-                specialProps: {
-                    context: 'http://schema.org',
-                    type: '',
-                    id: ''
-                },
-                fields: []
-            });
-        },
+    updatedFields[fieldIndex + 1] = updatedFields[fieldIndex];
+    updatedFields[fieldIndex] = nextField;
 
-        addField(schema) {
-            schema.fields.push({
-                key: '',
-                type: 'string',
-                value: '',
-                values: [],
-                fields: [],
-                config: {}
-            });
-        },
+    schema.fields = updatedFields;
+};
 
-        moveFieldUp(index, schema) {
-            if (index > 0) {
-                const fields = [...schema.fields];
-                const temp = fields[index - 1];
-                fields[index - 1] = fields[index];
-                fields[index] = temp;
-                schema.fields = fields;
-            }
-        },
+const removeField = (schema, fieldIndex) => {
+    schema.fields.splice(fieldIndex, 1);
+};
 
-        moveFieldDown(index, schema) {
-            if (index < schema.fields.length - 1) {
-                const fields = [...schema.fields];
-                const temp = fields[index + 1];
-                fields[index + 1] = fields[index];
-                fields[index] = temp;
-                schema.fields = fields;
-            }
-        },
-
-        removeField(schema, index) {
-            schema.fields.splice(index, 1);
-        },
-
-        addArrayValue(field) {
-            if (!field.values) {
-                field.values = [];
-            }
-            if (field.type === 'object_array') {
-                field.values.push({
-                    specialProps: {
-                        type: '',
-                        id: ''
-                    },
-                    fields: []
-                });
-            } else {
-                field.values.push('');
-            }
-        },
-
-        removeArrayValue(field, index) {
-            field.values.splice(index, 1);
-        },
-
-        validateKey(field) {
-            field.key = field.key.replace(/[^a-zA-Z0-9@]/g, '');
-        },
-
-        useDefaultId(schema) {
-            schema.specialProps.id = this.suggestedId(schema);
-        },
-
-        suggestedId(schema) {
-            if (!schema.specialProps.type) {
-                return '';
-            }
-            return `{{ site:url }}/#${schema.specialProps.type}`;
-        },
-
-        handleTypeChange(field) {
-            if (field.type === 'object') {
-                field.value = {
-                    specialProps: {
-                        type: '',
-                        id: ''
-                    },
-                    fields: []
-                };
-            } else if (field.type === 'array') {
-                field.values = [];
-            } else if (field.type === 'object_array') {
-                field.values = [];
-            } else if (field.type === 'data_object') {
-                field.value = '';
-            } else if (field.type === 'replicator_object_array') {
-                field.config = {
-                    replicator_field: '',
-                    set: '',
-                    mappings: []
-                };
-                field.values = [];
-            } else {
-                field.value = '';
-            }
-        },
-
-        togglePreview() {
-            this.showPreview = !this.showPreview;
-        },
-
-        toggleSchema(index) {
-            this.$set(this.collapsedSchemas, index, !this.collapsedSchemas[index]);
-        },
-
-        isSchemaCollapsed(index) {
-            return this.collapsedSchemas[index] || false;
-        },
-
-        removeSchema(index) {
-            this.schemas.splice(index, 1);
-        },
-
-        handlePresetSelected(data) {
-            const { preset, action } = data;
-            
-            switch (action) {
-                case 'merge':
-                case 'add':
-                    this.schemas.push(JSON.parse(JSON.stringify(preset.schema)));
-                    break;
-                case 'override':
-                    this.schemas = [JSON.parse(JSON.stringify(preset.schema))];
-                    break;
-            }
-        },
-
-        getFieldByInput(inputElement) {
-            const fieldElement = inputElement.closest('.field');
-            if (fieldElement) {
-                const schemaIndex = fieldElement.dataset.schemaIndex;
-                const fieldIndex = fieldElement.dataset.fieldIndex;
-                return this.schemas[schemaIndex].fields[fieldIndex];
-            }
-            return null;
-        },
-
-        onEnd(event) {
-            // This method will be called when dragging ends, and the fields will be updated automatically.
-        },
+const addArrayValue = field => {
+    if (!field.values) {
+        field.values = [];
     }
-}
+
+    if (field.type === 'object_array') {
+        field.values.push({ specialProps: { type: '', id: '' }, fields: [] });
+        return;
+    }
+
+    field.values.push('');
+};
+
+const removeArrayValue = (field, valueIndex) => {
+    field.values.splice(valueIndex, 1);
+};
+
+const validateKey = field => {
+    field.key = field.key.replace(/[^a-zA-Z0-9@]/g, '');
+};
+
+const suggestedId = schema => {
+    if (!schema.specialProps.type) return '';
+    return `{{ site:url }}/#${schema.specialProps.type}`;
+};
+
+const useDefaultId = schema => {
+    schema.specialProps.id = suggestedId(schema);
+};
+
+const handleTypeChange = field => {
+    if (field.type === 'object') {
+        field.value = { specialProps: { type: '', id: '' }, fields: [] };
+        return;
+    }
+    if (field.type === 'array') {
+        field.values = [];
+        return;
+    }
+    if (field.type === 'object_array') {
+        field.values = [];
+        return;
+    }
+    if (field.type === 'data_object') {
+        field.value = '';
+        return;
+    }
+    if (field.type === 'replicator_object_array') {
+        field.config = { replicator_field: '', set: '', mappings: [] };
+        field.values = [];
+        return;
+    }
+    field.value = '';
+};
+
+const togglePreview = () => {
+    showPreview.value = !showPreview.value;
+};
+
+const toggleSchema = schemaIndex => {
+    collapsedSchemas.value[schemaIndex] = !collapsedSchemas.value[schemaIndex];
+};
+
+const isSchemaCollapsed = schemaIndex => collapsedSchemas.value[schemaIndex] === true;
+
+const requestRemoveSchema = schemaIndex => {
+    schemaIndexToRemove.value = schemaIndex;
+    confirmRemoveSchemaOpen.value = true;
+};
+
+const confirmRemoveSchema = () => {
+    if (schemaIndexToRemove.value === null) return;
+
+    schemas.value.splice(schemaIndexToRemove.value, 1);
+    schemaIndexToRemove.value = null;
+    confirmRemoveSchemaOpen.value = false;
+};
+
+const requestRemoveField = (schema, fieldIndex) => {
+    fieldRemoveContext.value = { schema, fieldIndex };
+    confirmRemoveFieldOpen.value = true;
+};
+
+const confirmRemoveField = () => {
+    const context = fieldRemoveContext.value;
+
+    if (!context || !context.schema || context.fieldIndex === null) return;
+
+    removeField(context.schema, context.fieldIndex);
+    fieldRemoveContext.value = { schema: null, fieldIndex: null };
+    confirmRemoveFieldOpen.value = false;
+};
+
+const requestRemoveArrayValue = (field, valueIndex) => {
+    arrayRemoveContext.value = { field, valueIndex };
+    confirmRemoveArrayValueOpen.value = true;
+};
+
+const confirmRemoveArrayValue = () => {
+    const context = arrayRemoveContext.value;
+
+    if (!context || !context.field || context.valueIndex === null) return;
+
+    removeArrayValue(context.field, context.valueIndex);
+    arrayRemoveContext.value = { field: null, valueIndex: null };
+    confirmRemoveArrayValueOpen.value = false;
+};
+
+const handlePresetSelected = presetEvent => {
+    const { preset, action } = presetEvent;
+    const presetSchema = JSON.parse(JSON.stringify(preset.schema));
+
+    if (action === 'merge' || action === 'add') {
+        schemas.value.push(presetSchema);
+        return;
+    }
+
+    if (action === 'override') {
+        schemas.value = [presetSchema];
+    }
+};
+
+const onEnd = dragEvent => dragEvent;
 </script>
 
 <style>
+@reference "../../../css/statamic-structured-data.css";
+
 .structured-data-builder {
     max-width: 800px;
 }

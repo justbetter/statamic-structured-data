@@ -36,7 +36,7 @@ class InjectStructuredDataActionTest extends TestCase
 
         /** @var StructuredDataService $service */
         $service = $this->mock(StructuredDataService::class);
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $result = $action->execute();
@@ -66,7 +66,7 @@ class InjectStructuredDataActionTest extends TestCase
             $mock->shouldReceive('getJsonLdScripts')->andReturn(['<script>test</script>']);
         });
 
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $result = $action->execute();
@@ -99,7 +99,7 @@ class InjectStructuredDataActionTest extends TestCase
             $mock->shouldReceive('getJsonLdScripts')->andReturn(['<script>test</script>']);
         });
 
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $result = $action->execute();
@@ -127,7 +127,7 @@ class InjectStructuredDataActionTest extends TestCase
 
         /** @var StructuredDataService $service */
         $service = $this->mock(StructuredDataService::class);
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $result = $action->execute();
@@ -160,7 +160,7 @@ class InjectStructuredDataActionTest extends TestCase
             $mock->shouldReceive('getJsonLdScripts')->andReturn(['<script>test</script>']);
         });
 
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $result = $action->execute();
@@ -191,7 +191,7 @@ class InjectStructuredDataActionTest extends TestCase
 
         /** @var StructuredDataService $service */
         $service = $this->mock(StructuredDataService::class);
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $result = $action->execute();
@@ -221,7 +221,7 @@ class InjectStructuredDataActionTest extends TestCase
             $mock->shouldReceive('getJsonLdScripts')->andReturn([]);
         });
 
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $result = $action->execute();
@@ -251,7 +251,7 @@ class InjectStructuredDataActionTest extends TestCase
             $mock->shouldReceive('getJsonLdScripts')->andReturn(['<script>script1</script>', '<script>script2</script>']);
         });
 
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $result = $action->execute();
@@ -276,7 +276,7 @@ class InjectStructuredDataActionTest extends TestCase
 
         /** @var StructuredDataService $service */
         $service = $this->mock(StructuredDataService::class);
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $reflection = new \ReflectionClass($action);
@@ -302,7 +302,7 @@ class InjectStructuredDataActionTest extends TestCase
 
         /** @var StructuredDataService $service */
         $service = $this->mock(StructuredDataService::class);
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $reflection = new \ReflectionClass($action);
@@ -326,7 +326,7 @@ class InjectStructuredDataActionTest extends TestCase
 
         /** @var StructuredDataService $service */
         $service = $this->mock(StructuredDataService::class);
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $reflection = new \ReflectionClass($action);
@@ -357,7 +357,7 @@ class InjectStructuredDataActionTest extends TestCase
 
         /** @var StructuredDataService $service */
         $service = $this->mock(StructuredDataService::class);
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $reflection = new \ReflectionClass($action);
@@ -381,7 +381,7 @@ class InjectStructuredDataActionTest extends TestCase
 
         /** @var StructuredDataService $service */
         $service = $this->mock(StructuredDataService::class);
-        /** @var \Justbetter\StatamicStructuredData\Services\StructuredDataService $service */
+        /** @var StructuredDataService $service */
         $action = new InjectStructuredDataAction($service);
 
         $reflection = new \ReflectionClass($action);

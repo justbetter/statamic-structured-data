@@ -12,28 +12,40 @@ use Statamic\Taxonomies\Taxonomy;
 class ReplicatorFieldService
 {
     /** @return array<int, array<string, mixed>> */
-    public function getReplicatorFields(EntryContract $dataTemplate): array
+    public function getReplicatorFields(EntryContract|Collection|Taxonomy $dataTemplate): array
     {
-        /** @var Entry $dataTemplate */
         /** @var ?Collection $collection */
-        $collection = $dataTemplate->use_for_collection; /** @phpstan-ignore-line */
+        $collection = null;
         /** @var ?Taxonomy $taxonomy */
-        $taxonomy = $dataTemplate->use_for_taxonomy; /** @phpstan-ignore-line */
+        $taxonomy = null;
+
+        if ($dataTemplate instanceof Collection) {
+            $collection = $dataTemplate;
+        } elseif ($dataTemplate instanceof Taxonomy) {
+            $taxonomy = $dataTemplate;
+        } else {
+            /** @var Entry $dataTemplate */
+            $collection = $dataTemplate->use_for_collection ?? null;
+            $taxonomy = $dataTemplate->use_for_taxonomy ?? null;
+        }
+
         if (! $collection && ! $taxonomy) {
             return [];
         }
 
         if ($collection) {
-            $blueprints = $collection->entryBlueprints() ?? false;
+            /** @var SupportCollection<int, Blueprint>|array<int, Blueprint>|null $entryBlueprints */
+            $entryBlueprints = $collection->entryBlueprints();
+            $blueprints = collect($entryBlueprints)->filter();
         } else {
-            $blueprints = $taxonomy->termBlueprints() ?? false;
+            /** @var SupportCollection<int, Blueprint>|array<int, Blueprint>|null $termBlueprints */
+            $termBlueprints = $taxonomy->termBlueprints();
+            $blueprints = collect($termBlueprints)->filter();
         }
 
-        // @codeCoverageIgnoreStart
-        if (! $blueprints || ! $blueprints->first()) {
+        if ($blueprints->isEmpty()) {
             return [];
         }
-        // @codeCoverageIgnoreEnd
 
         $fieldsArray = $this->extractFieldsFromBlueprints($blueprints);
 
@@ -49,7 +61,7 @@ class ReplicatorFieldService
         return $blueprints->reduce(function (array $carry, Blueprint $blueprint): array {
             $items = $blueprint->fields()->items();
 
-            if ($items instanceof \Illuminate\Support\Collection) {
+            if ($items instanceof SupportCollection) {
                 $items = $items->all();
             }
 

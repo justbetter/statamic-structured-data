@@ -220,7 +220,7 @@ class StructuredDataServiceTest extends TestCase
         /** @var StructuredDataParser $parser */
         $service = new StructuredDataService($parser);
 
-        /** @var \Statamic\Taxonomies\LocalizedTerm $term */
+        /** @var LocalizedTerm $term */
         $result = $service->getJsonLdScripts($term);
 
         $this->assertEmpty($result);
@@ -497,7 +497,7 @@ class StructuredDataServiceTest extends TestCase
     }
 
     #[Test]
-    public function transform_schema_skips_fields_when_transformed_value_is_null_in_flat_mode(): void
+    public function transform_schema_keeps_flat_field_key_and_uses_transformed_value(): void
     {
         $parser = $this->mock(StructuredDataParser::class);
         /** @var StructuredDataParser $parser */
@@ -540,9 +540,54 @@ class StructuredDataServiceTest extends TestCase
 
         $result = $service->transformSchema($schema);
 
-        $this->assertArrayHasKey('merged_key', $result);
-        $this->assertSame('merged_value', $result['merged_key']);
-        $this->assertArrayNotHasKey('flat_field', $result);
+        $this->assertArrayHasKey('flat_field', $result);
+        $this->assertIsArray($result['flat_field']);
+        $this->assertArrayHasKey('merged_key', $result['flat_field']);
+        $this->assertSame('merged_value', $result['flat_field']['merged_key']);
+    }
+
+    #[Test]
+    public function transform_schema_skips_fields_when_transformer_returns_null(): void
+    {
+        $parser = $this->mock(StructuredDataParser::class);
+        /** @var StructuredDataParser $parser */
+        $service = new StructuredDataService($parser);
+
+        $stubTransformer = new class implements FieldTransformerInterface
+        {
+            public function transform(array $field, $item = null): mixed
+            {
+                return null;
+            }
+        };
+
+        $stubFactory = new class($stubTransformer) extends FieldTransformerFactory
+        {
+            public function __construct(private FieldTransformerInterface $transformer) {}
+
+            public function getTransformer(?string $type): FieldTransformerInterface
+            {
+                return $this->transformer;
+            }
+        };
+
+        $reflection = new \ReflectionClass($service);
+        $property = $reflection->getProperty('transformerFactory');
+        $property->setAccessible(true);
+        $property->setValue($service, $stubFactory);
+
+        $schema = [
+            'fields' => [
+                [
+                    'key' => 'skipped_field',
+                    'type' => 'text',
+                    'value' => 'Should be skipped',
+                ],
+            ],
+        ];
+
+        $result = $service->transformSchema($schema);
+        $this->assertArrayNotHasKey('skipped_field', $result);
     }
 
     #[Test]

@@ -21,7 +21,7 @@ class StructuredDataTest extends TestCase
                 ->andReturn($expectedResult);
         });
 
-        /** @var \Justbetter\StatamicStructuredData\Actions\InjectStructuredDataAction $action */
+        /** @var InjectStructuredDataAction $action */
         $tag = new StructuredData($action);
 
         $result = $tag->head();
@@ -38,7 +38,7 @@ class StructuredDataTest extends TestCase
                 ->andReturn(null);
         });
 
-        /** @var \Justbetter\StatamicStructuredData\Actions\InjectStructuredDataAction $action */
+        /** @var InjectStructuredDataAction $action */
         $tag = new StructuredData($action);
 
         $result = $tag->head();

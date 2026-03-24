@@ -7,6 +7,7 @@ use Statamic\Entries\Collection;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\GlobalSet;
+use Statamic\Fields\Blueprint;
 use Statamic\Fields\Fieldtype;
 use Statamic\Globals\GlobalSet as StatamicGlobalSet;
 use Statamic\Taxonomies\Taxonomy;
@@ -74,16 +75,14 @@ class AvailableVariablesFieldtype extends Fieldtype
         /** @var ?Entry $dataTemplate */
         $dataTemplate = $this->field->parent();
         /** @var ?Collection $collection */
-        $collection = $dataTemplate?->get('use_for_collection') ?? $dataTemplate?->use_for_collection; /** @phpstan-ignore-line */
+        $collection = $dataTemplate?->use_for_collection; /** @phpstan-ignore-line */
         if (! $collection instanceof Collection) {
             return [];
         }
 
-        $blueprints = $collection->entryBlueprints();
-
-        if (! $blueprints || ! $blueprints->first()) {
-            return [];
-        }
+        /** @var SupportCollection<int, Blueprint>|array<int, Blueprint>|null $entryBlueprints */
+        $entryBlueprints = $collection->entryBlueprints();
+        $blueprints = collect($entryBlueprints)->filter();
 
         /** @var array<int, array<string, mixed>> $fieldsArray */
         $fieldsArray = $blueprints->reduce(function (array $carry, $blueprint): array {
@@ -94,18 +93,14 @@ class AvailableVariablesFieldtype extends Fieldtype
 
         $fields = collect($fieldsArray);
 
-        if ($fields->isEmpty()) {
-            return [];
-        }
-
-        $baseFields = [['name' => 'absolute_url', 'description' => 'Full URL']];
-
         $collectionFields = $fields->map(function (array $field) {
             return $this->setFieldData($field);
         })
             ->filter()
             ->values()
             ->all();
+
+        $baseFields = [['name' => 'absolute_url', 'description' => 'Full URL']];
 
         return array_merge($baseFields, $collectionFields);
     }
@@ -116,16 +111,14 @@ class AvailableVariablesFieldtype extends Fieldtype
         /** @var ?Entry $dataTemplate */
         $dataTemplate = $this->field->parent();
         /** @var ?Taxonomy $taxonomy */
-        $taxonomy = $dataTemplate?->get('use_for_taxonomy') ?? $dataTemplate?->use_for_taxonomy; /** @phpstan-ignore-line */
+        $taxonomy = $dataTemplate?->use_for_taxonomy; /** @phpstan-ignore-line */
         if (! $taxonomy instanceof Taxonomy) {
             return [];
         }
 
-        $blueprints = $taxonomy->termBlueprints();
-
-        if (! $blueprints || ! $blueprints->first()) {
-            return [];
-        }
+        /** @var SupportCollection<int, Blueprint>|array<int, Blueprint>|null $termBlueprints */
+        $termBlueprints = $taxonomy->termBlueprints();
+        $blueprints = collect($termBlueprints)->filter();
 
         /** @var array<int, array<string, mixed>> $fieldsArray */
         $fieldsArray = $blueprints->reduce(function (array $carry, $blueprint): array {
@@ -136,18 +129,14 @@ class AvailableVariablesFieldtype extends Fieldtype
 
         $fields = collect($fieldsArray);
 
-        if ($fields->isEmpty()) {
-            return [];
-        }
-
-        $baseFields = [['name' => 'absolute_url', 'description' => 'Full URL']];
-
         $collectionFields = $fields->map(function (array $field) {
             return $this->setFieldData($field);
         })
             ->filter()
             ->values()
             ->all();
+
+        $baseFields = [['name' => 'absolute_url', 'description' => 'Full URL']];
 
         return array_merge($baseFields, $collectionFields);
     }
@@ -263,7 +252,7 @@ class AvailableVariablesFieldtype extends Fieldtype
             return $items;
         }
 
-        if ($items instanceof \Illuminate\Support\Collection) {
+        if ($items instanceof SupportCollection) {
             /** @var array<int, array<string, mixed>> $result */
             $result = $items->all();
 

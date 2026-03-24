@@ -2,6 +2,7 @@
 
 namespace Justbetter\StatamicStructuredData\Tests\Unit\Fieldtypes;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataBuilder;
 use Justbetter\StatamicStructuredData\Services\PresetService;
@@ -12,8 +13,10 @@ use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Collection as CollectionFacade;
+use Statamic\Facades\Site;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
 use Statamic\Fields\Field;
+use Statamic\Query\EloquentQueryBuilder;
 use Statamic\Taxonomies\LocalizedTerm;
 use Statamic\Taxonomies\Taxonomy;
 
@@ -27,8 +30,8 @@ class StructuredDataBuilderTest extends TestCase
         /** @var ReplicatorFieldService $replicatorFieldService */
         $replicatorFieldService = $this->mock(ReplicatorFieldService::class);
 
-        /** @var \Justbetter\StatamicStructuredData\Services\PresetService $presetService */
-        /** @var \Justbetter\StatamicStructuredData\Services\ReplicatorFieldService $replicatorFieldService */
+        /** @var PresetService $presetService */
+        /** @var ReplicatorFieldService $replicatorFieldService */
         $fieldtype = new StructuredDataBuilder($presetService, $replicatorFieldService);
 
         $result = $fieldtype->preProcess('not-an-array');
@@ -54,8 +57,8 @@ class StructuredDataBuilderTest extends TestCase
         /** @var ReplicatorFieldService $replicatorFieldService */
         $replicatorFieldService = $this->mock(ReplicatorFieldService::class);
 
-        /** @var \Justbetter\StatamicStructuredData\Services\PresetService $presetService */
-        /** @var \Justbetter\StatamicStructuredData\Services\ReplicatorFieldService $replicatorFieldService */
+        /** @var PresetService $presetService */
+        /** @var ReplicatorFieldService $replicatorFieldService */
         $fieldtype = new StructuredDataBuilder($presetService, $replicatorFieldService);
 
         $data = [
@@ -95,8 +98,8 @@ class StructuredDataBuilderTest extends TestCase
         });
 
         /** @var Field $fieldMock */
-        /** @var \Justbetter\StatamicStructuredData\Services\PresetService $presetService */
-        /** @var \Justbetter\StatamicStructuredData\Services\ReplicatorFieldService $replicatorFieldService */
+        /** @var PresetService $presetService */
+        /** @var ReplicatorFieldService $replicatorFieldService */
         $fieldtype = new StructuredDataBuilder($presetService, $replicatorFieldService);
         $fieldtype->setField($fieldMock);
 
@@ -123,8 +126,8 @@ class StructuredDataBuilderTest extends TestCase
         });
 
         /** @var Field $fieldMock */
-        /** @var \Justbetter\StatamicStructuredData\Services\PresetService $presetService */
-        /** @var \Justbetter\StatamicStructuredData\Services\ReplicatorFieldService $replicatorFieldService */
+        /** @var PresetService $presetService */
+        /** @var ReplicatorFieldService $replicatorFieldService */
         $fieldtype = new StructuredDataBuilder($presetService, $replicatorFieldService);
         $fieldtype->setField($fieldMock);
 
@@ -159,8 +162,8 @@ class StructuredDataBuilderTest extends TestCase
         });
 
         /** @var Field $fieldMock */
-        /** @var \Justbetter\StatamicStructuredData\Services\PresetService $presetService */
-        /** @var \Justbetter\StatamicStructuredData\Services\ReplicatorFieldService $replicatorFieldService */
+        /** @var PresetService $presetService */
+        /** @var ReplicatorFieldService $replicatorFieldService */
         $fieldtype = new StructuredDataBuilder($presetService, $replicatorFieldService);
         $fieldtype->setField($fieldMock);
 
@@ -180,10 +183,10 @@ class StructuredDataBuilderTest extends TestCase
         $presetService = $this->mock(PresetService::class);
         $replicatorFieldService = $this->mock(ReplicatorFieldService::class);
 
-        \Statamic\Facades\Taxonomy::shouldReceive('findByHandle')->with('structured_data_objects')->andReturn(null);
+        TaxonomyFacade::shouldReceive('findByHandle')->with('structured_data_objects')->andReturn(null);
 
-        /** @var \Justbetter\StatamicStructuredData\Services\PresetService $presetService */
-        /** @var \Justbetter\StatamicStructuredData\Services\ReplicatorFieldService $replicatorFieldService */
+        /** @var PresetService $presetService */
+        /** @var ReplicatorFieldService $replicatorFieldService */
         $fieldtype = new StructuredDataBuilder($presetService, $replicatorFieldService);
 
         $reflection = new \ReflectionClass($fieldtype);
@@ -192,7 +195,7 @@ class StructuredDataBuilderTest extends TestCase
 
         $result = $method->invoke($fieldtype);
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertEmpty($result);
     }
 
@@ -206,11 +209,11 @@ class StructuredDataBuilderTest extends TestCase
         $taxonomy = TaxonomyFacade::make('structured_data_objects');
         $taxonomy->save();
 
-        \Statamic\Facades\Taxonomy::shouldReceive('findByHandle')->with('structured_data_objects')->andReturn($taxonomy);
-        \Statamic\Facades\Site::shouldReceive('selected')->andReturn(null);
+        TaxonomyFacade::shouldReceive('findByHandle')->with('structured_data_objects')->andReturn($taxonomy);
+        Site::shouldReceive('selected')->andReturn(null);
 
-        /** @var \Justbetter\StatamicStructuredData\Services\PresetService $presetService */
-        /** @var \Justbetter\StatamicStructuredData\Services\ReplicatorFieldService $replicatorFieldService */
+        /** @var PresetService $presetService */
+        /** @var ReplicatorFieldService $replicatorFieldService */
         $fieldtype = new StructuredDataBuilder($presetService, $replicatorFieldService);
 
         $reflection = new \ReflectionClass($fieldtype);
@@ -219,7 +222,7 @@ class StructuredDataBuilderTest extends TestCase
 
         $result = $method->invoke($fieldtype);
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertEmpty($result);
     }
 
@@ -241,7 +244,7 @@ class StructuredDataBuilderTest extends TestCase
             $mock->shouldReceive('get')->with('object_data')->andReturn(['test' => 'data']);
         });
 
-        $queryBuilder = $this->mock(\Statamic\Query\EloquentQueryBuilder::class, function ($mock) use ($term): void {
+        $queryBuilder = $this->mock(EloquentQueryBuilder::class, function ($mock) use ($term): void {
             $mock->shouldReceive('where')->with('site', 'default')->andReturnSelf();
             $mock->shouldReceive('get')->andReturn(collect([$term]));
         });
@@ -249,11 +252,11 @@ class StructuredDataBuilderTest extends TestCase
         $taxonomyMock = Mockery::mock($taxonomy)->makePartial();
         $taxonomyMock->shouldReceive('queryTerms')->andReturn($queryBuilder);
 
-        \Statamic\Facades\Taxonomy::shouldReceive('findByHandle')->with('structured_data_objects')->andReturn($taxonomyMock);
-        \Statamic\Facades\Site::shouldReceive('selected')->andReturn($site);
+        TaxonomyFacade::shouldReceive('findByHandle')->with('structured_data_objects')->andReturn($taxonomyMock);
+        Site::shouldReceive('selected')->andReturn($site);
 
-        /** @var \Justbetter\StatamicStructuredData\Services\PresetService $presetService */
-        /** @var \Justbetter\StatamicStructuredData\Services\ReplicatorFieldService $replicatorFieldService */
+        /** @var PresetService $presetService */
+        /** @var ReplicatorFieldService $replicatorFieldService */
         $fieldtype = new StructuredDataBuilder($presetService, $replicatorFieldService);
 
         $reflection = new \ReflectionClass($fieldtype);
@@ -262,7 +265,7 @@ class StructuredDataBuilderTest extends TestCase
 
         $result = $method->invoke($fieldtype);
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
         $this->assertNotEmpty($result);
         /** @var array<string, mixed> $firstItem */
         $firstItem = $result->first();
@@ -279,8 +282,8 @@ class StructuredDataBuilderTest extends TestCase
         /** @var ReplicatorFieldService $replicatorFieldService */
         $replicatorFieldService = $this->mock(ReplicatorFieldService::class);
 
-        /** @var \Justbetter\StatamicStructuredData\Services\PresetService $presetService */
-        /** @var \Justbetter\StatamicStructuredData\Services\ReplicatorFieldService $replicatorFieldService */
+        /** @var PresetService $presetService */
+        /** @var ReplicatorFieldService $replicatorFieldService */
         $fieldtype = new StructuredDataBuilder($presetService, $replicatorFieldService);
 
         $reflection = new \ReflectionClass($fieldtype);
