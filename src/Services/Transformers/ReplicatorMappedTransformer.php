@@ -97,7 +97,7 @@ class ReplicatorMappedTransformer
      * @param  array<string, mixed>|null  $sourceData
      * @return array<int, array<string, mixed>>
      */
-    protected function transformNested(array $field, $item = null, ?array $sourceData = null): array
+    public function transformNested(array $field, $item = null, ?array $sourceData = null): array
     {
         /** @var array<string, mixed>|null $config */
         $config = $field['config'] ?? null;

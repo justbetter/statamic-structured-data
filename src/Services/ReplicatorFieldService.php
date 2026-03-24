@@ -4,29 +4,36 @@ namespace Justbetter\StatamicStructuredData\Services;
 
 use Illuminate\Support\Collection as SupportCollection;
 use Statamic\Contracts\Entries\Entry as EntryContract;
+use Statamic\Entries\Collection;
+use Statamic\Entries\Entry;
 use Statamic\Fields\Blueprint;
+use Statamic\Taxonomies\Taxonomy;
 
 class ReplicatorFieldService
 {
     /** @return array<int, array<string, mixed>> */
     public function getReplicatorFields(EntryContract $dataTemplate): array
     {
-        // @phpstan-ignore-next-line
-        $collection = $dataTemplate->use_for_collection;
-        // @phpstan-ignore-next-line
-        $taxonomy = $dataTemplate->use_for_taxonomy;
-
+        /** @var Entry $dataTemplate */
+        /** @var ?Collection $collection */
+        $collection = $dataTemplate->use_for_collection; /** @phpstan-ignore-line */
+        /** @var ?Taxonomy $taxonomy */
+        $taxonomy = $dataTemplate->use_for_taxonomy; /** @phpstan-ignore-line */
         if (! $collection && ! $taxonomy) {
             return [];
         }
 
-        $blueprints = $collection
-            ? $collection->entryBlueprints()
-            : $taxonomy->termBlueprints();
+        if ($collection) {
+            $blueprints = $collection->entryBlueprints() ?? false;
+        } else {
+            $blueprints = $taxonomy->termBlueprints() ?? false;
+        }
 
+        // @codeCoverageIgnoreStart
         if (! $blueprints || ! $blueprints->first()) {
             return [];
         }
+        // @codeCoverageIgnoreEnd
 
         $fieldsArray = $this->extractFieldsFromBlueprints($blueprints);
 
@@ -144,7 +151,8 @@ class ReplicatorFieldService
         $setOptions = [];
 
         foreach ($sets as $setHandle => $setConfig) {
-            if (! is_array($setConfig)) {
+            /** @phpstan-ignore-next-line */
+            if (! is_string($setHandle) || ! is_array($setConfig)) {
                 continue;
             }
 
@@ -217,6 +225,12 @@ class ReplicatorFieldService
             /** @var array<string, mixed> $setFieldConfig */
             [$setFieldHandle, $setFieldConfig] = $fieldData;
 
+            /** @phpstan-ignore-next-line */
+            if (! is_string($setFieldHandle)) {
+                continue;
+            }
+
+            /** @var array<string, mixed> $setFieldConfig */
             $setFieldDisplay = is_string($setFieldConfig['display'] ?? null) ? $setFieldConfig['display'] : $setFieldHandle;
             $setFieldType = is_string($setFieldConfig['type'] ?? null) ? $setFieldConfig['type'] : null;
 

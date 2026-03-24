@@ -58,7 +58,8 @@ class ApplyTemplateToItemJob implements ShouldQueue
 
         if (! in_array($this->templateId, $templateIds, true)) {
             $templateIds[] = $this->templateId;
-            $item->set('structured_data_templates', array_values($templateIds));
+            /** @var non-empty-list<string> $templateIds */
+            $item->set('structured_data_templates', $templateIds);
             $item->saveQuietly();
         }
     }

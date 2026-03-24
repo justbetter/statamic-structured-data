@@ -27,6 +27,7 @@ class StructuredDataObjectBuilder extends Fieldtype
             ];
         }
 
+        /** @var array<string, mixed> $data */
         return $data;
     }
 

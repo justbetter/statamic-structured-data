@@ -48,7 +48,7 @@ class StructuredDataService
             $schemas = $template->get('schema_data');
             $schemas = $schemas ?? [];
 
-            if (empty($schemas) || ! is_array($schemas)) {
+            if (empty($schemas)) {
                 continue;
             }
 
@@ -63,6 +63,7 @@ class StructuredDataService
                         continue;
                     }
 
+                    /** @var array<string, mixed> $parsedSchema */
                     $scripts[] = $this->formatJsonLd($parsedSchema, $json, $item);
                 }
             } catch (\Exception $e) {
@@ -97,12 +98,17 @@ class StructuredDataService
      */
     public function parseAndTransformSchemas($schemas, EntryContract|Page|LocalizedTerm|TermContract|null $item = null): array
     {
+        if (! $item instanceof EntryContract && ! $item instanceof TermContract) {
+            return [];
+        }
+
         $parsedData = $this->parser->parse($schemas, $item);
         $transformedData = [];
 
         if (is_array($parsedData)) {
             foreach ($parsedData as $schema) {
                 if (is_array($schema)) {
+                    /** @var array<string, mixed> $schema */
                     $transformedData[] = $this->transformSchema($schema, $item);
                 }
             }
@@ -117,6 +123,7 @@ class StructuredDataService
      */
     public function transformSchema(array $schema, EntryContract|Page|LocalizedTerm|TermContract|null $item = null): array
     {
+        /** @var array<string, mixed> $result */
         $result = [];
 
         if (isset($schema['specialProps']) && is_array($schema['specialProps'])) {
@@ -134,10 +141,12 @@ class StructuredDataService
 
         if (isset($schema['fields']) && is_array($schema['fields'])) {
             foreach ($schema['fields'] as $field) {
-                if (! isset($field['key'])) {
+                if (! is_array($field) || ! isset($field['key']) || ! is_string($field['key']) || $field['key'] === '') {
                     continue;
                 }
 
+                /** @var array<string, mixed> $field */
+                /** @var string $key */
                 $key = $field['key'];
                 $transformedValue = $this->transformField($field, $item, $result);
 
@@ -152,6 +161,9 @@ class StructuredDataService
         return $result;
     }
 
+    /**
+     * @param  array<mixed, mixed>  $array
+     */
     protected function isAssociativeArray(array $array): bool
     {
         if (empty($array)) {
@@ -171,13 +183,17 @@ class StructuredDataService
 
         // Handle object and object_array types that need recursive schema transformation
         if ($type === 'object' && isset($field['value']) && is_array($field['value'])) {
-            return $this->transformSchema($field['value'], $item);
+            /** @var array<string, mixed> $fieldValue */
+            $fieldValue = $field['value'];
+
+            return $this->transformSchema($fieldValue, $item);
         }
 
         if ($type === 'object_array' && isset($field['values']) && is_array($field['values'])) {
             $output = [];
             foreach ($field['values'] as $value) {
                 if (is_array($value)) {
+                    /** @var array<string, mixed> $value */
                     $output[] = $this->transformSchema($value, $item);
                 }
             }
@@ -190,12 +206,17 @@ class StructuredDataService
         $transformedValue = $transformer->transform($field, $item);
 
         // Handle flat mode for replicator_object_array
+        /** @var array<string, mixed>|null $config */
+        $config = $field['config'] ?? null;
+
         if ($type === 'replicator_object_array'
-            && isset($field['config']['flat'])
-            && $field['config']['flat'] === true
+            && is_array($config)
+            && ($config['flat'] ?? false) === true
             && is_array($transformedValue)
             && $this->isAssociativeArray($transformedValue)) {
-            $result = array_merge($result, $transformedValue);
+            /** @var array<string, mixed> $merged */
+            $merged = array_merge($result, $transformedValue);
+            $result = $merged;
 
             return null;
         }

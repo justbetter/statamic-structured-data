@@ -60,4 +60,48 @@ class ReplicatorObjectArrayTransformer implements FieldTransformerInterface
 
         return $this->mappedTransformer->transform($replicatorData, $setFilter, $mappings, $item);
     }
+
+    /**
+     * @param  mixed  $row
+     * @return array<string, mixed>|null
+     */
+    protected function normalizeReplicatorRow($row): ?array
+    {
+        return $this->normalizer->normalize($row);
+    }
+
+    /**
+     * @param  mixed  $value
+     */
+    protected function unwrapValue($value): mixed
+    {
+        return $this->normalizer->unwrap($value);
+    }
+
+    /**
+     * Ensures the given value is an array, converting non-arrays to empty array.
+     *
+     * @param  mixed  $values
+     * @return array<string, mixed>
+     */
+    protected function ensureArrayValues($values): array
+    {
+        if (! is_array($values)) {
+            return [];
+        }
+
+        /** @var array<string, mixed> $values */
+        return $values;
+    }
+
+    /**
+     * @param  array<string, mixed>  $field
+     * @param  mixed  $item
+     * @param  array<string, mixed>|null  $sourceData
+     * @return array<int, array<string, mixed>>
+     */
+    protected function transformNested(array $field, $item = null, ?array $sourceData = null): array
+    {
+        return $this->mappedTransformer->transformNested($field, $item, $sourceData);
+    }
 }
