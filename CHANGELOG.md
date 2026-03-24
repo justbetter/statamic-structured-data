@@ -1,6 +1,18 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.5.0...1.5.0)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.0.0...2.0.0)
+## [2.0.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.0.0) - 2026-03-24
+
+### Added
+
+- Added apply to all action for templates (#19)
+- Added replicator support in templates (#20)
+- Added option to flatten fields from a replicator (#21)
+- Added tests + Small refactor (#22)
+
+### Changed
+- Statamic 6 update + Vue 3 & Statamic UI refactor (#23)
+
 ## [1.5.0](https://github.com/justbetter/statamic-structured-data/releases/tag/1.5.0) - 2025-12-15
 
 ### Added
