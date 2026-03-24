@@ -176,8 +176,6 @@ const copyVariable = (variable, event) => {
     navigator.clipboard
         .writeText(variable)
         .then(() => {
-            // eslint-disable-next-line no-console
-            console.log('Variable copied to clipboard:', variable);
             tooltipVisible.value = true;
             tooltipStyle.top = `${event.layerY}px`;
             tooltipStyle.left = `${event.layerX}px`;
