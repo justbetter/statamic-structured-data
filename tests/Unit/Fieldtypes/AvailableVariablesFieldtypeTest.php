@@ -11,11 +11,13 @@ use Statamic\Entries\Collection;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Blueprint as BlueprintFacade;
 use Statamic\Facades\Collection as CollectionFacade;
+use Statamic\Facades\GlobalSet;
 use Statamic\Facades\GlobalSet as GlobalSetFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
 use Statamic\Fields\Blueprint;
 use Statamic\Fields\Field;
 use Statamic\Fields\Fields;
+use Statamic\Globals\GlobalCollection;
 use Statamic\Taxonomies\Taxonomy;
 
 class AvailableVariablesFieldtypeTest extends TestCase
@@ -249,8 +251,8 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $globalSetMock->shouldReceive('blueprint')->andReturn($blueprintMock);
         $globalSetMock->shouldReceive('handle')->andReturn('test');
 
-        $globalCollection = new \Statamic\Globals\GlobalCollection([$globalSetMock]);
-        \Statamic\Facades\GlobalSet::shouldReceive('all')->andReturn($globalCollection);
+        $globalCollection = new GlobalCollection([$globalSetMock]);
+        GlobalSet::shouldReceive('all')->andReturn($globalCollection);
 
         $reflection = new \ReflectionClass($fieldtype);
         $method = $reflection->getMethod('getGlobalVariables');
@@ -366,7 +368,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
     {
         $fieldtype = new AvailableVariablesFieldtype;
 
-        \Statamic\Facades\Collection::shouldReceive('find')->with('nonexistent')->andReturn(null);
+        CollectionFacade::shouldReceive('find')->with('nonexistent')->andReturn(null);
 
         $reflection = new \ReflectionClass($fieldtype);
         $method = $reflection->getMethod('getCollectionVariables');
@@ -409,7 +411,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
             ],
         ];
 
-        \Statamic\Facades\Collection::shouldReceive('find')->with('blog')->andReturn($collection);
+        CollectionFacade::shouldReceive('find')->with('blog')->andReturn($collection);
 
         $reflection = new \ReflectionClass($fieldtype);
         $method = $reflection->getMethod('getCollectionVariables');
@@ -439,7 +441,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
             ],
         ];
 
-        \Statamic\Facades\Collection::shouldReceive('find')->with('blog')->andReturn($collectionMock);
+        CollectionFacade::shouldReceive('find')->with('blog')->andReturn($collectionMock);
 
         $reflection = new \ReflectionClass($fieldtype);
         $method = $reflection->getMethod('getCollectionVariables');
@@ -473,7 +475,7 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $blueprint->save();
         $collection->entryBlueprints();
 
-        \Statamic\Facades\Collection::shouldReceive('find')->with('blog')->andReturn($collection);
+        CollectionFacade::shouldReceive('find')->with('blog')->andReturn($collection);
 
         $reflection = new \ReflectionClass($fieldtype);
         $method = $reflection->getMethod('setFieldData');

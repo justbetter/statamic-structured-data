@@ -61,7 +61,7 @@ class ReplicatorFieldService
         return $blueprints->reduce(function (array $carry, Blueprint $blueprint): array {
             $items = $blueprint->fields()->items();
 
-            if ($items instanceof \Illuminate\Support\Collection) {
+            if ($items instanceof SupportCollection) {
                 $items = $items->all();
             }
 

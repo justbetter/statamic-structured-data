@@ -220,7 +220,7 @@ class StructuredDataServiceTest extends TestCase
         /** @var StructuredDataParser $parser */
         $service = new StructuredDataService($parser);
 
-        /** @var \Statamic\Taxonomies\LocalizedTerm $term */
+        /** @var LocalizedTerm $term */
         $result = $service->getJsonLdScripts($term);
 
         $this->assertEmpty($result);

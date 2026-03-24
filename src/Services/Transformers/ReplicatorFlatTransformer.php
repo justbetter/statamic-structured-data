@@ -224,6 +224,7 @@ class ReplicatorFlatTransformer
         }
 
         if (isset($unwrappedValue['type']) || isset($unwrappedValue['set']) || isset($unwrappedValue['values'])) {
+            /** @var array<string, mixed> $unwrappedValue */
             return [$unwrappedValue];
         }
 
@@ -249,9 +250,11 @@ class ReplicatorFlatTransformer
         }
 
         if ($this->isIndexedArray($data)) {
+            /** @var array<int, mixed> $data */
             return $this->searchInIndexedArray($data, $keyField, $valueField);
         }
 
+        /** @var array<string, mixed> $data */
         return $this->searchInAssociativeArray($data, $keyField, $valueField);
     }
 

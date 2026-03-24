@@ -97,7 +97,7 @@ class EntryCreatedListenerTest extends TestCase
         $listener = new EntryCreatedListener;
         $listener->handle($event);
 
-        /** @var \Statamic\Entries\Entry $entryMock */
+        /** @var Entry $entryMock */
         $this->assertNotNull($entryMock->get('structured_data_templates'));
         $this->assertNotEmpty($entryMock->get('structured_data_templates'));
     }

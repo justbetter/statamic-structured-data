@@ -247,7 +247,7 @@ class ApplyTemplateActionTest extends TestCase
             ->set('blueprint_type', 'collection')
             ->set('use_for_collection', $blogCollectionMock);
 
-        /** @var \Statamic\Entries\Entry $template */
+        /** @var Entry $template */
         $action = new ApplyTemplateAction;
         $result = $action->applyTemplateToCollection($template, 'template-123');
 

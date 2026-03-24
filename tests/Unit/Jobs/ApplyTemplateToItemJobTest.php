@@ -39,7 +39,7 @@ class ApplyTemplateToItemJobTest extends TestCase
         $job = new ApplyTemplateToItemJob('entry-123', 'entry', 'template-456');
         $job->handle();
 
-        /** @var \Statamic\Entries\Entry $entryMock */
+        /** @var Entry $entryMock */
         $templates = $entryMock->get('structured_data_templates');
         $this->assertIsArray($templates);
         $this->assertContains('template-456', $templates);
@@ -64,7 +64,7 @@ class ApplyTemplateToItemJobTest extends TestCase
         $taxonomy->save();
         $term = $this->mock(LocalizedTerm::class, function ($mock): void {
             $mock->shouldReceive('get')->with('structured_data_templates')->andReturn([]);
-            $mock->shouldReceive('set')->with('structured_data_templates', \Mockery::any())->once();
+            $mock->shouldReceive('set')->with('structured_data_templates', Mockery::any())->once();
             $mock->shouldReceive('saveQuietly')->once();
         });
 
@@ -102,7 +102,7 @@ class ApplyTemplateToItemJobTest extends TestCase
         $method->setAccessible(true);
         $method->invoke($job, $entryMock);
 
-        /** @var \Statamic\Entries\Entry $entryMock */
+        /** @var Entry $entryMock */
         $templates = $entryMock->get('structured_data_templates');
         $this->assertIsArray($templates);
         $this->assertContains('template-456', $templates);
@@ -149,7 +149,7 @@ class ApplyTemplateToItemJobTest extends TestCase
         $method->setAccessible(true);
         $method->invoke($job, $entryMock);
 
-        /** @var \Statamic\Entries\Entry $entryMock */
+        /** @var Entry $entryMock */
         $templates = $entryMock->get('structured_data_templates');
         $this->assertCount(3, $templates);
         $this->assertContains('template-789', $templates);
@@ -174,7 +174,7 @@ class ApplyTemplateToItemJobTest extends TestCase
         $method->setAccessible(true);
         $method->invoke($job, $entryMock);
 
-        /** @var \Statamic\Entries\Entry $entryMock */
+        /** @var Entry $entryMock */
         $templates = $entryMock->get('structured_data_templates');
         $this->assertCount(3, $templates);
         $this->assertContains('789', $templates);
@@ -200,7 +200,7 @@ class ApplyTemplateToItemJobTest extends TestCase
         $method->setAccessible(true);
         $method->invoke($job, $entryMock);
 
-        /** @var \Statamic\Entries\Entry $entryMock */
+        /** @var Entry $entryMock */
         $templates = $entryMock->get('structured_data_templates');
         $this->assertIsArray($templates);
         $this->assertContains('template-456', $templates);
@@ -225,7 +225,7 @@ class ApplyTemplateToItemJobTest extends TestCase
         $method->setAccessible(true);
         $method->invoke($job, $entryMock);
 
-        /** @var \Statamic\Entries\Entry $entryMock */
+        /** @var Entry $entryMock */
         $templates = $entryMock->get('structured_data_templates');
         $this->assertCount(1, $templates);
         $this->assertContains('template-456', $templates);
@@ -247,7 +247,7 @@ class ApplyTemplateToItemJobTest extends TestCase
         $method->setAccessible(true);
         $method->invoke($job, $entryMock);
 
-        /** @var \Statamic\Entries\Entry $entryMock */
+        /** @var Entry $entryMock */
         $templates = $entryMock->get('structured_data_templates');
         $this->assertIsArray($templates);
         $this->assertContains('template-456', $templates);
