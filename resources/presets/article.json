@@ -3,7 +3,7 @@
   "description": "Basic article schema for blog posts and news articles",
   "schema": {
     "specialProps": {
-      "context": "http://schema.org",
+      "context": "https://schema.org",
       "type": "Article",
       "id": "{{ entry:url }}"
     },

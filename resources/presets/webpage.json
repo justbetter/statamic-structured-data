@@ -3,7 +3,7 @@
     "description": "Basic web page schema for individual pages and content",
     "schema": {
       "specialProps": {
-        "context": "http://schema.org",
+        "context": "https://schema.org",
         "type": "WebPage",
         "id": "{{ entry:url }}"
       },

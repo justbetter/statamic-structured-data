@@ -33,7 +33,7 @@ class StructuredDataBuilder extends Fieldtype
         $default = [
             [
                 'specialProps' => [
-                    'context' => 'http://schema.org',
+                    'context' => 'https://schema.org',
                     'type' => '',
                     'id' => '',
                 ],

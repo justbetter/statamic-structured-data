@@ -3,7 +3,7 @@
   "description": "Basic website schema with essential properties",
   "schema": {
     "specialProps": {
-      "context": "http://schema.org",
+      "context": "https://schema.org",
       "type": "WebSite",
       "id": "{{ site:url }}"
     },
