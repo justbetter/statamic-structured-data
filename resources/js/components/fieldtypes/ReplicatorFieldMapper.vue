@@ -302,7 +302,7 @@ export default {
             this.mappingIndexToRemove = null;
         },
         sanitizeKey(mapping) {
-            mapping.key = mapping.key.replace(/[^a-zA-Z0-9@]/g, '');
+            mapping.key = mapping.key.replace(/[^a-zA-Z0-9@:-]/g, '');
         },
         getFieldOptionsForMapping(mapping) {
             if (!this.selectedReplicatorField) {

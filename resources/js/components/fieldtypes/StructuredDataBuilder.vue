@@ -268,7 +268,7 @@ let nextFieldId = 1;
 
 const createEmptySchema = () => ({
     specialProps: {
-        context: 'http://schema.org',
+        context: 'https://schema.org',
         type: '',
         id: '',
     },
@@ -413,7 +413,7 @@ const removeArrayValue = (field, valueIndex) => {
 };
 
 const validateKey = field => {
-    field.key = field.key.replace(/[^a-zA-Z0-9@]/g, '');
+    field.key = field.key.replace(/[^a-zA-Z0-9@:-]/g, '');
 };
 
 const suggestedId = schema => {

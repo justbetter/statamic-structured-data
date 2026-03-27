@@ -239,7 +239,7 @@ export default {
         },
 
         validateKey(field) {
-            field.key = field.key.replace(/[^a-zA-Z0-9@]/g, '');
+            field.key = field.key.replace(/[^a-zA-Z0-9@:-]/g, '');
         },
 
         useDefaultId() {

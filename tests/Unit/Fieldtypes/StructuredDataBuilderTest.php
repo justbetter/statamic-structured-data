@@ -42,7 +42,7 @@ class StructuredDataBuilderTest extends TestCase
         $this->assertArrayHasKey('fields', $result[0]);
         /** @var array<string, mixed> $specialProps */
         $specialProps = $result[0]['specialProps'];
-        $this->assertEquals('http://schema.org', $specialProps['context']);
+        $this->assertEquals('https://schema.org', $specialProps['context']);
         $this->assertEquals('', $specialProps['type']);
         $this->assertEquals('', $specialProps['id']);
         $this->assertIsArray($result[0]['fields']);
@@ -64,7 +64,7 @@ class StructuredDataBuilderTest extends TestCase
         $data = [
             [
                 'specialProps' => [
-                    'context' => 'http://schema.org',
+                    'context' => 'https://schema.org',
                     'type' => 'Person',
                     'id' => 'person-1',
                 ],

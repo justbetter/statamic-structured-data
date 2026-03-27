@@ -215,7 +215,7 @@ const removeArrayValue = (field, valueIndex) => {
 };
 
 const validateKey = field => {
-    field.key = field.key.replace(/[^a-zA-Z0-9@]/g, '');
+    field.key = field.key.replace(/[^a-zA-Z0-9@:-]/g, '');
 };
 
 const handleTypeChange = field => {
