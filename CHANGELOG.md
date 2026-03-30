@@ -1,6 +1,19 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.4.2...1.4.2)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.5.1...1.5.1)
+## [1.5.1](https://github.com/justbetter/statamic-structured-data/releases/tag/1.5.1) - 2026-03-30
+
+### Added
+
+- Load schema.org over https & allow special characters in key fields (#25)
+
+## [1.5.0](https://github.com/justbetter/statamic-structured-data/releases/tag/1.5.0) - 2025-12-15
+
+### Added
+
+- Added option to auto assign templates to new entries (#17)
+- Changed Phpstan level & fixed Phpstan errors + ran Pint (#18)
+
 ## [1.4.2](https://github.com/justbetter/statamic-structured-data/releases/tag/1.4.2) - 2025-12-05
 
 ### Fixed
