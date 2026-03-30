@@ -3,7 +3,7 @@
   "description": "Basic organization schema with contact and location info",
   "schema": {
     "specialProps": {
-      "context": "http://schema.org",
+      "context": "https://schema.org",
       "type": "Organization",
       "id": "{{ site:url }}/#Organization"
     },

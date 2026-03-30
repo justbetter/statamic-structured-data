@@ -226,7 +226,7 @@ export default {
             type: Array,
             default: () => [{
                 specialProps: {
-                    context: 'http://schema.org',
+                    context: 'https://schema.org',
                     type: '',
                     id: ''
                 },
@@ -247,7 +247,7 @@ export default {
         return {
             schemas: this.value.length ? this.value : [{
                 specialProps: {
-                    context: 'http://schema.org',
+                    context: 'https://schema.org',
                     type: '',
                     id: ''
                 },
@@ -314,7 +314,7 @@ export default {
         addSchema() {
             this.schemas.push({
                 specialProps: {
-                    context: 'http://schema.org',
+                    context: 'https://schema.org',
                     type: '',
                     id: ''
                 },
@@ -378,7 +378,7 @@ export default {
         },
 
         validateKey(field) {
-            field.key = field.key.replace(/[^a-zA-Z0-9@]/g, '');
+            field.key = field.key.replace(/[^a-zA-Z0-9@:-]/g, '');
         },
 
         useDefaultId(schema) {
