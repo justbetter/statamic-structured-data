@@ -1,6 +1,12 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.0.0...2.0.0)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.1.0...2.1.0)
+## [2.1.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.1.0) - 2026-04-13
+
+### Added
+
+- Add Support for Laravel 13 (#24)
+
 ## [2.0.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.0.0) - 2026-03-24
 
 ### Added
