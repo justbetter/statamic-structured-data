@@ -10,16 +10,17 @@ This Statamic addon provides a powerful and flexible way to add structured data 
 
 - 🔄 Dynamic JSON-LD generation based on entry and term data
 - 📝 Template-based structured data configuration
-- 🔌 Automatic injection of structured data into your pages
+- 📦 Built-in schema presets (WebSite, WebPage, Organization, Article, LocalBusiness)
 - 🎯 Support for multiple schemas per page
 - 🛠 Antlers template parsing support
+- 🧩 Support for replicator-to-JSON-LD field mapping
 - 💪 Flexible and extensible architecture
 
 ## Requirements
 
-- PHP ^8.2 or ^8.3
-- Laravel ^11.0
-- Statamic ^5.0
+- PHP ^8.4 or ^8.5
+- Laravel ^12.0
+- Statamic ^6.0
 
 ## Installation
 
@@ -52,7 +53,13 @@ php artisan vendor:publish --tag=justbetter-structured-data
 ```
 
 You can now find the config file at `config/justbetter/structured-data.php`.
-After publishing the config, you can set the collections and taxonomies that should have structured data templates.
+After publishing the config, you can configure:
+
+- which collections support structured data templates
+- which taxonomies support structured data objects
+- whether presets are enabled
+- which default presets are available
+- custom preset paths
 
 ## Usage
 
@@ -68,9 +75,21 @@ Create templates in your Statamic control panel that define your structured data
 
 In your entry or term's content, you can assign one or more structured data templates using the `structured_data_templates` field. The addon will automatically process these templates and generate the appropriate JSON-LD scripts.
 
-### 3. Automatic Injection
+### 3. Rendering Structured Data
 
-The addon automatically injects the generated JSON-LD scripts into your pages before the closing `</body>` tag. No additional configuration is required.
+Render the generated JSON-LD where you need it in your layout:
+
+**Blade**:
+
+```blade
+{!! Statamic::tag('structured-data:head')->fetch() !!}
+```
+
+**Antlers**:
+
+```antlers
+{{ structured-data:head }}
+```
 
 ## Example Schema
 
