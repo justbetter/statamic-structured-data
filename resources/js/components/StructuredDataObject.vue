@@ -20,71 +20,18 @@
 
         <div>
             <div v-for="(field, index) in objectData.fields" :key="index" class="mb-4 border-b pb-4">
-                <div class="flex items-start gap-2">
-                    <div class="flex-1">
-                        <Label class="mb-1.5">{{ __('Key') }}</Label>
-                        <Input
-                            v-model="field.key"
-                            @update:model-value="() => validateKey(field)"
-                        />
-                    </div>
-
-                    <div class="w-32">
-                        <Label class="mb-1.5">Type</Label>
-                        <Select
-                            v-model="field.type"
-                            :options="selectOptions"
-                            @update:model-value="() => handleTypeChange(field)"
-                        />
-                    </div>
-
-                    <Button
-                        variant="danger"
-                        class="mt-6"
-                        @click="requestRemoveField(index)"
-                    >
-                        <Icon name="x" />
-                    </Button>
-                </div>
-
-                <div class="mt-2">
-                    <div v-if="field.type === 'string'">
-                        <Input v-model="field.value" />
-                    </div>
-
-                    <div v-else-if="field.type === 'numeric'">
-                        <Input type="number" v-model="field.value" />
-                    </div>
-
-                    <div v-else-if="field.type === 'array'" class="space-y-2">
-                        <div v-for="(value, valueIndex) in field.values" :key="valueIndex" class="flex gap-2">
-                            <Input v-model="field.values[valueIndex]" />
-                            <Button
-                                variant="danger"
-                                @click="requestRemoveArrayValue(field, valueIndex)"
-                            >
-                                <Icon name="x" />
-                            </Button>
-                        </div>
-                        <Button @click="addArrayValue(field)" variant="primary">{{ __('Add Value') }}</Button>
-                    </div>
-
-                    <div v-else-if="field.type === 'object'" class="mt-2 border rounded p-4">
-                        <structured-data-object
-                            v-model="field.value"
-                            :base-url="baseUrl"
-                            :parent-type="objectData.specialProps.type"
-                            :field-key="field.key"
-                        />
-                    </div>
-
-                    <div v-else-if="field.type === 'replicator_object_array'" class="mt-2">
-                        <replicator-field-mapper 
-                            v-model="field.config" 
-                            :replicator-fields="replicatorFields"
-                        />
-                    </div>
-                </div>
+                <StructuredDataFieldEditor
+                    :field="field"
+                    :select-options="selectOptions"
+                    :base-url="baseUrl"
+                    :replicator-fields="replicatorFields"
+                    :remove-field-label="__('Remove Property')"
+                    @validate-key="validateKey"
+                    @type-change="handleTypeChange"
+                    @add-array-value="addArrayValue"
+                    @remove-array-value="requestRemoveArrayValue"
+                    @remove-field="requestRemoveField(index)"
+                />
             </div>
 
             <Button @click="addField" variant="primary">{{ __('Add Property') }}</Button>
@@ -107,20 +54,24 @@
 </template>
 
 <script>
-import { Button, Card, ConfirmationModal, Icon, Input, Label, Select } from '@statamic/cms/ui';
-import ReplicatorFieldMapper from './fieldtypes/ReplicatorFieldMapper.vue';
+import { defineAsyncComponent } from 'vue';
+import { Button, Card, ConfirmationModal, Input, Label } from '@statamic/cms/ui';
+import {
+    addStructuredDataArrayValue,
+    handleStructuredDataFieldTypeChange,
+    removeStructuredDataArrayValue,
+    validateStructuredDataKey,
+} from '../composables/useStructuredDataFields';
 
 export default {
     name: 'StructuredDataObject',
     components: {
-        'replicator-field-mapper': ReplicatorFieldMapper,
         Button,
         Card,
         ConfirmationModal,
-        Icon,
         Input,
         Label,
-        Select,
+        StructuredDataFieldEditor: defineAsyncComponent(() => import('./StructuredDataFieldEditor.vue')),
     },
 
     props: {
@@ -145,6 +96,10 @@ export default {
         fieldKey: {
             type: String,
             default: ''
+        },
+        replicatorFields: {
+            type: Array,
+            default: () => []
         }
     },
 
@@ -175,9 +130,6 @@ export default {
                 { value: 'object', label: 'Object' },
                 { value: 'replicator_object_array', label: 'Replicator Object Array' }
             ];
-        },
-        availableReplicatorFields() {
-            return this.replicatorFields || [];
         }
     },
 
@@ -228,18 +180,15 @@ export default {
         },
 
         addArrayValue(field) {
-            if (!field.values) {
-                field.values = [];
-            }
-            field.values.push('');
+            addStructuredDataArrayValue(field);
         },
 
         removeArrayValue(field, index) {
-            field.values.splice(index, 1);
+            removeStructuredDataArrayValue(field, index);
         },
 
         validateKey(field) {
-            field.key = field.key.replace(/[^a-zA-Z0-9@:-]/g, '');
+            validateStructuredDataKey(field);
         },
 
         useDefaultId() {
@@ -247,26 +196,7 @@ export default {
         },
 
         handleTypeChange(field) {
-            if (field.type === 'object') {
-                this.$set(field, 'value', {
-                    specialProps: {
-                        type: '',
-                        id: ''
-                    },
-                    fields: []
-                });
-            } else if (field.type === 'array') {
-                field.values = [];
-            } else if (field.type === 'replicator_object_array') {
-                field.config = {
-                    replicator_field: '',
-                    set: '',
-                    mappings: []
-                };
-                field.values = [];
-            } else {
-                field.value = '';
-            }
+            handleStructuredDataFieldTypeChange(field);
         },
 
         requestRemoveField(index) {
