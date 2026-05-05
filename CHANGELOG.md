@@ -1,6 +1,6 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.2.0...2.2.0)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/...2.2.0)
 ## [2.2.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.2.0) - 2026-05-05
 
 ### Added
@@ -12,7 +12,6 @@
 
 ### Fixed
 - Parse Bard content correctly (#27)
-- Fixed vite script loading (#29)
 
 ## [2.1.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.1.0) - 2026-04-13
 
