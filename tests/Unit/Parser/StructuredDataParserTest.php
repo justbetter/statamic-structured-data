@@ -451,6 +451,7 @@ class StructuredDataParserTest extends TestCase
         $entry = $this->makeEntry();
         $parser = $this->makeParser();
 
+        /** @var AntlersParserContract&MockInterface $antlersParser */
         $antlersParser = $this->mock(AntlersParserContract::class, function (MockInterface $mock): void {
             $mock->shouldReceive('injectNoparse')->andReturnUsing(static fn (string $value): string => $value);
         });
@@ -467,6 +468,7 @@ class StructuredDataParserTest extends TestCase
         $entry = $this->makeEntry();
         $parser = $this->makeParser();
 
+        /** @var AntlersParserContract&MockInterface $antlersParser */
         $antlersParser = $this->mock(AntlersParserContract::class, function (MockInterface $mock): void {
             $mock->shouldReceive('injectNoparse')->andReturn('');
         });
