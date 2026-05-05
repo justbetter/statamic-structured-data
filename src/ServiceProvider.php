@@ -25,7 +25,6 @@ class ServiceProvider extends AddonServiceProvider
     protected $vite = [
         'input' => [
             'resources/js/statamic-structured-data.js',
-            'resources/css/statamic-structured-data.css',
         ],
         'publicDirectory' => 'resources/dist',
     ];

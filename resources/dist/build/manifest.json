@@ -1,32 +1,25 @@
 {
-  "resources/css/statamic-structured-data.css": {
-    "file": "assets/statamic-structured-data-C0lrZzcE.css",
-    "src": "resources/css/statamic-structured-data.css",
-    "isEntry": true
-  },
   "resources/js/components/StructuredDataFieldEditor.vue": {
-    "file": "assets/StructuredDataFieldEditor-Cj4Wey72.js",
+    "file": "assets/StructuredDataFieldEditor-CO12Y0iM.js",
     "name": "StructuredDataFieldEditor",
     "src": "resources/js/components/StructuredDataFieldEditor.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/statamic-structured-data.js"
-    ],
-    "css": [
-      "assets/StructuredDataFieldEditor-CHvsL5DP.css"
     ]
   },
   "resources/js/statamic-structured-data.js": {
-    "file": "assets/statamic-structured-data-D_2N8S_F.js",
+    "file": "assets/statamic-structured-data-DSPlP4f9.js",
     "name": "statamic-structured-data",
     "src": "resources/js/statamic-structured-data.js",
     "isEntry": true,
     "dynamicImports": [
       "resources/js/components/StructuredDataFieldEditor.vue",
       "resources/js/components/StructuredDataFieldEditor.vue"
-    ],
-    "css": [
-      "assets/statamic-structured-data-BBXul3Sg.css"
     ]
+  },
+  "style.css": {
+    "file": "assets/style-CW98Jme1.css",
+    "src": "style.css"
   }
 }
