@@ -1,18 +1,6 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.2.0...2.2.0)
-## [2.2.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.2.0) - 2026-05-05
-
-### Added
-- Added field duplication (#26)
-- Added field collapse (#26)
-- Added dutch translations (#26)
-- Added support for group fields (#28)
-- show imported fieldset fields (#28)
-
-### Fixed
-- Parse Bard content correctly (#27)
-
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.1.0...2.2.0)
 ## [2.1.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.1.0) - 2026-04-13
 
 ### Added
