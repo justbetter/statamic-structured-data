@@ -1,6 +1,11 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/...2.2.0)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.2.1...2.2.1)
+## [2.2.1](https://github.com/justbetter/statamic-structured-data/releases/tag/2.2.1) - 2026-05-05
+
+### Fixed
+- Fixed vite script loading (#29)
+
 ## [2.2.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.2.0) - 2026-05-05
 
 ### Added
