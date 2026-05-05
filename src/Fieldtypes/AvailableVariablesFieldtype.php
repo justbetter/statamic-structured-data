@@ -230,7 +230,7 @@ class AvailableVariablesFieldtype extends Fieldtype
         }
 
         $descriptionValue = is_string($description) ? $description : null;
-        $display = is_array($fieldConfig) && is_string($fieldConfig['display'] ?? null) ? $fieldConfig['display'] : null;
+        $display = is_string($fieldConfig['display'] ?? null) ? $fieldConfig['display'] : null;
 
         return [
             'name' => $name ?? $fieldHandle,

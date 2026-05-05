@@ -1,29 +1,39 @@
 <template>
     <div class="structured-data-builder">
         <div class="flex-1">
-            <Card
+            <Panel
                 v-for="(schema, schemaIndex) in schemas"
                 :key="schemaIndex"
                 class="structured-data-schema mb-6"
             >
-                <div class="flex justify-between items-center mb-3">
+                <PanelHeader class="flex items-center justify-between">
                     <div class="flex items-center gap-2 cursor-pointer" @click="toggleSchema(schemaIndex)">
-                        <div class="chevron" :class="{ 'chevron-up': !isSchemaCollapsed(schemaIndex) }"></div>
-                        <h3 class="font-bold text-lg">
+                        <Heading as="h3" size="lg">
                             <span v-if="schema.specialProps.type">{{ schema.specialProps.type }}</span>
                             <span v-else>{{ __('Schema') }} {{ schemaIndex + 1 }}</span>
-                        </h3>
+                        </Heading>
                     </div>
-                    <Button
-                        v-if="schemas.length > 1"
-                        @click="requestRemoveSchema(schemaIndex)"
-                        variant="danger"
-                    >
-                        {{ __('Remove Schema')}}
-                    </Button>
-                </div>
+                    <div class="flex items-center gap-2">
+                        <Button
+                            v-if="schemas.length > 1"
+                            @click="requestRemoveSchema(schemaIndex)"
+                            variant="danger"
+                        >
+                            {{ __('Remove Schema')}}
+                        </Button>
 
-                <div v-show="!isSchemaCollapsed(schemaIndex)">
+                        <Button
+                            variant="subtle"
+                            @click="toggleSchema(schemaIndex)"
+                            :aria-label="isSchemaCollapsed(schemaIndex) ? __('Expand Schema') : __('Collapse Schema')"
+                            :title="isSchemaCollapsed(schemaIndex) ? __('Expand Schema') : __('Collapse Schema')"
+                        >
+                            <Icon :name="isSchemaCollapsed(schemaIndex) ? 'chevron-down' : 'chevron-up'" />
+                        </Button>
+                    </div>
+                </PanelHeader>
+
+                <Card v-show="!isSchemaCollapsed(schemaIndex)">
                     <div class="space-y-3">
                         <div v-if="schema.specialProps">
                             <div class="mb-3">
@@ -52,7 +62,15 @@
                         </div>
 
                         <div class="mt-4">
-                            <h4 class="text-gray-600 mb-2">{{ __('Fields') }}</h4>
+                            <div class="mb-2 flex items-center justify-between">
+                                <Heading size="md">{{ __('Fields') }}</Heading>
+                                <Button
+                                    variant="subtle"
+                                    @click="toggleAllFields(schemaIndex, schema)"
+                                >
+                                    {{ areAllFieldsCollapsed(schemaIndex, schema) ? __('Expand All Fields') : __('Collapse All Fields') }}
+                                </Button>
+                            </div>
 
                             <draggable
                                 v-model="schema.fields"
@@ -62,132 +80,73 @@
                                 handle=".drag-handle"
                             >
                                 <template #item="{ element: field, index }">
-                                    <Card class="mb-2">
-                                        <div class="structured-data-schema-field-header px-2 py-2 flex justify-between items-center">
-                                            <div class="flex items-center gap-2">
+                                    <Panel class="mb-2">
+                                        <PanelHeader class="structured-data-schema-field-header flex justify-between items-center">
+                                            <div class="flex items-center gap-4">
                                                 <DragHandle class="drag-handle" />
-                                                <Button v-show="index > 0" @click="moveFieldUp(index, schema)" variant="subtle">↑ {{ __('Move Up') }}</Button>
+                                                <Heading
+                                                    @click="toggleField(schemaIndex, field)"
+                                                    as="h6"
+                                                    size="xs"
+                                                    class="truncate cursor-pointer max-w-[320px]"
+                                                >
+                                                    {{ getCollapsedFieldSummary(field) }}
+                                                </Heading>
                                             </div>
-                                            <Button v-show="index < schema.fields.length - 1" @click="moveFieldDown(index, schema)" variant="subtle">{{ __('Move Down') }} ↓</Button>
-                                        </div>
-                                        <div class="p-3">
-                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                                <div class="col-span-2">
-                                                    <Label class="mb-1.5">{{ __('Key') }}</Label>
-                                                    <Input
-                                                        v-model="field.key"
-                                                        @update:model-value="() => validateKey(field)"
-                                                    />
-                                                </div>
-
-                                                <div>
-                                                    <Label class="mb-1.5">{{ __('Type') }}</Label>
-                                                    <Select
-                                                        v-model="field.type"
-                                                        :options="selectOptions"
-                                                        @update:model-value="() => handleTypeChange(field)"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                                <div class="mt-3">
-                                                <Label class="mb-1.5">{{ __('Value') }}</Label>
-
-                                                <Input
-                                                    v-if="field.type === 'string'"
-                                                    v-model="field.value"
-                                                    :placeholder="'Enter value'"
+                                            <div class="flex items-center gap-2">
+                                                <Button
+                                                    variant="subtle"
+                                                    @click="duplicateField(index, schema)"
+                                                    :title="__('Duplicate Field')"
+                                                    icon="duplicate"
+                                                    icon-only
                                                 />
 
-                                                <Input
-                                                    v-if="field.type === 'numeric'"
-                                                    type="number"
-                                                    v-model="field.value"
-                                                    :placeholder="'Enter value'"
+                                                <Button 
+                                                    v-show="index > 0" 
+                                                    @click="moveFieldUp(index, schema)" 
+                                                    :title="__('Move Field Up')" 
+                                                    variant="subtle" 
+                                                    icon="arrow-up" 
+                                                    icon-only 
                                                 />
 
-                                                <div v-else-if="field.type === 'array'" class="mt-2">
-                                                    <div class="flex flex-col gap-2 space-y-2">
-                                                        <div v-for="(value, valueIndex) in field.values" :key="valueIndex" class="flex items-center gap-2">
-                                                            <Input
-                                                                v-model="field.values[valueIndex]"
-                                                            />
-                                                            <Button
-                                                                @click="requestRemoveArrayValue(field, valueIndex)"
-                                                                class="inline-flex items-center px-2 py-1"
-                                                                variant="danger"
-                                                            >
-                                                                <span>{{ __('Remove') }}</span>
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                    <Button
-                                                        @click="addArrayValue(field)"
-                                                        variant="primary"
-                                                        class="mt-2 text-sm"
-                                                    >
-                                                        {{ __('Add Value')}}
-                                                    </Button>
-                                                </div>
+                                                <Button 
+                                                    v-show="index < schema.fields.length - 1" 
+                                                    @click="moveFieldDown(index, schema)" 
+                                                    :title="__('Move Field Down')" 
+                                                    variant="subtle" 
+                                                    icon="arrow-down" 
+                                                    icon-only 
+                                                />
 
-                                                <div v-else-if="field.type === 'object'" class="mt-2">
-                                                    <structured-data-object 
-                                                        v-model="field.value" 
-                                                        :base-url="baseUrl"
-                                                        :replicator-fields="replicatorFields"
-                                                    />
-                                                </div>
-
-                                                <div v-else-if="field.type === 'object_array'" class="mt-2">
-                                                    <div class="flex flex-col gap-2 space-y-2">
-                                                        <div v-for="(value, valueIndex) in field.values" :key="valueIndex" class="flex flex-col gap-2">
-                                                            <structured-data-object 
-                                                                v-model="field.values[valueIndex]" 
-                                                                :base-url="baseUrl"
-                                                            />
-                                                            <div>
-                                                                <Button
-                                                                    @click="requestRemoveArrayValue(field, valueIndex)"
-                                                                    class="inline-flex self-end items-center px-2 py-1"
-                                                                    variant="danger"
-                                                                >
-                                                                    <span>{{ __('Remove') }}</span>
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <Button
-                                                        @click="addArrayValue(field)"
-                                                        class="mt-2 text-sm"
-                                                        variant="primary"
-                                                    >
-                                                        {{ __('Add Value')}}
-                                                    </Button>
-                                                </div>
-
-                                                <div v-else-if="field.type === 'data_object'" class="mt-2">
-                                                    <Select
-                                                        v-model="field.value"
-                                                        :options="taxonomyTermOptions"
-                                                    />
-                                                </div>
-
-                                                <div v-else-if="field.type === 'replicator_object_array'" class="mt-2">
-                                                    <replicator-field-mapper 
-                                                        v-model="field.config"
-                                                        :base-url="baseUrl" 
-                                                        :replicator-fields="replicatorFields"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div class="flex justify-end mt-3">
-                                                <Button variant="danger" @click="requestRemoveField(schema, index)">
-                                                    {{ __('Remove Field') }}
+                                                <Button
+                                                    variant="subtle"
+                                                    @click="toggleField(schemaIndex, field)"
+                                                    :aria-label="isFieldCollapsed(schemaIndex, field) ? __('Expand Field') : __('Collapse Field')"
+                                                >
+                                                    <Icon :name="isFieldCollapsed(schemaIndex, field) ? 'chevron-down' : 'chevron-up'" />
                                                 </Button>
                                             </div>
-                                        </div>
-                                    </Card>
+                                        </PanelHeader>
+                                        <Card v-show="!isFieldCollapsed(schemaIndex, field)">
+                                            <StructuredDataFieldEditor
+                                                :field="field"
+                                                :select-options="selectOptions"
+                                                :taxonomy-term-options="taxonomyTermOptions"
+                                                :base-url="baseUrl"
+                                                :replicator-fields="replicatorFields"
+                                                :object-array-enabled="true"
+                                                :data-object-enabled="true"
+                                                :remove-field-label="__('Remove Field')"
+                                                @validate-key="validateKey"
+                                                @type-change="handleTypeChange"
+                                                @add-array-value="addArrayValue"
+                                                @remove-array-value="requestRemoveArrayValue"
+                                                @remove-field="requestRemoveField(schema, index)"
+                                            />
+                                        </Card>
+                                    </Panel>
                                 </template>
                             </draggable>
 
@@ -196,8 +155,8 @@
                             </Button>
                         </div>
                     </div>
-                </div>
-            </Card>
+                </Card>
+            </Panel>
 
             <div class="flex gap-2 mt-4">
                 <Button variant="primary" @click="addSchema">{{ __('Add Schema') }}</Button>
@@ -247,14 +206,20 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import { Fieldtype } from '@statamic/cms';
-import { Button, Card, Input, Label, Select, DragHandle, ConfirmationModal } from '@statamic/cms/ui';
-import StructuredDataObject from '../StructuredDataObject.vue';
-import ReplicatorFieldMapper from './ReplicatorFieldMapper.vue';
+import { Button, Card, Heading, Icon, Input, Label, Panel, PanelHeader, DragHandle, ConfirmationModal } from '@statamic/cms/ui';
 import PresetStack from '../PresetStack.vue';
 import { formatSchemaJson } from '../../utils/schema';
+import {
+    addStructuredDataArrayValue,
+    handleStructuredDataFieldTypeChange,
+    removeStructuredDataArrayValue,
+    validateStructuredDataKey,
+} from '../../composables/useStructuredDataFields';
 import draggable from 'vuedraggable';
+
+const StructuredDataFieldEditor = defineAsyncComponent(() => import('../StructuredDataFieldEditor.vue'));
 
 const fieldtypeProps = defineProps(Fieldtype.props);
 const { value, meta, config } = fieldtypeProps;
@@ -268,7 +233,7 @@ let nextFieldId = 1;
 
 const createEmptySchema = () => ({
     specialProps: {
-        context: 'http://schema.org',
+        context: 'https://schema.org',
         type: '',
         id: '',
     },
@@ -296,6 +261,7 @@ const schemas = ref(JSON.parse(JSON.stringify(initialSchemas)));
 const showPreview = ref(false);
 const showPresetModal = ref(false);
 const collapsedSchemas = ref({});
+const collapsedFields = ref({});
 const confirmRemoveSchemaOpen = ref(false);
 const schemaIndexToRemove = ref(null);
 const confirmRemoveFieldOpen = ref(false);
@@ -395,25 +361,30 @@ const removeField = (schema, fieldIndex) => {
     schema.fields.splice(fieldIndex, 1);
 };
 
-const addArrayValue = field => {
-    if (!field.values) {
-        field.values = [];
-    }
+const duplicateField = (fieldIndex, schema) => {
+    const sourceField = schema?.fields?.[fieldIndex];
 
-    if (field.type === 'object_array') {
-        field.values.push({ specialProps: { type: '', id: '' }, fields: [] });
+    if (!sourceField) {
         return;
     }
 
-    field.values.push('');
+    const duplicatedField = JSON.parse(JSON.stringify(sourceField));
+    duplicatedField.__id = `field-${nextFieldId}`;
+    nextFieldId += 1;
+
+    schema.fields.splice(fieldIndex + 1, 0, duplicatedField);
+};
+
+const addArrayValue = field => {
+    addStructuredDataArrayValue(field, { objectArrayType: 'object_array' });
 };
 
 const removeArrayValue = (field, valueIndex) => {
-    field.values.splice(valueIndex, 1);
+    removeStructuredDataArrayValue(field, valueIndex);
 };
 
 const validateKey = field => {
-    field.key = field.key.replace(/[^a-zA-Z0-9@]/g, '');
+    validateStructuredDataKey(field);
 };
 
 const suggestedId = schema => {
@@ -426,28 +397,10 @@ const useDefaultId = schema => {
 };
 
 const handleTypeChange = field => {
-    if (field.type === 'object') {
-        field.value = { specialProps: { type: '', id: '' }, fields: [] };
-        return;
-    }
-    if (field.type === 'array') {
-        field.values = [];
-        return;
-    }
-    if (field.type === 'object_array') {
-        field.values = [];
-        return;
-    }
-    if (field.type === 'data_object') {
-        field.value = '';
-        return;
-    }
-    if (field.type === 'replicator_object_array') {
-        field.config = { replicator_field: '', set: '', mappings: [] };
-        field.values = [];
-        return;
-    }
-    field.value = '';
+    handleStructuredDataFieldTypeChange(field, {
+        objectArrayType: 'object_array',
+        dataObjectType: 'data_object',
+    });
 };
 
 const togglePreview = () => {
@@ -459,6 +412,52 @@ const toggleSchema = schemaIndex => {
 };
 
 const isSchemaCollapsed = schemaIndex => collapsedSchemas.value[schemaIndex] === true;
+
+const getFieldCollapseKey = (schemaIndex, field) => {
+    const fieldId = field?.__id ?? '';
+    return `${schemaIndex}:${fieldId}`;
+};
+
+const toggleField = (schemaIndex, field) => {
+    const key = getFieldCollapseKey(schemaIndex, field);
+    collapsedFields.value[key] = !collapsedFields.value[key];
+};
+
+const isFieldCollapsed = (schemaIndex, field) => {
+    const key = getFieldCollapseKey(schemaIndex, field);
+    return collapsedFields.value[key] === true;
+};
+
+const getCollapsedFieldSummary = field => {
+    const key = field?.key?.trim?.() ?? '';
+
+    if (key.length > 0) {
+        return key;
+    }
+
+    return __('(No key set)');
+};
+
+const areAllFieldsCollapsed = (schemaIndex, schema) => {
+    if (!schema?.fields?.length) {
+        return false;
+    }
+
+    return schema.fields.every(field => isFieldCollapsed(schemaIndex, field));
+};
+
+const toggleAllFields = (schemaIndex, schema) => {
+    if (!schema?.fields?.length) {
+        return;
+    }
+
+    const nextCollapsedState = !areAllFieldsCollapsed(schemaIndex, schema);
+
+    schema.fields.forEach(field => {
+        const key = getFieldCollapseKey(schemaIndex, field);
+        collapsedFields.value[key] = nextCollapsedState;
+    });
+};
 
 const requestRemoveSchema = schemaIndex => {
     schemaIndexToRemove.value = schemaIndex;

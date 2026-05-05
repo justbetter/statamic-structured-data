@@ -3,7 +3,7 @@
     "description": "Local business schema with location and contact information",
     "schema": {
       "specialProps": {
-        "context": "http://schema.org",
+        "context": "https://schema.org",
         "type": "LocalBusiness",
         "id": "{{ site:url }}/#LocalBusiness"
       },

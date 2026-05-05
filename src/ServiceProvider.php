@@ -46,8 +46,16 @@ class ServiceProvider extends AddonServiceProvider
         $this->bootCollections()
             ->bootTaxonomies()
             ->bootConfig()
+            ->bootTranslations()
             ->bootActions()
             ->bootServices();
+    }
+
+    public function bootTranslations(): self
+    {
+        $this->loadJsonTranslationsFrom(__DIR__.'/../resources/lang');
+
+        return $this;
     }
 
     public function bootServices(): self
