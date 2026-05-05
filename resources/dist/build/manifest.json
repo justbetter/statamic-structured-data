@@ -1,11 +1,11 @@
 {
   "resources/css/statamic-structured-data.css": {
-    "file": "assets/statamic-structured-data-CI5EAgds.css",
+    "file": "assets/statamic-structured-data-C0lrZzcE.css",
     "src": "resources/css/statamic-structured-data.css",
     "isEntry": true
   },
   "resources/js/components/StructuredDataFieldEditor.vue": {
-    "file": "assets/StructuredDataFieldEditor-CqkufCpJ.js",
+    "file": "assets/StructuredDataFieldEditor-Cj4Wey72.js",
     "name": "StructuredDataFieldEditor",
     "src": "resources/js/components/StructuredDataFieldEditor.vue",
     "isDynamicEntry": true,
@@ -13,11 +13,11 @@
       "resources/js/statamic-structured-data.js"
     ],
     "css": [
-      "assets/StructuredDataFieldEditor-Bn7WRy9X.css"
+      "assets/StructuredDataFieldEditor-CHvsL5DP.css"
     ]
   },
   "resources/js/statamic-structured-data.js": {
-    "file": "assets/statamic-structured-data-Cr8R_Kzk.js",
+    "file": "assets/statamic-structured-data-D_2N8S_F.js",
     "name": "statamic-structured-data",
     "src": "resources/js/statamic-structured-data.js",
     "isEntry": true,
@@ -26,7 +26,7 @@
       "resources/js/components/StructuredDataFieldEditor.vue"
     ],
     "css": [
-      "assets/statamic-structured-data-xYV_Q93s.css"
+      "assets/statamic-structured-data-BBXul3Sg.css"
     ]
   }
 }
