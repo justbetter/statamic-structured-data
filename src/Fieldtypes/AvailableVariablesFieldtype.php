@@ -6,6 +6,7 @@ use Illuminate\Support\Collection as SupportCollection;
 use Statamic\Entries\Collection;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Collection as CollectionFacade;
+use Statamic\Facades\Fieldset as FieldsetFacade;
 use Statamic\Facades\GlobalSet;
 use Statamic\Fields\Blueprint;
 use Statamic\Fields\Fieldtype;
@@ -58,6 +59,7 @@ class AvailableVariablesFieldtype extends Fieldtype
             'assets',
             'bard',
             'toggle',
+            'select',
             'integer',
             'slug',
             'date',
@@ -208,11 +210,16 @@ class AvailableVariablesFieldtype extends Fieldtype
     protected function setFieldData(array $field, ?string $name = null, ?string $description = null, bool $recursive = true): ?array
     {
         $fieldHandle = $field['handle'] ?? null;
-        /** @var array<string, mixed>|null $fieldConfig */
-        $fieldConfig = $field['field'] ?? null;
-        $fieldType = is_array($fieldConfig) ? ($fieldConfig['type'] ?? null) : null;
+        /** @var array<string, mixed> $fieldConfig */
+        $fieldConfig = is_array($field['field'] ?? null) ? $field['field'] : [];
+        $fieldType = $fieldConfig['type'] ?? null;
 
-        if (! is_string($fieldHandle) || $fieldHandle === 'parent' || ! is_string($fieldType) || ! $this->fieldTypeIsEligible($fieldType)) {
+        if (! is_string($fieldHandle) || $fieldHandle === 'parent' || ! is_string($fieldType)) {
+            return null;
+        }
+
+        $isGroupField = $fieldType === 'group';
+        if (! $isGroupField && ! $this->fieldTypeIsEligible($fieldType)) {
             return null;
         }
 
@@ -229,14 +236,53 @@ class AvailableVariablesFieldtype extends Fieldtype
             $children = $this->getCollectionVariables($collections[0], $field);
         }
 
+        if ($isGroupField && $recursive) {
+            $children = $this->getGroupVariables($field, $fieldConfig);
+        }
+
         $descriptionValue = is_string($description) ? $description : null;
         $display = is_string($fieldConfig['display'] ?? null) ? $fieldConfig['display'] : null;
+
+        if ($isGroupField && empty($children)) {
+            return null;
+        }
 
         return [
             'name' => $name ?? $fieldHandle,
             'description' => $descriptionValue ?? $display ?? $fieldHandle,
             'children' => $children,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $field
+     * @param  array<string, mixed>  $fieldConfig
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getGroupVariables(array $field, array $fieldConfig): array
+    {
+        $groupFields = $this->normalizeBlueprintItems($fieldConfig['fields'] ?? []);
+        $groupHandle = is_string($field['handle'] ?? null) ? $field['handle'] : '';
+        $groupDisplay = is_string($fieldConfig['display'] ?? null) ? $fieldConfig['display'] : $groupHandle;
+
+        return collect($groupFields)
+            ->map(function (array $groupField) use ($groupHandle, $groupDisplay): ?array {
+                /** @var string $childHandle */
+                $childHandle = $groupField['handle'];
+
+                $childConfig = is_array($groupField['field'] ?? null) ? $groupField['field'] : [];
+                $childDisplay = is_string($childConfig['display'] ?? null) ? $childConfig['display'] : $childHandle;
+
+                return $this->setFieldData(
+                    $groupField,
+                    $groupHandle.':'.$childHandle,
+                    $groupDisplay.': '.$childDisplay,
+                    false
+                );
+            })
+            ->filter()
+            ->values()
+            ->all();
     }
 
     /**
@@ -247,18 +293,85 @@ class AvailableVariablesFieldtype extends Fieldtype
      */
     protected function normalizeBlueprintItems($items): array
     {
-        if (is_array($items)) {
-            /** @var array<int, array<string, mixed>> $items */
+        if ($items instanceof SupportCollection) {
+            $items = $items->all();
+        }
+
+        if (! is_array($items)) {
+            return [];
+        }
+
+        $normalizedItems = [];
+
+        foreach ($items as $item) {
+            if ($item instanceof SupportCollection) {
+                $item = $item->all();
+            }
+
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $import = $item['import'] ?? null;
+            if (is_string($import) && $import !== '') {
+                $normalizedItems = array_merge($normalizedItems, $this->getImportedFieldsetItems($item));
+
+                continue;
+            }
+
+            if (isset($item['handle']) && is_array($item['field'] ?? null)) {
+                /** @var array<string, mixed> $item */
+                $normalizedItems[] = $item;
+            }
+
+            $nestedItems = $item['fields'] ?? null;
+            if (is_array($nestedItems) || $nestedItems instanceof SupportCollection) {
+                $normalizedItems = array_merge(
+                    $normalizedItems,
+                    $this->normalizeBlueprintItems($nestedItems)
+                );
+            }
+        }
+
+        return $normalizedItems;
+    }
+
+    /**
+     * @param  array<string, mixed>  $importConfig
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getImportedFieldsetItems(array $importConfig): array
+    {
+        $fieldsetHandle = $importConfig['import'] ?? null;
+        if (! is_string($fieldsetHandle) || $fieldsetHandle === '') {
+            return [];
+        }
+
+        $prefix = $importConfig['prefix'] ?? null;
+        if (! is_string($prefix)) {
+            $prefix = '';
+        }
+
+        $fieldset = FieldsetFacade::find($fieldsetHandle);
+
+        if (! $fieldset) {
+            return [];
+        }
+
+        $items = $this->normalizeBlueprintItems($fieldset->fields()->items());
+
+        if ($prefix === '') {
             return $items;
         }
 
-        if ($items instanceof SupportCollection) {
-            /** @var array<int, array<string, mixed>> $result */
-            $result = $items->all();
+        return array_map(function (array $item) use ($prefix): array {
+            $handle = $item['handle'] ?? null;
 
-            return $result;
-        }
+            if (is_string($handle) && $handle !== '') {
+                $item['handle'] = $prefix.$handle;
+            }
 
-        return [];
+            return $item;
+        }, $items);
     }
 }

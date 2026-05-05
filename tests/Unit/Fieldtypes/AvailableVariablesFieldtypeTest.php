@@ -11,12 +11,14 @@ use Statamic\Entries\Collection;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Blueprint as BlueprintFacade;
 use Statamic\Facades\Collection as CollectionFacade;
+use Statamic\Facades\Fieldset as FieldsetFacade;
 use Statamic\Facades\GlobalSet;
 use Statamic\Facades\GlobalSet as GlobalSetFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
 use Statamic\Fields\Blueprint;
 use Statamic\Fields\Field;
 use Statamic\Fields\Fields;
+use Statamic\Fields\Fieldset;
 use Statamic\Globals\GlobalCollection;
 use Statamic\Taxonomies\Taxonomy;
 
@@ -523,6 +525,98 @@ class AvailableVariablesFieldtypeTest extends TestCase
     }
 
     #[Test]
+    public function set_field_data_returns_group_field_with_supported_children(): void
+    {
+        $fieldtype = new AvailableVariablesFieldtype;
+
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('setFieldData');
+        $method->setAccessible(true);
+
+        $field = [
+            'handle' => 'media_options',
+            'field' => [
+                'type' => 'group',
+                'display' => 'Media opties',
+                'fields' => [
+                    [
+                        'handle' => 'object_fit',
+                        'field' => [
+                            'type' => 'select',
+                            'display' => 'Object fit',
+                        ],
+                    ],
+                    [
+                        'handle' => 'video',
+                        'field' => [
+                            'type' => 'toggle',
+                            'display' => 'Video',
+                        ],
+                    ],
+                    [
+                        'handle' => 'layout',
+                        'field' => [
+                            'type' => 'grid',
+                            'display' => 'Layout',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $result = $method->invoke($fieldtype, $field);
+
+        $this->assertIsArray($result);
+        /** @var array<string, mixed> $result */
+        $this->assertSame('media_options', $result['name']);
+        $this->assertSame('Media opties', $result['description']);
+        $this->assertArrayHasKey('children', $result);
+        $this->assertIsArray($result['children']);
+        $this->assertCount(2, $result['children']);
+
+        /** @var array<int, array<string, mixed>> $children */
+        $children = $result['children'];
+        $childNames = array_column($children, 'name');
+        $childDescriptions = array_column($children, 'description');
+
+        $this->assertContains('media_options:object_fit', $childNames);
+        $this->assertContains('Media opties: Object fit', $childDescriptions);
+        $this->assertContains('media_options:video', $childNames);
+        $this->assertContains('Media opties: Video', $childDescriptions);
+        $this->assertNotContains('media_options:layout', $childNames);
+    }
+
+    #[Test]
+    public function set_field_data_returns_null_for_group_without_supported_children(): void
+    {
+        $fieldtype = new AvailableVariablesFieldtype;
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('setFieldData');
+        $method->setAccessible(true);
+
+        $field = [
+            'handle' => 'media_options',
+            'field' => [
+                'type' => 'group',
+                'display' => 'Media opties',
+                'fields' => [
+                    [
+                        'handle' => 'layout',
+                        'field' => [
+                            'type' => 'grid',
+                            'display' => 'Layout',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $result = $method->invoke($fieldtype, $field);
+
+        $this->assertNull($result);
+    }
+
+    #[Test]
     public function normalize_blueprint_items_converts_collection_to_array(): void
     {
         $fieldtype = new AvailableVariablesFieldtype;
@@ -570,6 +664,168 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $method->setAccessible(true);
 
         $result = $method->invoke($fieldtype, 'not-an-array');
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function normalize_blueprint_items_includes_imported_fieldset_items(): void
+    {
+        $fieldtype = new AvailableVariablesFieldtype;
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('normalizeBlueprintItems');
+        $method->setAccessible(true);
+
+        $fieldsetFields = $this->mock(Fields::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('items')->andReturn([
+                [
+                    'handle' => 'imported_title',
+                    'field' => [
+                        'type' => 'text',
+                        'display' => 'Imported Title',
+                    ],
+                ],
+            ]);
+        });
+
+        $fieldset = $this->mock(Fieldset::class, function (MockInterface $mock) use ($fieldsetFields): void {
+            $mock->shouldReceive('fields')->andReturn($fieldsetFields);
+        });
+
+        FieldsetFacade::shouldReceive('find')->with('seo_fields')->andReturn($fieldset);
+
+        $result = $method->invoke($fieldtype, [
+            ['import' => 'seo_fields'],
+        ]);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        /** @var array<string, mixed> $firstResult */
+        $firstResult = $result[0];
+        $this->assertSame('imported_title', $firstResult['handle']);
+    }
+
+    #[Test]
+    public function normalize_blueprint_items_handles_missing_imported_fieldset(): void
+    {
+        $fieldtype = new AvailableVariablesFieldtype;
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('normalizeBlueprintItems');
+        $method->setAccessible(true);
+
+        FieldsetFacade::shouldReceive('find')->with('missing_fields')->andReturn(null);
+
+        $result = $method->invoke($fieldtype, [
+            ['import' => 'missing_fields'],
+        ]);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function normalize_blueprint_items_applies_prefix_to_imported_fieldset_items(): void
+    {
+        $fieldtype = new AvailableVariablesFieldtype;
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('normalizeBlueprintItems');
+        $method->setAccessible(true);
+
+        $fieldsetFields = $this->mock(Fields::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('items')->andReturn([
+                [
+                    'handle' => 'image',
+                    'field' => [
+                        'type' => 'assets',
+                        'display' => 'Image',
+                    ],
+                ],
+            ]);
+        });
+
+        $fieldset = $this->mock(Fieldset::class, function (MockInterface $mock) use ($fieldsetFields): void {
+            $mock->shouldReceive('fields')->andReturn($fieldsetFields);
+        });
+
+        FieldsetFacade::shouldReceive('find')->with('media')->andReturn($fieldset);
+
+        $result = $method->invoke($fieldtype, [
+            ['import' => 'media', 'prefix' => 'featured_'],
+        ]);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        /** @var array<string, mixed> $firstResult */
+        $firstResult = $result[0];
+        $this->assertSame('featured_image', $firstResult['handle']);
+    }
+
+    #[Test]
+    public function normalize_blueprint_items_handles_nested_support_collection_and_invalid_items(): void
+    {
+        $fieldtype = new AvailableVariablesFieldtype;
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('normalizeBlueprintItems');
+        $method->setAccessible(true);
+
+        $nestedFields = collect([
+            [
+                'handle' => 'nested_title',
+                'field' => [
+                    'type' => 'text',
+                    'display' => 'Nested Title',
+                ],
+            ],
+        ]);
+
+        $items = [
+            collect([
+                'handle' => 'wrapped_field',
+                'field' => [
+                    'type' => 'text',
+                    'display' => 'Wrapped Field',
+                ],
+            ]),
+            'invalid-item',
+            [
+                'fields' => $nestedFields,
+            ],
+        ];
+
+        $result = $method->invoke($fieldtype, $items);
+
+        $this->assertIsArray($result);
+        $fieldHandles = array_column($result, 'handle');
+        $this->assertContains('wrapped_field', $fieldHandles);
+        $this->assertContains('nested_title', $fieldHandles);
+    }
+
+    #[Test]
+    public function normalize_blueprint_items_handles_invalid_import_handle(): void
+    {
+        $fieldtype = new AvailableVariablesFieldtype;
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('normalizeBlueprintItems');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($fieldtype, [
+            ['import' => null],
+        ]);
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function get_imported_fieldset_items_returns_empty_for_invalid_import_config(): void
+    {
+        $fieldtype = new AvailableVariablesFieldtype;
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('getImportedFieldsetItems');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($fieldtype, ['import' => null]);
 
         $this->assertIsArray($result);
         $this->assertEmpty($result);
@@ -628,6 +884,48 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $this->assertGreaterThanOrEqual(2, count($result));
         $fieldNames = array_column($result, 'name');
         $this->assertContains('title', $fieldNames);
+    }
+
+    #[Test]
+    public function set_field_data_group_skips_children_without_handle(): void
+    {
+        $fieldtype = new AvailableVariablesFieldtype;
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('setFieldData');
+        $method->setAccessible(true);
+
+        $field = [
+            'handle' => 'media_options',
+            'field' => [
+                'type' => 'group',
+                'display' => 'Media opties',
+                'fields' => [
+                    [
+                        'field' => [
+                            'type' => 'toggle',
+                            'display' => 'Missing Handle',
+                        ],
+                    ],
+                    [
+                        'handle' => 'video',
+                        'field' => [
+                            'type' => 'toggle',
+                            'display' => 'Video',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $result = $method->invoke($fieldtype, $field);
+
+        $this->assertIsArray($result);
+        /** @var array<string, mixed> $result */
+        $this->assertArrayHasKey('children', $result);
+        /** @var array<int, array<string, mixed>> $children */
+        $children = $result['children'];
+        $this->assertCount(1, $children);
+        $this->assertSame('media_options:video', $children[0]['name'] ?? null);
     }
 
     #[Test]
