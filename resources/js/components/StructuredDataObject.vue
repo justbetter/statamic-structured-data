@@ -69,6 +69,14 @@
                             :base-url="baseUrl"
                             :parent-type="objectData.specialProps.type"
                             :field-key="field.key"
+                            :replicator-fields="replicatorFields"
+                        />
+                    </div>
+
+                    <div v-else-if="field.type === 'replicator_object_array'" class="mt-2">
+                        <replicator-field-mapper
+                            v-model="field.config"
+                            :replicator-fields="replicatorFields"
                         />
                     </div>
                 </div>
@@ -80,8 +88,14 @@
 </template>
 
 <script>
+import ReplicatorFieldMapper from './fieldtypes/ReplicatorFieldMapper.vue';
+
 export default {
     name: 'StructuredDataObject',
+
+    components: {
+        'replicator-field-mapper': ReplicatorFieldMapper,
+    },
 
     props: {
         value: {
@@ -105,7 +119,11 @@ export default {
         fieldKey: {
             type: String,
             default: ''
-        }
+        },
+        replicatorFields: {
+            type: Array,
+            default: () => [],
+        },
     },
 
     data() {
@@ -125,9 +143,10 @@ export default {
                 { value: 'string', label: 'String' },
                 { value: 'numeric', label: 'Numeric' },
                 { value: 'array', label: 'Array' },
-                { value: 'object', label: 'Object' }
+                { value: 'object', label: 'Object' },
+                { value: 'replicator_object_array', label: 'Replicator Object Array' },
             ];
-        }
+        },
     },
 
     watch: {
@@ -204,6 +223,13 @@ export default {
                     fields: []
                 });
             } else if (field.type === 'array') {
+                field.values = [];
+            } else if (field.type === 'replicator_object_array') {
+                field.config = {
+                    replicator_field: '',
+                    set: '',
+                    mappings: [],
+                };
                 field.values = [];
             } else {
                 field.value = '';

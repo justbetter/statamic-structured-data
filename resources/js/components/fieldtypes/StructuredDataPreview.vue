@@ -50,28 +50,38 @@
 export default {
     mixins: [Fieldtype],
 
+    inject: {
+        storeName: {
+            default: 'base',
+        },
+    },
+
     data() {
         return {
             selectedTemplates: [],
             showPreview: true,
             isPrettyPrint: true,
             loading: false,
-            error: null
+            error: null,
         }
     },
 
     computed: {
+        publishValues() {
+            return this.resolvePublishValues();
+        },
+
         hasTemplates() {
             return this.templateIds && this.templateIds.length > 0;
         },
 
         templateIds() {
-            return this.$store.state.publish.base.values?.structured_data_templates || [];
+            return this.publishValues?.structured_data_templates || [];
         },
 
         currentEntryId() {
-            return this.$store.state.publish.base.values.id;
-        }
+            return this.publishValues?.id;
+        },
     },
 
     watch: {
@@ -84,21 +94,69 @@ export default {
                 }
                 this.fetchTemplateData(newValue);
             }
-        }
+        },
+
+        publishValues: {
+            deep: true,
+            handler() {
+                if (!this.templateIds || !this.templateIds.length) {
+                    return;
+                }
+                this.fetchTemplateData(this.templateIds);
+            },
+        },
     },
 
     methods: {
+        resolvePublishValues() {
+            const preferredStore = this.storeName || 'base';
+            const publish = this.$store?.state?.publish;
+
+            if (publish) {
+                const preferredValues = publish[preferredStore]?.values;
+
+                if (this.isPublishValues(preferredValues)) {
+                    return preferredValues;
+                }
+
+                for (const storeKey of Object.keys(publish)) {
+                    const values = publish[storeKey]?.values;
+
+                    if (this.isPublishValues(values)) {
+                        return values;
+                    }
+                }
+            }
+
+            return {};
+        },
+
+        isPublishValues(values) {
+            return values && typeof values === 'object' && !Array.isArray(values);
+        },
+
         async fetchTemplateData(templateIds) {
+            if (!this.currentEntryId) {
+                this.error = 'Save the entry first to preview structured data.';
+                return;
+            }
+
             this.loading = true;
             this.error = null;
 
             try {
-                const response = await this.$axios.get(`/cp/justbetter/structured-data`, {
-                    params: {
-                        ids: templateIds,
-                        entry_id: this.currentEntryId
-                    }
-                });
+                const payload = {
+                    ids: templateIds,
+                    entry_id: this.currentEntryId,
+                };
+
+                const values = this.publishValues;
+
+                if (this.isPublishValues(values)) {
+                    payload.values = values;
+                }
+
+                const response = await this.$axios.post(`/cp/justbetter/structured-data`, payload);
 
                 this.selectedTemplates = response.data.map(template => ({
                     ...template,
@@ -111,7 +169,6 @@ export default {
                 this.loading = false;
             }
         },
-
     }
 }
 </script>

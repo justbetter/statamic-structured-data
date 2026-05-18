@@ -124,7 +124,10 @@
                                             </div>
 
                                             <div v-else-if="field.type === 'object'" class="mt-2">
-                                                <structured-data-object v-model="field.value" />
+                                                <structured-data-object
+                                                    v-model="field.value"
+                                                    :replicator-fields="replicatorFields"
+                                                />
                                             </div>
 
                                             <div v-else-if="field.type === 'object_array'" class="mt-2">
@@ -152,6 +155,13 @@
                                                     v-model="field.value"
                                                     :options="taxonomyTermOptions"
                                                     @input="(value) => { field.value = value.value; }"
+                                                />
+                                            </div>
+
+                                            <div v-else-if="field.type === 'replicator_object_array'" class="mt-2">
+                                                <replicator-field-mapper
+                                                    v-model="field.config"
+                                                    :replicator-fields="replicatorFields"
                                                 />
                                             </div>
                                         </div>
@@ -207,6 +217,7 @@
 
 <script>
 import StructuredDataObject from '../StructuredDataObject.vue';
+import ReplicatorFieldMapper from './ReplicatorFieldMapper.vue';
 import PresetModal from '../PresetModal.vue';
 import { formatSchemaJson } from '../../utils/schema';
 import draggable from 'vuedraggable';
@@ -217,6 +228,7 @@ export default {
 
     components: {
         'structured-data-object': StructuredDataObject,
+        'replicator-field-mapper': ReplicatorFieldMapper,
         'preset-modal': PresetModal,
         draggable,
     },
@@ -275,7 +287,8 @@ export default {
                 { value: 'array', label: 'Array' },
                 { value: 'object', label: 'Object' },
                 { value: 'object_array', label: 'Object Array' },
-                { value: 'data_object', label: 'Data Object (Term)' }
+                { value: 'data_object', label: 'Data Object (Term)' },
+                { value: 'replicator_object_array', label: 'Replicator Object Array' },
             ];
         },
 
@@ -298,7 +311,11 @@ export default {
 
         presetsEnabled() {
             return this.meta?.presets_enabled || false;
-        }
+        },
+
+        replicatorFields() {
+            return this.meta?.replicator_fields || [];
+        },
     },
 
     watch: {
@@ -407,6 +424,13 @@ export default {
                 field.values = [];
             } else if (field.type === 'data_object') {
                 field.value = '';
+            } else if (field.type === 'replicator_object_array') {
+                field.config = {
+                    replicator_field: '',
+                    set: '',
+                    mappings: [],
+                };
+                field.values = [];
             } else {
                 field.value = '';
             }

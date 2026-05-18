@@ -2,8 +2,10 @@
 
 namespace Justbetter\StatamicStructuredData\Services\Transformers;
 
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
 use Statamic\Fields\Value;
+use Statamic\Fields\Values;
 
 class ReplicatorRowNormalizer
 {
@@ -21,16 +23,20 @@ class ReplicatorRowNormalizer
             $row = $row->all();
         }
 
+        if ($row instanceof Values) {
+            $row = $row->all();
+        }
+
+        if ($row instanceof Arrayable && ! is_array($row)) {
+            $row = $row->toArray();
+        }
+
         if (! is_array($row)) {
             return null;
         }
 
         $set = $row['type'] ?? $row['set'] ?? null;
-        $values = $row['values'] ?? $row;
-
-        if (! is_array($values)) {
-            $values = [];
-        }
+        $values = $this->extractRowValues($row);
 
         foreach ($values as $key => $value) {
             $values[$key] = $this->unwrap($value);
@@ -55,6 +61,61 @@ class ReplicatorRowNormalizer
             $value = $value->all();
         }
 
+        if ($value instanceof Arrayable) {
+            $value = $value->toArray();
+        }
+
         return $value;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
+    protected function extractRowValues(array $row): array
+    {
+        $values = [];
+
+        if (isset($row['values']) && is_array($row['values'])) {
+            $values = $row['values'];
+        }
+
+        if (isset($row['fields']) && is_array($row['fields'])) {
+            $values = array_merge($values, $row['fields']);
+        }
+
+        $metaKeys = ['type', 'set', 'values', 'fields', 'enabled', 'id', '_id'];
+
+        foreach ($row as $key => $value) {
+            if (! is_string($key) || in_array($key, $metaKeys, true)) {
+                continue;
+            }
+
+            $values[$key] = $value;
+        }
+
+        return $values;
+    }
+
+    /**
+     * Statamic may store replicator rows as JSON strings in publish values.
+     */
+    public function decodeReplicatorData(mixed $data): mixed
+    {
+        $data = $this->unwrap($data);
+
+        if (is_string($data)) {
+            $trimmed = trim($data);
+
+            if ($trimmed !== '' && ($trimmed[0] === '[' || $trimmed[0] === '{')) {
+                $decoded = json_decode($data, true);
+
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    return $decoded;
+                }
+            }
+        }
+
+        return $data;
     }
 }

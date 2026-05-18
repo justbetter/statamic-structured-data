@@ -3,6 +3,7 @@
 namespace Justbetter\StatamicStructuredData\Services;
 
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
+use Justbetter\StatamicStructuredData\Services\Transformers\FieldTransformerFactory;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Contracts\Taxonomies\Term as TermContract;
 use Statamic\Entries\Entry as EntryModel;
@@ -14,9 +15,12 @@ class StructuredDataService
 {
     protected StructuredDataParser $parser;
 
+    protected FieldTransformerFactory $transformerFactory;
+
     public function __construct(StructuredDataParser $parser)
     {
         $this->parser = $parser;
+        $this->transformerFactory = new FieldTransformerFactory;
     }
 
     /**
@@ -59,7 +63,7 @@ class StructuredDataService
                         continue;
                     }
 
-                    $scripts[] = $this->formatJsonLd($parsedSchema, $json);
+                    $scripts[] = $this->formatJsonLd($parsedSchema, $json, $item);
                 }
             } catch (\Exception $e) {
                 continue;
@@ -72,9 +76,9 @@ class StructuredDataService
     /**
      * @param  array<string, mixed>  $schema
      */
-    public function formatJsonLd(array $schema, bool $json = false): string
+    public function formatJsonLd(array $schema, bool $json = false, EntryContract|Page|LocalizedTerm|TermContract|null $item = null): string
     {
-        $transformedSchema = $this->transformSchema($schema);
+        $transformedSchema = $this->transformSchema($schema, $item);
         $encodedSchema = json_encode($transformedSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         if ($json) {
@@ -93,6 +97,10 @@ class StructuredDataService
      */
     public function parseAndTransformSchemas($schemas, EntryContract|Page|LocalizedTerm|TermContract|null $item = null): array
     {
+        if (! $item instanceof EntryContract && ! $item instanceof TermContract) {
+            return [];
+        }
+
         $parsedData = $this->parser->parse($schemas, $item);
         $transformedData = [];
 
@@ -163,7 +171,7 @@ class StructuredDataService
      */
     protected function transformField(array $field, EntryContract|Page|LocalizedTerm|TermContract|null $item = null, array &$result = []): mixed
     {
-        $type = $field['type'] ?? null;
+        $type = $this->normalizeFieldType($field['type'] ?? null);
 
         // Handle object and object_array types that need recursive schema transformation
         if ($type === 'object' && isset($field['value']) && is_array($field['value'])) {
@@ -182,21 +190,35 @@ class StructuredDataService
         }
 
         // Use transformer factory for all other field types
-        $transformer = $this->transformerFactory->getTransformer(is_string($type) ? $type : null);
+        $transformer = $this->transformerFactory->getTransformer($type);
         $transformedValue = $transformer->transform($field, $item);
 
-        // Handle flat mode for replicator_object_array
+        /** @var array<string, mixed>|null $config */
+        $config = $field['config'] ?? null;
+
+        // Handle flat mode for replicator_object_array: keep flat object under the field key
         if ($type === 'replicator_object_array'
-            && isset($field['config']['flat'])
-            && $field['config']['flat'] === true
+            && is_array($config)
+            && ($config['flat'] ?? false) === true
             && is_array($transformedValue)
             && $this->isAssociativeArray($transformedValue)) {
-            $result = array_merge($result, $transformedValue);
-
-            return null;
+            return $transformedValue;
         }
 
         return $transformedValue;
+    }
+
+    protected function normalizeFieldType(mixed $type): ?string
+    {
+        if (is_string($type)) {
+            return $type;
+        }
+
+        if (is_array($type) && is_string($type['value'] ?? null)) {
+            return $type['value'];
+        }
+
+        return null;
     }
 
     /**

@@ -9,6 +9,7 @@ use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataBuilder;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataObjectBuilder;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataPreview;
 use Justbetter\StatamicStructuredData\Services\PresetService;
+use Justbetter\StatamicStructuredData\Services\PreviewContext;
 use Justbetter\StatamicStructuredData\Tags\StructuredData;
 use Statamic\Facades\Blueprint;
 use Statamic\Facades\Collection;
@@ -53,6 +54,7 @@ class ServiceProvider extends AddonServiceProvider
     public function bootServices(): self
     {
         $this->app->singleton(PresetService::class);
+        $this->app->singleton(PreviewContext::class);
 
         return $this;
     }

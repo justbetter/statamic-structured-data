@@ -225,6 +225,36 @@ export default {
         }
     },
     methods: {
+        extractSelectValue(value) {
+            if (value && typeof value === 'object' && 'value' in value) {
+                return value.value ?? '';
+            }
+
+            return value ?? '';
+        },
+        normalizeMapping(mapping) {
+            if (!mapping || typeof mapping !== 'object') {
+                return {
+                    key: '',
+                    mode: 'field',
+                    field: '',
+                    static: '',
+                    nested: {
+                        replicator_field: '',
+                        set: '',
+                        mappings: []
+                    }
+                };
+            }
+
+            return {
+                key: mapping.key || '',
+                mode: this.extractSelectValue(mapping.mode) || 'field',
+                field: this.extractSelectValue(mapping.field),
+                static: mapping.static ?? '',
+                nested: this.normalizeConfig(mapping.nested || {}),
+            };
+        },
         normalizeConfig(config) {
             const base = {
                 replicator_field: '',
@@ -240,14 +270,14 @@ export default {
             }
 
             return {
-                replicator_field: config.replicator_field || '',
-                set: config.set || '',
+                replicator_field: this.extractSelectValue(config.replicator_field),
+                set: this.extractSelectValue(config.set),
                 mappings: Array.isArray(config.mappings)
-                    ? JSON.parse(JSON.stringify(config.mappings))
+                    ? config.mappings.map((mapping) => this.normalizeMapping(mapping))
                     : [],
                 flat: config.flat === true,
-                flat_key_field: config.flat_key_field || '',
-                flat_value_field: config.flat_value_field || ''
+                flat_key_field: this.extractSelectValue(config.flat_key_field),
+                flat_value_field: this.extractSelectValue(config.flat_value_field),
             };
         },
         addMapping() {

@@ -5,7 +5,10 @@ namespace Justbetter\StatamicStructuredData\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
+use Justbetter\StatamicStructuredData\Services\PreviewContext;
+use Justbetter\StatamicStructuredData\Services\ReplicatorPreviewDiagnostic;
 use Justbetter\StatamicStructuredData\Services\StructuredDataService;
+use Justbetter\StatamicStructuredData\Services\Transformers\ReplicatorRowNormalizer;
 use Statamic\Contracts\Data\Augmentable;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Contracts\Taxonomies\Term as TermContract;
@@ -13,6 +16,7 @@ use Statamic\Entries\Entry as EntryModel;
 use Statamic\Facades\Entry;
 use Statamic\Facades\Site;
 use Statamic\Facades\Term;
+use Statamic\Fields\Field;
 use Statamic\Http\Controllers\CP\CpController;
 
 class StructuredDataController extends CpController
@@ -49,7 +53,7 @@ class StructuredDataController extends CpController
         );
     }
 
-    public function getTemplates(Request $request): JsonResponse
+    public function getTemplates(Request $request, PreviewContext $previewContext, ReplicatorPreviewDiagnostic $replicatorDiagnostic): JsonResponse
     {
         /** @var array<int|string>|null $templateIds */
         $templateIds = $request->input('ids', []);
@@ -63,35 +67,50 @@ class StructuredDataController extends CpController
             return response()->json(['error' => 'Content entry not found'], 404);
         }
 
-        /** @var array<int, array<string, mixed>> $templates */
-        $templates = collect($templateIds ?? [])
-            ->map(function ($id) use ($contentEntry) {
-                $entry = Entry::find($id);
+        $previewValues = $this->normalizePreviewValues($request->input('values'));
+        $previewContext->setValues($previewValues);
+        $contentEntry = $this->entryForPreview($contentEntry, $previewValues);
+        $debug = $request->boolean('debug');
 
-                if (! $entry instanceof EntryModel) {
-                    return null;
-                }
+        try {
+            /** @var array<int, array<string, mixed>> $templates */
+            $templates = collect($templateIds ?? [])
+                ->map(function ($id) use ($contentEntry, $debug, $replicatorDiagnostic) {
+                    $entry = Entry::find($id);
 
-                $structuredData = $entry->get('schema_data');
+                    if (! $entry instanceof EntryModel) {
+                        return null;
+                    }
 
-                if ($structuredData === null) {
-                    return null;
-                }
+                    $structuredData = $entry->get('schema_data');
 
-                $structuredDataService = app(StructuredDataService::class);
-                $transformedData = $structuredDataService->parseAndTransformSchemas($structuredData, $contentEntry);
+                    if ($structuredData === null) {
+                        return null;
+                    }
 
-                return [
-                    'id' => $entry->id(),
-                    'title' => $entry->get('title'),
-                    'structuredData' => $transformedData,
-                ];
-            })
-            ->filter()
-            ->values()
-            ->all();
+                    $structuredDataService = app(StructuredDataService::class);
+                    $transformedData = $structuredDataService->parseAndTransformSchemas($structuredData, $contentEntry);
 
-        return response()->json($templates);
+                    $result = [
+                        'id' => $entry->id(),
+                        'title' => $entry->get('title'),
+                        'structuredData' => $transformedData,
+                    ];
+
+                    if ($debug) {
+                        $result['replicatorDebug'] = $replicatorDiagnostic->forSchemas($structuredData, $contentEntry);
+                    }
+
+                    return $result;
+                })
+                ->filter()
+                ->values()
+                ->all();
+
+            return response()->json($templates);
+        } finally {
+            $previewContext->clear();
+        }
     }
 
     public function getAvailableVariables(Request $request): JsonResponse
@@ -118,7 +137,7 @@ class StructuredDataController extends CpController
         }
 
         $blueprint = $entry->blueprint();
-        /** @var array<int, \Statamic\Fields\Field> $fields */
+        /** @var array<int, Field> $fields */
         $fields = array_values($blueprint->fields()->all());
 
         $variables['entry'] = array_values(array_map(function ($field): array {
@@ -129,5 +148,58 @@ class StructuredDataController extends CpController
         }, $fields));
 
         return response()->json($variables);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function normalizePreviewValues(mixed $values): array
+    {
+        if (is_string($values)) {
+            $values = json_decode($values, true);
+        }
+
+        if (! is_array($values)) {
+            return [];
+        }
+
+        $normalizer = app(ReplicatorRowNormalizer::class);
+        $normalized = [];
+
+        foreach ($values as $key => $value) {
+            if (! is_string($key)) {
+                continue;
+            }
+
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+
+            $normalized[$key] = $normalizer->decodeReplicatorData($value);
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @param  array<string, mixed>  $values
+     */
+    protected function entryForPreview(EntryContract|TermContract $entry, array $values): EntryContract|TermContract
+    {
+        if ($values === []) {
+            return $entry;
+        }
+
+        $previewEntry = clone $entry;
+
+        foreach ($values as $key => $value) {
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+
+            $previewEntry->set($key, $value);
+        }
+
+        return $previewEntry;
     }
 }

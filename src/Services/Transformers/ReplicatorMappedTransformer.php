@@ -19,6 +19,12 @@ class ReplicatorMappedTransformer
         $results = [];
 
         foreach ($replicatorData as $row) {
+            $row = $this->normalizer->unwrap($row);
+
+            if (is_array($row) && ($row['enabled'] ?? true) === false) {
+                continue;
+            }
+
             $rowArray = $this->normalizer->normalize($row);
 
             if (! $rowArray) {
@@ -27,7 +33,7 @@ class ReplicatorMappedTransformer
 
             $rowSet = $rowArray['set'] ?? null;
 
-            if (is_string($setFilter) && $setFilter !== '' && $rowSet !== $setFilter) {
+            if (is_string($setFilter) && $setFilter !== '' && ! $this->setMatches($rowSet, $setFilter)) {
                 continue;
             }
 
@@ -80,8 +86,8 @@ class ReplicatorMappedTransformer
                 continue;
             }
 
-            $fieldHandle = $mapping['field'] ?? null;
-            if (! is_string($fieldHandle) || $fieldHandle === '') {
+            $fieldHandle = $this->normalizeMappingFieldHandle($mapping['field'] ?? null);
+            if ($fieldHandle === null) {
                 continue;
             }
 
@@ -106,13 +112,13 @@ class ReplicatorMappedTransformer
             return [];
         }
 
-        $replicatorHandle = $config['replicator_field'] ?? null;
+        $replicatorHandle = $this->normalizeConfigString($config['replicator_field'] ?? null);
 
-        if (! is_string($replicatorHandle) || $replicatorHandle === '') {
+        if ($replicatorHandle === null) {
             return [];
         }
 
-        $setFilter = is_string($config['set'] ?? null) ? $config['set'] : null;
+        $setFilter = $this->normalizeConfigString($config['set'] ?? null, allowEmpty: true);
         /** @var array<int, array<string, mixed>> $mappings */
         $mappings = is_array($config['mappings'] ?? null) ? $config['mappings'] : [];
 
@@ -131,5 +137,45 @@ class ReplicatorMappedTransformer
         }
 
         return $this->transform($replicatorData, $setFilter, $mappings, $item);
+    }
+
+    /**
+     * @param  mixed  $fieldHandle
+     */
+    protected function normalizeMappingFieldHandle($fieldHandle): ?string
+    {
+        if (is_string($fieldHandle) && $fieldHandle !== '') {
+            return $fieldHandle;
+        }
+
+        if (is_array($fieldHandle) && is_string($fieldHandle['value'] ?? null) && $fieldHandle['value'] !== '') {
+            return $fieldHandle['value'];
+        }
+
+        return null;
+    }
+
+    protected function setMatches(?string $rowSet, string $setFilter): bool
+    {
+        if ($rowSet === null || $rowSet === '') {
+            return false;
+        }
+
+        return strtolower($rowSet) === strtolower($setFilter);
+    }
+
+    protected function normalizeConfigString(mixed $value, bool $allowEmpty = false): ?string
+    {
+        if (is_string($value)) {
+            return $allowEmpty ? $value : ($value !== '' ? $value : null);
+        }
+
+        if (is_array($value) && is_string($value['value'] ?? null)) {
+            $stringValue = $value['value'];
+
+            return $allowEmpty ? $stringValue : ($stringValue !== '' ? $stringValue : null);
+        }
+
+        return null;
     }
 }
