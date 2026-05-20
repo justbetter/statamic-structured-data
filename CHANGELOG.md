@@ -1,6 +1,11 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.5.1...1.5.1)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.6.0...1.6.0)
+## [1.6.0](https://github.com/justbetter/statamic-structured-data/releases/tag/1.6.0) - 2026-05-20
+
+### Added
+- [1.x] Added option to flatten fields from a replicator (#30)
+
 ## [1.5.1](https://github.com/justbetter/statamic-structured-data/releases/tag/1.5.1) - 2026-03-30
 
 ### Added
