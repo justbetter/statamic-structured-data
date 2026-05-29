@@ -12,6 +12,7 @@
     },
     "require": {
         "php": "^8.4|^8.5",
+        "justbetter/statamic-base": "^1.0",
         "laravel/framework": "^12.0|^13.0",
         "statamic/cms": "^6.0"
     },
