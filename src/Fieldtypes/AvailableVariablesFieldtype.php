@@ -11,6 +11,7 @@ use Statamic\Facades\GlobalSet;
 use Statamic\Fields\Blueprint;
 use Statamic\Fields\Fieldtype;
 use Statamic\Globals\GlobalSet as StatamicGlobalSet;
+use Statamic\SeoPro\Cascade;
 use Statamic\Taxonomies\Taxonomy;
 
 class AvailableVariablesFieldtype extends Fieldtype
@@ -104,7 +105,11 @@ class AvailableVariablesFieldtype extends Fieldtype
 
         $baseFields = [['name' => 'absolute_url', 'description' => 'Full URL']];
 
-        return array_merge($baseFields, $collectionFields);
+        return array_merge(
+            $baseFields,
+            $collectionFields,
+            $this->getSeoProVariablesForSection($collection)
+        );
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -140,7 +145,62 @@ class AvailableVariablesFieldtype extends Fieldtype
 
         $baseFields = [['name' => 'absolute_url', 'description' => 'Full URL']];
 
-        return array_merge($baseFields, $collectionFields);
+        return array_merge(
+            $baseFields,
+            $collectionFields,
+            $this->getSeoProVariablesForSection($taxonomy)
+        );
+    }
+
+    protected function seoProIsInstalled(): bool
+    {
+        return class_exists(Cascade::class);
+    }
+
+    protected function seoIsEnabledForSection(Collection|Taxonomy $section): bool
+    {
+        if (! $this->seoProIsInstalled()) {
+            return false;
+        }
+
+        return $section->cascade('seo') !== false;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getSeoProVariablesForSection(Collection|Taxonomy $section): array
+    {
+        if (! $this->seoIsEnabledForSection($section)) {
+            return [];
+        }
+
+        return $this->getSeoProVariables();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getSeoProVariables(): array
+    {
+        $variables = [
+            'title' => 'Meta Title',
+            'compiled_title' => 'Compiled Title',
+            'description' => 'Meta Description',
+            'canonical_url' => 'Canonical URL',
+            'og_title' => 'Open Graph Title',
+            'og_type' => 'Open Graph Type',
+            'image' => 'Open Graph Image',
+        ];
+
+        return collect($variables)
+            ->map(fn (string $description, string $handle): array => [
+                'name' => 'seo:'.$handle,
+                'description' => $description,
+                'children' => [],
+            ])
+            ->values()
+            ->all();
     }
 
     /** @return array<int, mixed> */
