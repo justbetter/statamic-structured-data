@@ -1104,4 +1104,244 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $fieldNames = array_column($result, 'name');
         $this->assertContains('title', $fieldNames);
     }
+
+    #[Test]
+    public function get_seo_pro_variables_returns_core_cascaded_fields(): void
+    {
+        $fieldtype = new AvailableVariablesFieldtype;
+
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('getSeoProVariables');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($fieldtype);
+
+        $this->assertIsArray($result);
+        /** @var array<int, array<string, mixed>> $result */
+        $this->assertCount(7, $result);
+        $names = array_column($result, 'name');
+        $this->assertSame([
+            'seo:title',
+            'seo:compiled_title',
+            'seo:description',
+            'seo:canonical_url',
+            'seo:og_title',
+            'seo:og_type',
+            'seo:image',
+        ], $names);
+    }
+
+    #[Test]
+    public function get_entry_fields_appends_seo_pro_variables_when_seo_pro_is_available(): void
+    {
+        $fieldtype = new class extends AvailableVariablesFieldtype
+        {
+            protected function seoProIsInstalled(): bool
+            {
+                return true;
+            }
+        };
+
+        $collection = CollectionFacade::make('test');
+        $collection->save();
+        $blueprint = BlueprintFacade::make('test');
+        $blueprint->setNamespace('collections.test');
+        $blueprint->setContents([
+            'fields' => [
+                [
+                    'handle' => 'title',
+                    'field' => [
+                        'type' => 'text',
+                        'display' => 'Title',
+                    ],
+                ],
+            ],
+        ]);
+        $blueprint->save();
+        $collection->entryBlueprints();
+
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+        $entry = (new Entry)
+            ->collection($templatesCollection)
+            ->id('template-123');
+
+        $entry->use_for_collection = $collection;
+        $entryMock = $entry;
+
+        /** @var Field $fieldMock */
+        $fieldMock = $this->mock(Field::class, function (MockInterface $mock) use ($entryMock): void {
+            $mock->shouldReceive('parent')->andReturn($entryMock);
+        });
+
+        $fieldtype->setField($fieldMock);
+
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('getEntryFields');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($fieldtype);
+
+        $this->assertIsArray($result);
+        /** @var array<int, array<string, mixed>> $result */
+        $fieldNames = array_column($result, 'name');
+
+        $this->assertContains('seo:compiled_title', $fieldNames);
+
+        $titleIndex = array_search('title', $fieldNames, true);
+        $seoTitleIndex = array_search('seo:title', $fieldNames, true);
+
+        $this->assertNotFalse($titleIndex);
+        $this->assertNotFalse($seoTitleIndex);
+        $this->assertGreaterThan($titleIndex, $seoTitleIndex);
+    }
+
+    #[Test]
+    public function get_entry_fields_omits_seo_pro_variables_when_seo_is_disabled_for_collection(): void
+    {
+        $fieldtype = new class extends AvailableVariablesFieldtype
+        {
+            protected function seoProIsInstalled(): bool
+            {
+                return true;
+            }
+        };
+
+        $collection = CollectionFacade::make('test');
+        $collection->cascade(['seo' => false]);
+        $collection->save();
+
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+        $entry = (new Entry)
+            ->collection($templatesCollection)
+            ->id('template-123');
+
+        $entry->use_for_collection = $collection;
+        $entryMock = $entry;
+
+        /** @var Field $fieldMock */
+        $fieldMock = $this->mock(Field::class, function (MockInterface $mock) use ($entryMock): void {
+            $mock->shouldReceive('parent')->andReturn($entryMock);
+        });
+
+        $fieldtype->setField($fieldMock);
+
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('getEntryFields');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($fieldtype);
+
+        $this->assertIsArray($result);
+        /** @var array<int, array<string, mixed>> $result */
+        $fieldNames = array_column($result, 'name');
+
+        $this->assertNotContains('seo:title', $fieldNames);
+    }
+
+    #[Test]
+    public function get_term_fields_appends_seo_pro_variables_when_seo_pro_is_available(): void
+    {
+        $fieldtype = new class extends AvailableVariablesFieldtype
+        {
+            protected function seoProIsInstalled(): bool
+            {
+                return true;
+            }
+        };
+
+        /** @var Taxonomy $taxonomy */
+        $taxonomy = TaxonomyFacade::make('test');
+        $taxonomy->save();
+        $blueprint = BlueprintFacade::make('test');
+        $blueprint->setNamespace('taxonomies.test');
+        $blueprint->setContents([
+            'fields' => [
+                [
+                    'handle' => 'title',
+                    'field' => [
+                        'type' => 'text',
+                        'display' => 'Title',
+                    ],
+                ],
+            ],
+        ]);
+        $blueprint->save();
+        /** @phpstan-ignore-next-line */
+        $taxonomy->termBlueprints(['test']);
+
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+        $entry = (new Entry)
+            ->collection($templatesCollection)
+            ->id('template-123');
+
+        $entry->use_for_taxonomy = $taxonomy;
+        $entryMock = $entry;
+
+        /** @var Field $fieldMock */
+        $fieldMock = $this->mock(Field::class, function (MockInterface $mock) use ($entryMock): void {
+            $mock->shouldReceive('parent')->andReturn($entryMock);
+        });
+
+        $fieldtype->setField($fieldMock);
+
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('getTermFields');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($fieldtype);
+
+        $this->assertIsArray($result);
+        /** @var array<int, array<string, mixed>> $result */
+        $fieldNames = array_column($result, 'name');
+
+        $this->assertContains('seo:description', $fieldNames);
+    }
+
+    #[Test]
+    public function get_term_fields_omits_seo_pro_variables_when_seo_is_disabled_for_taxonomy(): void
+    {
+        $fieldtype = new class extends AvailableVariablesFieldtype
+        {
+            protected function seoProIsInstalled(): bool
+            {
+                return true;
+            }
+        };
+
+        /** @var Taxonomy $taxonomy */
+        $taxonomy = TaxonomyFacade::make('test');
+        $taxonomy->cascade(['seo' => false]);
+        $taxonomy->save();
+
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+        $entry = (new Entry)
+            ->collection($templatesCollection)
+            ->id('template-123');
+
+        $entry->use_for_taxonomy = $taxonomy;
+        $entryMock = $entry;
+
+        /** @var Field $fieldMock */
+        $fieldMock = $this->mock(Field::class, function (MockInterface $mock) use ($entryMock): void {
+            $mock->shouldReceive('parent')->andReturn($entryMock);
+        });
+
+        $fieldtype->setField($fieldMock);
+
+        $reflection = new \ReflectionClass($fieldtype);
+        $method = $reflection->getMethod('getTermFields');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($fieldtype);
+
+        $this->assertIsArray($result);
+        /** @var array<int, array<string, mixed>> $result */
+        $fieldNames = array_column($result, 'name');
+
+        $this->assertNotContains('seo:title', $fieldNames);
+    }
 }
