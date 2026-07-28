@@ -1,6 +1,12 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.2.1...2.2.1)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.3.0...2.3.0)
+## [2.3.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.3.0) - 2026-07-28
+
+### Added
+- Added SEO Pro support (#32)
+- Added base package (#31)
+
 ## [2.2.1](https://github.com/justbetter/statamic-structured-data/releases/tag/2.2.1) - 2026-05-05
 
 ### Fixed
