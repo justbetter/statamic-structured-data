@@ -1,6 +1,11 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.6.0...1.6.0)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.7.0...1.7.0)
+## [1.7.0](https://github.com/justbetter/statamic-structured-data/releases/tag/1.7.0) - 2026-07-31
+
+### Added
+- Allow PHP 8.4 (#33)
+
 ## [1.6.0](https://github.com/justbetter/statamic-structured-data/releases/tag/1.6.0) - 2026-05-20
 
 ### Added
