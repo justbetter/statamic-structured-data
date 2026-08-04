@@ -24,6 +24,9 @@
         "phpstan/phpstan-mockery": "^2.0",
         "phpunit/phpunit": "^11.5"
     },
+    "suggest": {
+        "statamic-rad-pack/runway": "Required to attach structured data templates to Runway resources."
+    },
     "config": {
         "allow-plugins": {
             "pixelfear/composer-dist-plugin": true,

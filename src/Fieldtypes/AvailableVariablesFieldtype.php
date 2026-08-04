@@ -2,7 +2,9 @@
 
 namespace Justbetter\StatamicStructuredData\Fieldtypes;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
+use Justbetter\StatamicStructuredData\Support\RunwaySupport;
 use Statamic\Entries\Collection;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Collection as CollectionFacade;
@@ -10,6 +12,7 @@ use Statamic\Facades\Fieldset as FieldsetFacade;
 use Statamic\Facades\GlobalSet;
 use Statamic\Fields\Blueprint;
 use Statamic\Fields\Fieldtype;
+use Statamic\Fields\LabeledValue;
 use Statamic\Globals\GlobalSet as StatamicGlobalSet;
 use Statamic\SeoPro\Cascade;
 use Statamic\Taxonomies\Taxonomy;
@@ -50,6 +53,7 @@ class AvailableVariablesFieldtype extends Fieldtype
             'globals' => $this->getGlobalVariables(),
             'entry' => $this->getEntryFields(),
             'term' => $this->getTermFields(),
+            'runway' => $this->getRunwayFields(),
         ];
     }
 
@@ -150,6 +154,86 @@ class AvailableVariablesFieldtype extends Fieldtype
             $collectionFields,
             $this->getSeoProVariablesForSection($taxonomy)
         );
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    protected function getRunwayFields(): array
+    {
+        if (! RunwaySupport::isInstalled()) {
+            return [];
+        }
+
+        $resourceHandle = $this->resolveRunwayResourceHandle($this->field->parent());
+
+        if (! $resourceHandle) {
+            return [];
+        }
+
+        $resource = RunwaySupport::findResource($resourceHandle);
+
+        if (! $resource) {
+            return [];
+        }
+
+        $blueprint = $resource->blueprint();
+        $items = $this->normalizeBlueprintItems($blueprint->fields()->items());
+
+        $blueprintFields = collect($items)
+            ->map(fn (array $field) => $this->setFieldData($field))
+            ->filter()
+            ->values()
+            ->all();
+
+        $blueprintHandles = collect($blueprintFields)->pluck('name')->filter()->all();
+
+        $modelAttributes = $this->getRunwayModelAttributeVariables($resource->model(), $blueprintHandles);
+
+        $baseFields = [['name' => 'absolute_url', 'description' => 'Full URL']];
+
+        return array_merge($baseFields, $blueprintFields, $modelAttributes);
+    }
+
+    protected function resolveRunwayResourceHandle(mixed $dataTemplate): ?string
+    {
+        if (! $dataTemplate instanceof Entry) {
+            return null;
+        }
+
+        $runwayHandle = $dataTemplate->use_for_runway ?? null;
+        if ($runwayHandle instanceof LabeledValue) {
+            $runwayHandle = $runwayHandle->value();
+        }
+
+        return is_string($runwayHandle) && $runwayHandle !== '' ? $runwayHandle : null;
+    }
+
+    /**
+     * @param  array<int, mixed>  $existingHandles
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getRunwayModelAttributeVariables(Model $model, array $existingHandles): array
+    {
+        $existing = collect($existingHandles)
+            ->filter(fn ($handle): bool => is_string($handle))
+            ->values()
+            ->all();
+
+        $attributeNames = collect()
+            ->merge($model->getFillable())
+            ->merge($model->getAppends())
+            ->merge(array_keys($model->getAttributes()))
+            ->filter(fn ($name): bool => is_string($name) && $name !== '')
+            ->unique()
+            ->reject(fn (string $name): bool => in_array($name, $existing, true) || $name === 'parent')
+            ->values();
+
+        return $attributeNames
+            ->map(fn (string $name): array => [
+                'name' => $name,
+                'description' => $name,
+                'children' => [],
+            ])
+            ->all();
     }
 
     protected function seoProIsInstalled(): bool

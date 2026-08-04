@@ -5,6 +5,7 @@ namespace Justbetter\StatamicStructuredData;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\File;
 use Justbetter\StatamicStructuredData\Fieldtypes\AvailableVariablesFieldtype;
+use Justbetter\StatamicStructuredData\Fieldtypes\RunwayResourcesFieldtype;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataBuilder;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataObjectBuilder;
 use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataPreview;
@@ -38,6 +39,7 @@ class ServiceProvider extends AddonServiceProvider
         StructuredDataPreview::class,
         StructuredDataObjectBuilder::class,
         AvailableVariablesFieldtype::class,
+        RunwayResourcesFieldtype::class,
     ];
 
     public function bootAddon(): void
@@ -117,6 +119,11 @@ class ServiceProvider extends AddonServiceProvider
 
     protected function bootConfig(): self
     {
+        $this->mergeConfigFrom(
+            __DIR__.'/../config/structured-data.php',
+            'justbetter.structured-data'
+        );
+
         $this->publishes([
             __DIR__.'/../config/structured-data.php' => config_path('justbetter/structured-data.php'),
         ], 'justbetter-structured-data');

@@ -7,3 +7,5 @@ parameters:
         - src
         - tests
     level: 9
+    scanFiles:
+        - stubs/runway.php

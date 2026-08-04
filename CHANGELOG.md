@@ -1,6 +1,12 @@
 # Changelog 
 
 [Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.3.0...2.3.0)
+## Unreleased
+
+### Added
+- Added optional Runway resource support (templates apply to all models of a resource)
+- Added `structured-data:for` tag for explicit item/model rendering
+
 ## [2.3.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.3.0) - 2026-07-28
 
 ### Added

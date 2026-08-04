@@ -2,7 +2,9 @@
 
 namespace Justbetter\StatamicStructuredData\Actions;
 
+use Illuminate\Database\Eloquent\Model;
 use Justbetter\StatamicStructuredData\Services\StructuredDataService;
+use Justbetter\StatamicStructuredData\Support\RunwaySupport;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Entry as EntryFacade;
@@ -29,6 +31,32 @@ class InjectStructuredDataAction
 
         if ($term) {
             return $this->handleTaxonomy($term);
+        }
+
+        $runwayModel = $this->getCurrentRunwayModel();
+
+        if ($runwayModel) {
+            return $this->handleRunwayModel($runwayModel);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  EntryContract|Page|LocalizedTerm|Model  $item
+     */
+    public function executeForItem($item, ?string $resourceHandle = null): ?string
+    {
+        if ($item instanceof Entry || $item instanceof Page) {
+            return $this->handleEntry($item);
+        }
+
+        if ($item instanceof LocalizedTerm) {
+            return $this->handleTaxonomy($item);
+        }
+
+        if ($item instanceof Model) {
+            return $this->handleRunwayModel($item, $resourceHandle);
         }
 
         return null;
@@ -59,6 +87,23 @@ class InjectStructuredDataAction
         }
 
         return $this->handleScripts($term);
+    }
+
+    protected function handleRunwayModel(Model $model, ?string $resourceHandle = null): ?string
+    {
+        $handle = RunwaySupport::resolveResourceHandle($model, $resourceHandle);
+
+        if (! $handle) {
+            return null;
+        }
+
+        $scripts = $this->structuredDataService->getJsonLdScripts($model, false, $handle);
+
+        if (! $scripts) {
+            return null;
+        }
+
+        return implode("\n", $scripts);
     }
 
     protected function handleScripts(EntryContract|Page|LocalizedTerm $item): ?string
@@ -94,5 +139,23 @@ class InjectStructuredDataAction
         $term = Term::findByUri($url, $site->handle());
 
         return $term instanceof LocalizedTerm ? $term : null;
+    }
+
+    protected function getCurrentRunwayModel(): ?Model
+    {
+        if (! RunwaySupport::isInstalled()) {
+            return null;
+        }
+
+        $url = URL::getCurrent();
+        $model = RunwaySupport::findByUri($url);
+
+        if (! $model instanceof Model) {
+            return null;
+        }
+
+        $handle = RunwaySupport::resolveResourceHandle($model);
+
+        return $handle ? $model : null;
     }
 }
