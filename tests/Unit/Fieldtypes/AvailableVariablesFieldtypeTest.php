@@ -1494,9 +1494,13 @@ class AvailableVariablesFieldtypeTest extends TestCase
     {
         $templatesCollection = CollectionFacade::make('structured_data_templates');
         $templatesCollection->save();
-        $entry = (new Entry)->collection($templatesCollection)->id('template-123');
-        $entry->set('use_for_runway', 'product');
-        $this->assertInstanceOf(LabeledValue::class, $entry->use_for_runway);
+
+        $entry = new class extends Entry
+        {
+            public mixed $use_for_runway;
+        };
+        $entry->collection($templatesCollection)->id('template-123');
+        $entry->use_for_runway = new LabeledValue('product', 'Products');
 
         $fieldtype = new AvailableVariablesFieldtype;
         $method = (new \ReflectionClass($fieldtype))->getMethod('resolveRunwayResourceHandle');

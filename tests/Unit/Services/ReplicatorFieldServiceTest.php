@@ -1144,11 +1144,12 @@ class ReplicatorFieldServiceTest extends TestCase
 
         $collection = CollectionFacade::make('structured_data_templates');
         $collection->save();
-        $template = (new Entry)
-            ->collection($collection)
-            ->id('template-runway-labeled');
-        $template->set('use_for_runway', 'product');
-        $this->assertInstanceOf(LabeledValue::class, $template->use_for_runway);
+        $template = new class extends Entry
+        {
+            public mixed $use_for_runway;
+        };
+        $template->collection($collection)->id('template-runway-labeled');
+        $template->use_for_runway = new LabeledValue('product', 'Products');
 
         $service = new ReplicatorFieldService;
         $result = $service->getReplicatorFields($template);
