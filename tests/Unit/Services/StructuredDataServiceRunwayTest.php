@@ -122,4 +122,16 @@ class StructuredDataServiceRunwayTest extends TestCase
         $this->assertStringContainsString('application/ld+json', $scripts[0]);
         $this->assertStringContainsString('Product', $scripts[0]);
     }
+
+    #[Test]
+    public function get_runway_template_ids_returns_empty_when_handle_not_enabled(): void
+    {
+        Config::set('justbetter.structured-data.runway', []);
+
+        $parser = $this->mock(StructuredDataParser::class);
+        /** @var StructuredDataParser $parser */
+        $service = new StructuredDataService($parser);
+
+        $this->assertSame([], $service->getRunwayTemplateIds('product'));
+    }
 }

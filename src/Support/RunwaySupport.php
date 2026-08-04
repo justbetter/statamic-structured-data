@@ -10,9 +10,16 @@ use StatamicRadPack\Runway\Runway;
 
 class RunwaySupport
 {
+    private static ?bool $installedOverride = null;
+
+    public static function fakeInstalled(?bool $installed): void
+    {
+        self::$installedOverride = $installed;
+    }
+
     public static function isInstalled(): bool
     {
-        return class_exists(Runway::class);
+        return self::$installedOverride ?? class_exists(Runway::class);
     }
 
     /**

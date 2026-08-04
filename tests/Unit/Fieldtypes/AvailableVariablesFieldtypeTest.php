@@ -2,7 +2,10 @@
 
 namespace Justbetter\StatamicStructuredData\Tests\Unit\Fieldtypes;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Config;
 use Justbetter\StatamicStructuredData\Fieldtypes\AvailableVariablesFieldtype;
+use Justbetter\StatamicStructuredData\Support\RunwaySupport;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use Mockery;
 use Mockery\MockInterface;
@@ -19,8 +22,11 @@ use Statamic\Fields\Blueprint;
 use Statamic\Fields\Field;
 use Statamic\Fields\Fields;
 use Statamic\Fields\Fieldset;
+use Statamic\Fields\LabeledValue;
 use Statamic\Globals\GlobalCollection;
 use Statamic\Taxonomies\Taxonomy;
+use StatamicRadPack\Runway\Resource;
+use StatamicRadPack\Runway\Runway;
 
 class AvailableVariablesFieldtypeTest extends TestCase
 {
@@ -1343,5 +1349,177 @@ class AvailableVariablesFieldtypeTest extends TestCase
         $fieldNames = array_column($result, 'name');
 
         $this->assertNotContains('seo:title', $fieldNames);
+    }
+
+    #[Test]
+    public function get_runway_fields_returns_empty_when_runway_not_installed(): void
+    {
+        RunwaySupport::fakeInstalled(false);
+
+        $fieldtype = new AvailableVariablesFieldtype;
+        $fieldMock = $this->mock(Field::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('parent')->andReturn(null);
+        });
+        $fieldtype->setField($fieldMock);
+
+        $method = (new \ReflectionClass($fieldtype))->getMethod('getRunwayFields');
+        $method->setAccessible(true);
+
+        $this->assertSame([], $method->invoke($fieldtype));
+    }
+
+    #[Test]
+    public function get_runway_fields_returns_empty_when_parent_is_not_entry(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+
+        $fieldtype = new AvailableVariablesFieldtype;
+        $fieldMock = $this->mock(Field::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('parent')->andReturn(null);
+        });
+        $fieldtype->setField($fieldMock);
+
+        $method = (new \ReflectionClass($fieldtype))->getMethod('getRunwayFields');
+        $method->setAccessible(true);
+
+        $this->assertSame([], $method->invoke($fieldtype));
+    }
+
+    #[Test]
+    public function get_runway_fields_returns_empty_when_no_resource_handle(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+        $entry = (new Entry)->collection($templatesCollection)->id('template-123');
+
+        $fieldtype = new AvailableVariablesFieldtype;
+        $fieldMock = $this->mock(Field::class, function (MockInterface $mock) use ($entry): void {
+            $mock->shouldReceive('parent')->andReturn($entry);
+        });
+        $fieldtype->setField($fieldMock);
+
+        $method = (new \ReflectionClass($fieldtype))->getMethod('getRunwayFields');
+        $method->setAccessible(true);
+
+        $this->assertSame([], $method->invoke($fieldtype));
+    }
+
+    #[Test]
+    public function get_runway_fields_returns_empty_when_resource_not_found(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+        Config::set('justbetter.structured-data.runway', ['product']);
+
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+        $entry = (new Entry)->collection($templatesCollection)->id('template-123');
+        $entry->use_for_runway = 'product';
+
+        $fieldtype = new AvailableVariablesFieldtype;
+        $fieldMock = $this->mock(Field::class, function (MockInterface $mock) use ($entry): void {
+            $mock->shouldReceive('parent')->andReturn($entry);
+        });
+        $fieldtype->setField($fieldMock);
+
+        $method = (new \ReflectionClass($fieldtype))->getMethod('getRunwayFields');
+        $method->setAccessible(true);
+
+        $this->assertSame([], $method->invoke($fieldtype));
+    }
+
+    #[Test]
+    public function get_runway_fields_returns_blueprint_and_model_variables(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+        Config::set('justbetter.structured-data.runway', ['product']);
+
+        $blueprint = BlueprintFacade::make('runway-product')->setContents([
+            'fields' => [
+                [
+                    'handle' => 'name',
+                    'field' => [
+                        'type' => 'text',
+                        'display' => 'Name',
+                    ],
+                ],
+            ],
+        ]);
+
+        $model = new class extends Model
+        {
+            protected $table = 'products';
+
+            protected $fillable = ['sku', 'color'];
+
+            protected $attributes = [
+                'sku' => 'ABC',
+                'name' => 'Bike',
+            ];
+        };
+
+        $resource = new Resource;
+        $resource->resourceHandle = 'product';
+        $resource->resourceName = 'Products';
+        $resource->resourceBlueprint = $blueprint;
+        $resource->resourceModel = $model;
+        Runway::$findResults['product'] = $resource;
+
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+        $entry = (new Entry)->collection($templatesCollection)->id('template-123');
+        $entry->use_for_runway = 'product';
+
+        $fieldtype = new AvailableVariablesFieldtype;
+        $fieldMock = $this->mock(Field::class, function (MockInterface $mock) use ($entry): void {
+            $mock->shouldReceive('parent')->andReturn($entry);
+        });
+        $fieldtype->setField($fieldMock);
+
+        $method = (new \ReflectionClass($fieldtype))->getMethod('getRunwayFields');
+        $method->setAccessible(true);
+        $result = $method->invoke($fieldtype);
+
+        $this->assertIsArray($result);
+        $names = array_column($result, 'name');
+        $this->assertContains('absolute_url', $names);
+        $this->assertContains('name', $names);
+        $this->assertContains('sku', $names);
+        $this->assertContains('color', $names);
+    }
+
+    #[Test]
+    public function resolve_runway_resource_handle_unwraps_labeled_value(): void
+    {
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+        $entry = (new Entry)->collection($templatesCollection)->id('template-123');
+        $entry->set('use_for_runway', 'product');
+        $this->assertInstanceOf(LabeledValue::class, $entry->use_for_runway);
+
+        $fieldtype = new AvailableVariablesFieldtype;
+        $method = (new \ReflectionClass($fieldtype))->getMethod('resolveRunwayResourceHandle');
+        $method->setAccessible(true);
+
+        $this->assertSame('product', $method->invoke($fieldtype, $entry));
+    }
+
+    #[Test]
+    public function preload_includes_runway_variables_key(): void
+    {
+        $fieldtype = new AvailableVariablesFieldtype;
+        $fieldMock = $this->mock(Field::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('parent')->andReturn(null);
+        });
+        $fieldtype->setField($fieldMock);
+
+        $result = $fieldtype->preload();
+
+        /** @var array<string, mixed> $result */
+        $this->assertArrayHasKey('variables', $result);
+        /** @var array<string, mixed> $resultVariables */
+        $resultVariables = $result['variables'];
+        $this->assertArrayHasKey('runway', $resultVariables);
     }
 }

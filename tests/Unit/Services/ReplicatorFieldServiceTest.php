@@ -2,7 +2,9 @@
 
 namespace Justbetter\StatamicStructuredData\Tests\Unit\Services;
 
+use Illuminate\Support\Facades\Config;
 use Justbetter\StatamicStructuredData\Services\ReplicatorFieldService;
+use Justbetter\StatamicStructuredData\Support\RunwaySupport;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use Mockery;
 use Mockery\MockInterface;
@@ -14,7 +16,10 @@ use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
 use Statamic\Fields\Blueprint;
 use Statamic\Fields\Fields;
+use Statamic\Fields\LabeledValue;
 use Statamic\Taxonomies\Taxonomy;
+use StatamicRadPack\Runway\Resource;
+use StatamicRadPack\Runway\Runway;
 
 class ReplicatorFieldServiceTest extends TestCase
 {
@@ -1047,5 +1052,107 @@ class ReplicatorFieldServiceTest extends TestCase
         $result = $service->getReplicatorFields($templateMock);
 
         $this->assertEmpty($result);
+    }
+
+    #[Test]
+    public function get_replicator_fields_uses_runway_blueprint_when_configured(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+        Config::set('justbetter.structured-data.runway', ['product']);
+
+        $blueprint = BlueprintFacade::make('runway-product')->setContents([
+            'fields' => [
+                [
+                    'handle' => 'blocks',
+                    'field' => [
+                        'type' => 'replicator',
+                        'display' => 'Blocks',
+                        'sets' => [
+                            'text' => [
+                                'display' => 'Text',
+                                'fields' => [
+                                    [
+                                        'handle' => 'content',
+                                        'field' => [
+                                            'type' => 'text',
+                                            'display' => 'Content',
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $resource = new Resource;
+        $resource->resourceHandle = 'product';
+        $resource->resourceBlueprint = $blueprint;
+        Runway::$findResults['product'] = $resource;
+
+        $collection = CollectionFacade::make('structured_data_templates');
+        $collection->save();
+        $template = (new Entry)
+            ->collection($collection)
+            ->id('template-runway');
+        $template->use_for_runway = 'product';
+
+        $service = new ReplicatorFieldService;
+        $result = $service->getReplicatorFields($template);
+
+        $this->assertNotEmpty($result);
+        $this->assertSame('blocks', $result[0]['handle']);
+    }
+
+    #[Test]
+    public function get_replicator_fields_unwraps_labeled_value_runway_handle(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+        Config::set('justbetter.structured-data.runway', ['product']);
+
+        $blueprint = BlueprintFacade::make('runway-product-labeled')->setContents([
+            'fields' => [
+                [
+                    'handle' => 'blocks',
+                    'field' => [
+                        'type' => 'replicator',
+                        'display' => 'Blocks',
+                        'sets' => [
+                            'text' => [
+                                'display' => 'Text',
+                                'fields' => [
+                                    [
+                                        'handle' => 'content',
+                                        'field' => [
+                                            'type' => 'text',
+                                            'display' => 'Content',
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $resource = new Resource;
+        $resource->resourceHandle = 'product';
+        $resource->resourceBlueprint = $blueprint;
+        Runway::$findResults['product'] = $resource;
+
+        $collection = CollectionFacade::make('structured_data_templates');
+        $collection->save();
+        $template = (new Entry)
+            ->collection($collection)
+            ->id('template-runway-labeled');
+        $template->set('use_for_runway', 'product');
+        $this->assertInstanceOf(LabeledValue::class, $template->use_for_runway);
+
+        $service = new ReplicatorFieldService;
+        $result = $service->getReplicatorFields($template);
+
+        $this->assertNotEmpty($result);
     }
 }

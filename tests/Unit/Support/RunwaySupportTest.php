@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Config;
 use Justbetter\StatamicStructuredData\Support\RunwaySupport;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use StatamicRadPack\Runway\ModelRepository;
+use StatamicRadPack\Runway\Resource;
+use StatamicRadPack\Runway\Runway;
 
 class RunwaySupportTest extends TestCase
 {
@@ -46,12 +49,6 @@ class RunwaySupportTest extends TestCase
     {
         Config::set('justbetter.structured-data.runway', ['runway_support_test_product']);
 
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-        };
-
-        // Anonymous class basename won't match; use a named stub instead.
         $named = new RunwaySupportTestProduct;
 
         $this->assertSame('runway_support_test_product', RunwaySupport::resolveResourceHandle($named));
@@ -61,22 +58,166 @@ class RunwaySupportTest extends TestCase
     public function resource_options_returns_empty_when_runway_not_installed(): void
     {
         Config::set('justbetter.structured-data.runway', ['product']);
-
-        if (RunwaySupport::isInstalled()) {
-            $this->markTestSkipped('Runway is installed in this environment.');
-        }
+        RunwaySupport::fakeInstalled(false);
 
         $this->assertSame([], RunwaySupport::resourceOptions());
     }
 
     #[Test]
+    public function resource_options_returns_empty_when_no_handles_enabled(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+        Config::set('justbetter.structured-data.runway', []);
+
+        $this->assertSame([], RunwaySupport::resourceOptions());
+    }
+
+    #[Test]
+    public function resource_options_returns_enabled_resources_when_installed(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+        Config::set('justbetter.structured-data.runway', ['product']);
+
+        $product = new Resource;
+        $product->resourceHandle = 'product';
+        $product->resourceName = 'Products';
+
+        $category = new Resource;
+        $category->resourceHandle = 'category';
+        $category->resourceName = 'Categories';
+
+        Runway::fakeResources([
+            'product' => $product,
+            'category' => $category,
+        ]);
+
+        $this->assertSame(['product' => 'Products'], RunwaySupport::resourceOptions());
+    }
+
+    #[Test]
+    public function resolve_resource_handle_uses_runway_resource_method(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+        Config::set('justbetter.structured-data.runway', ['product']);
+
+        $resource = new Resource;
+        $resource->resourceHandle = 'product';
+
+        $model = new class extends Model
+        {
+            public Resource $resource;
+
+            public function runwayResource(): Resource
+            {
+                return $this->resource;
+            }
+        };
+        $model->resource = $resource;
+
+        $this->assertSame('product', RunwaySupport::resolveResourceHandle($model));
+    }
+
+    #[Test]
+    public function resolve_resource_handle_ignores_disabled_runway_resource(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+        Config::set('justbetter.structured-data.runway', ['category']);
+
+        $resource = new Resource;
+        $resource->resourceHandle = 'product';
+
+        $model = new class extends Model
+        {
+            public Resource $resource;
+
+            public function runwayResource(): Resource
+            {
+                return $this->resource;
+            }
+        };
+        $model->resource = $resource;
+
+        $this->assertNull(RunwaySupport::resolveResourceHandle($model));
+    }
+
+    #[Test]
+    public function resolve_resource_handle_catches_runway_resource_exceptions(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+        Config::set('justbetter.structured-data.runway', ['product']);
+
+        $model = new class extends Model
+        {
+            public function runwayResource(): Resource
+            {
+                throw new \RuntimeException('not registered');
+            }
+        };
+
+        $this->assertNull(RunwaySupport::resolveResourceHandle($model));
+    }
+
+    #[Test]
+    public function resolve_resource_handle_returns_null_for_non_objects_without_explicit_handle(): void
+    {
+        $this->assertNull(RunwaySupport::resolveResourceHandle('not-an-object'));
+    }
+
+    #[Test]
     public function find_by_uri_returns_null_when_runway_not_installed(): void
     {
-        if (RunwaySupport::isInstalled()) {
-            $this->markTestSkipped('Runway is installed in this environment.');
-        }
+        RunwaySupport::fakeInstalled(false);
 
         $this->assertNull(RunwaySupport::findByUri('/some-product'));
+    }
+
+    #[Test]
+    public function find_by_uri_returns_model_when_repository_finds_one(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+
+        $model = new class extends Model
+        {
+            protected $table = 'products';
+        };
+
+        ModelRepository::$findByUriResult = $model;
+
+        $this->assertSame($model, RunwaySupport::findByUri('/product'));
+    }
+
+    #[Test]
+    public function find_by_uri_returns_null_when_repository_result_is_not_a_model(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+        ModelRepository::$findByUriResult = 'not-a-model';
+
+        $this->assertNull(RunwaySupport::findByUri('/product'));
+    }
+
+    #[Test]
+    public function find_resource_returns_null_when_not_installed_or_disabled(): void
+    {
+        Config::set('justbetter.structured-data.runway', ['product']);
+        RunwaySupport::fakeInstalled(false);
+        $this->assertNull(RunwaySupport::findResource('product'));
+
+        RunwaySupport::fakeInstalled(true);
+        Config::set('justbetter.structured-data.runway', []);
+        $this->assertNull(RunwaySupport::findResource('product'));
+    }
+
+    #[Test]
+    public function find_resource_returns_resource_when_enabled(): void
+    {
+        RunwaySupport::fakeInstalled(true);
+        Config::set('justbetter.structured-data.runway', ['product']);
+
+        $resource = new Resource;
+        $resource->resourceHandle = 'product';
+        Runway::$findResults['product'] = $resource;
+
+        $this->assertSame($resource, RunwaySupport::findResource('product'));
     }
 }
 
