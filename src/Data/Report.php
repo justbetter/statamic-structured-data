@@ -144,7 +144,6 @@ final class Report extends Fluent
      */
     protected function scopesArray(): array
     {
-        /** @var mixed $scopes */
         $scopes = $this->attributes['scopes'] ?? [];
 
         if (! is_array($scopes)) {
@@ -153,9 +152,20 @@ final class Report extends Fluent
 
         $normalized = [];
         foreach ($scopes as $scope) {
-            if (is_array($scope)) {
-                $normalized[] = $scope;
+            if (! is_array($scope)) {
+                continue;
             }
+
+            $item = [];
+            foreach ($scope as $key => $value) {
+                if (! is_string($key)) {
+                    continue;
+                }
+
+                $item[$key] = $value;
+            }
+
+            $normalized[] = $item;
         }
 
         return $normalized;
