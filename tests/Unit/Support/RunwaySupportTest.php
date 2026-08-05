@@ -2,9 +2,11 @@
 
 namespace Justbetter\StatamicStructuredData\Tests\Unit\Support;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
 use Justbetter\StatamicStructuredData\Support\RunwaySupport;
+use Justbetter\StatamicStructuredData\Tests\Stubs\BrokenProduct;
+use Justbetter\StatamicStructuredData\Tests\Stubs\Product;
+use Justbetter\StatamicStructuredData\Tests\Stubs\RunwaySupportTestProduct;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use StatamicRadPack\Runway\ModelRepository;
@@ -35,10 +37,7 @@ class RunwaySupportTest extends TestCase
     {
         Config::set('justbetter.structured-data.runway', ['product']);
 
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-        };
+        $model = new Product;
 
         $this->assertSame('product', RunwaySupport::resolveResourceHandle($model, 'product'));
         $this->assertNull(RunwaySupport::resolveResourceHandle($model, 'category'));
@@ -103,16 +102,8 @@ class RunwaySupportTest extends TestCase
         $resource = new Resource;
         $resource->resourceHandle = 'product';
 
-        $model = new class extends Model
-        {
-            public Resource $resource;
-
-            public function runwayResource(): Resource
-            {
-                return $this->resource;
-            }
-        };
-        $model->resource = $resource;
+        $model = new Product;
+        $model->runwayResource = $resource;
 
         $this->assertSame('product', RunwaySupport::resolveResourceHandle($model));
     }
@@ -126,16 +117,8 @@ class RunwaySupportTest extends TestCase
         $resource = new Resource;
         $resource->resourceHandle = 'product';
 
-        $model = new class extends Model
-        {
-            public Resource $resource;
-
-            public function runwayResource(): Resource
-            {
-                return $this->resource;
-            }
-        };
-        $model->resource = $resource;
+        $model = new Product;
+        $model->runwayResource = $resource;
 
         $this->assertNull(RunwaySupport::resolveResourceHandle($model));
     }
@@ -146,15 +129,7 @@ class RunwaySupportTest extends TestCase
         RunwaySupport::fakeInstalled(true);
         Config::set('justbetter.structured-data.runway', ['product']);
 
-        $model = new class extends Model
-        {
-            public function runwayResource(): Resource
-            {
-                throw new \RuntimeException('not registered');
-            }
-        };
-
-        $this->assertNull(RunwaySupport::resolveResourceHandle($model));
+        $this->assertNull(RunwaySupport::resolveResourceHandle(new BrokenProduct));
     }
 
     #[Test]
@@ -176,10 +151,7 @@ class RunwaySupportTest extends TestCase
     {
         RunwaySupport::fakeInstalled(true);
 
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-        };
+        $model = new Product;
 
         ModelRepository::$findByUriResult = $model;
 
@@ -219,9 +191,4 @@ class RunwaySupportTest extends TestCase
 
         $this->assertSame($resource, RunwaySupport::findResource('product'));
     }
-}
-
-class RunwaySupportTestProduct extends Model
-{
-    protected $table = 'products';
 }

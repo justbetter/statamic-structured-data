@@ -9,6 +9,7 @@ use Justbetter\StatamicStructuredData\Services\Transformers\FieldTransformerInte
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
+use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\Entry as EntryFacade;
@@ -682,19 +683,15 @@ class StructuredDataServiceTest extends TestCase
     }
 
     #[Test]
-    public function get_templates_returns_empty_array_for_invalid_item(): void
+    public function get_templates_returns_empty_array_for_unsupported_entry_implementation(): void
     {
         $parser = $this->mock(StructuredDataParser::class);
         /** @var StructuredDataParser $parser */
         $service = new StructuredDataService($parser);
 
-        $reflection = new \ReflectionClass($service);
-        $method = $reflection->getMethod('getTemplates');
-        $method->setAccessible(true);
-        $result = $method->invoke($service, 'invalid-item');
+        $entry = $this->mock(EntryContract::class);
 
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
+        $this->assertSame([], $service->getTemplates($entry));
     }
 
     #[Test]

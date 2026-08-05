@@ -2,10 +2,10 @@
 
 namespace Justbetter\StatamicStructuredData\Tests\Unit\Services;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
 use Justbetter\StatamicStructuredData\Services\StructuredDataService;
+use Justbetter\StatamicStructuredData\Tests\Stubs\Product;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
@@ -33,15 +33,10 @@ class StructuredDataServiceRunwayTest extends TestCase
             ]]);
         $template->save();
 
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-
-            protected $attributes = [
-                'name' => 'Test Bike',
-                'sku' => 'BIKE-1',
-            ];
-        };
+        $model = new Product([
+            'name' => 'Test Bike',
+            'sku' => 'BIKE-1',
+        ]);
 
         $parser = $this->mock(StructuredDataParser::class);
         /** @var StructuredDataParser $parser */
@@ -57,10 +52,7 @@ class StructuredDataServiceRunwayTest extends TestCase
     {
         Config::set('justbetter.structured-data.runway', []);
 
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-        };
+        $model = new Product;
 
         $parser = $this->mock(StructuredDataParser::class);
         /** @var StructuredDataParser $parser */
@@ -92,14 +84,9 @@ class StructuredDataServiceRunwayTest extends TestCase
             ->set('schema_data', $schema);
         $template->save();
 
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-
-            protected $attributes = [
-                'name' => 'Test Bike',
-            ];
-        };
+        $model = new Product([
+            'name' => 'Test Bike',
+        ]);
 
         $parser = $this->mock(StructuredDataParser::class, function (MockInterface $mock) use ($schema, $model): void {
             $mock->shouldReceive('parse')

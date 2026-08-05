@@ -8,7 +8,7 @@ use Justbetter\StatamicStructuredData\Services\Transformers\FieldTransformerFact
 use Justbetter\StatamicStructuredData\Support\RunwaySupport;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Contracts\Taxonomies\Term as TermContract;
-use Statamic\Entries\Entry as EntryModel;
+use Statamic\Entries\Entry;
 use Statamic\Facades\Entry as EntryFacade;
 use Statamic\Query\EloquentQueryBuilder;
 use Statamic\Structures\Page;
@@ -27,10 +27,9 @@ class StructuredDataService
     }
 
     /**
-     * @param  EntryContract|Page|LocalizedTerm|TermContract|Model  $item
      * @return array<int, string>
      */
-    public function getJsonLdScripts($item, bool $json = false, ?string $resourceHandle = null): array
+    public function getJsonLdScripts(EntryContract|Page|LocalizedTerm|TermContract|Model $item, bool $json = false, ?string $resourceHandle = null): array
     {
         $templates = $this->getTemplates($item, $resourceHandle);
 
@@ -43,7 +42,7 @@ class StructuredDataService
         foreach ($templates as $templateId) {
             $template = EntryFacade::find($templateId);
 
-            if (! $template instanceof EntryModel) {
+            if (! $template instanceof Entry) {
                 continue;
             }
 
@@ -79,9 +78,8 @@ class StructuredDataService
 
     /**
      * @param  array<string, mixed>  $schema
-     * @param  EntryContract|Page|LocalizedTerm|TermContract|Model|null  $item
      */
-    public function formatJsonLd(array $schema, bool $json = false, $item = null): string
+    public function formatJsonLd(array $schema, bool $json = false, EntryContract|Page|LocalizedTerm|TermContract|Model|null $item = null): string
     {
         $transformedSchema = $this->transformSchema($schema, $item);
         $encodedSchema = json_encode($transformedSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -98,10 +96,9 @@ class StructuredDataService
 
     /**
      * @param  mixed  $schemas
-     * @param  EntryContract|Page|LocalizedTerm|TermContract|Model|null  $item
      * @return array<int, array<string, mixed>>
      */
-    public function parseAndTransformSchemas($schemas, $item = null): array
+    public function parseAndTransformSchemas($schemas, EntryContract|Page|LocalizedTerm|TermContract|Model|null $item = null): array
     {
         if (
             ! $item instanceof EntryContract
@@ -128,10 +125,9 @@ class StructuredDataService
 
     /**
      * @param  array<string, mixed>  $schema
-     * @param  EntryContract|Page|LocalizedTerm|TermContract|Model|null  $item
      * @return array<string, mixed>
      */
-    public function transformSchema(array $schema, $item = null): array
+    public function transformSchema(array $schema, EntryContract|Page|LocalizedTerm|TermContract|Model|null $item = null): array
     {
         /** @var array<string, mixed> $result */
         $result = [];
@@ -185,10 +181,9 @@ class StructuredDataService
 
     /**
      * @param  array<string, mixed>  $field
-     * @param  EntryContract|Page|LocalizedTerm|TermContract|Model|null  $item
      * @param  array<string, mixed>  $result
      */
-    protected function transformField(array $field, $item = null, array &$result = []): mixed
+    protected function transformField(array $field, EntryContract|Page|LocalizedTerm|TermContract|Model|null $item = null, array &$result = []): mixed
     {
         $type = $field['type'] ?? null;
 
@@ -232,17 +227,16 @@ class StructuredDataService
     }
 
     /**
-     * @param  EntryContract|Page|LocalizedTerm|Model|mixed  $item
      * @return array<int|string, mixed>
      */
-    public function getTemplates($item, ?string $resourceHandle = null): array
+    public function getTemplates(EntryContract|Page|LocalizedTerm|TermContract|Model $item, ?string $resourceHandle = null): array
     {
         if ($item instanceof Page) {
             /** @var EntryContract $item */
             $item = $item->entry();
         }
 
-        if ($item instanceof EntryModel) {
+        if ($item instanceof Entry) {
             /** @var array<int|string, mixed>|null $templates */
             $templates = $item->get('structured_data_templates');
 
@@ -287,7 +281,7 @@ class StructuredDataService
             ->where('blueprint_type', 'runway')
             ->where('use_for_runway', $resourceHandle)
             ->get()
-            ->map(fn ($entry): ?string => $entry->id() !== null ? (string) $entry->id() : null)
+            ->map(fn (Entry $entry): ?string => $entry->id() !== null ? (string) $entry->id() : null)
             ->filter()
             ->values()
             ->all();

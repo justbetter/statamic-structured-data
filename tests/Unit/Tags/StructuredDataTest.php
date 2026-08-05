@@ -2,9 +2,9 @@
 
 namespace Justbetter\StatamicStructuredData\Tests\Unit\Tags;
 
-use Illuminate\Database\Eloquent\Model;
 use Justbetter\StatamicStructuredData\Actions\InjectStructuredDataAction;
 use Justbetter\StatamicStructuredData\Tags\StructuredData;
+use Justbetter\StatamicStructuredData\Tests\Stubs\Product;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
@@ -50,10 +50,7 @@ class StructuredDataTest extends TestCase
     #[Test]
     public function for_method_passes_item_and_resource_to_action(): void
     {
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-        };
+        $model = new Product;
 
         $action = $this->mock(InjectStructuredDataAction::class, function (MockInterface $mock) use ($model): void {
             $mock->shouldReceive('executeForItem')

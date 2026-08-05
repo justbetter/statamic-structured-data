@@ -8,11 +8,12 @@ parameters:
         - tests
     level: 9
     scanFiles:
-        - stubs/runway.php
+        - stubs/runway/Runway.php
+        - stubs/runway/Resource.php
+        - stubs/runway/ModelRepository.php
     universalObjectCratesClasses:
         - Statamic\Entries\Entry
         - Statamic\Taxonomies\LocalizedTerm
         - Statamic\Taxonomies\Term
         - Statamic\Contracts\Entries\Entry
         - Statamic\Contracts\Taxonomies\Term
-

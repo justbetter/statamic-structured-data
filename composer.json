@@ -7,11 +7,9 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Justbetter\\StatamicStructuredData\\Tests\\": "tests"
-        },
-        "files": [
-            "stubs/runway.php"
-        ]
+            "Justbetter\\StatamicStructuredData\\Tests\\": "tests",
+            "StatamicRadPack\\Runway\\": "stubs/runway"
+        }
     },
     "require": {
         "php": "^8.4|^8.5",
