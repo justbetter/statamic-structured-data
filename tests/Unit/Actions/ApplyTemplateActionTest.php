@@ -204,14 +204,10 @@ class ApplyTemplateActionTest extends TestCase
     #[Test]
     public function apply_template_to_taxonomy_returns_zero_when_taxonomy_not_found(): void
     {
-        $collection = CollectionFacade::make('structured_data_templates');
-        $collection->save();
-        $template = (new Entry)
-            ->collection($collection)
-            ->id('template-123')
-            ->set('blueprint_type', 'taxonomy');
-
-        $template->use_for_taxonomy = 'nonexistent';
+        $template = Mockery::mock(Entry::class);
+        $template->shouldReceive('augmentedValue')->with('use_for_taxonomy')->andReturn('nonexistent');
+        $template->shouldReceive('value')->with('use_for_taxonomy')->andReturn('nonexistent');
+        $template->shouldReceive('get')->with('use_for_taxonomy')->andReturn('nonexistent');
 
         $action = new ApplyTemplateAction;
         $result = $action->applyTemplateToTaxonomy($template, 'template-123');
@@ -283,7 +279,7 @@ class ApplyTemplateActionTest extends TestCase
         /** @var Entry $template */
         $template = $this->mock(Entry::class, function ($mock) use ($taxonomyMock, $site): void {
             $mock->shouldReceive('site')->andReturn($site);
-            $mock->shouldReceive('get')->with('use_for_taxonomy')->andReturn($taxonomyMock);
+            $mock->shouldReceive('augmentedValue')->with('use_for_taxonomy')->andReturn($taxonomyMock);
         });
 
         $action = new ApplyTemplateAction;

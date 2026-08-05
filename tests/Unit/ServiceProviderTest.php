@@ -8,9 +8,10 @@ use Justbetter\StatamicStructuredData\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Entries\Collection;
 use Statamic\Facades\Collection as CollectionFacade;
-use Statamic\Facades\Site;
-use Statamic\Facades\Taxonomy;
-use Statamic\Taxonomies\Taxonomy as TaxonomyModel;
+use Statamic\Facades\Site as SiteFacade;
+use Statamic\Facades\Taxonomy as TaxonomyFacade;
+use Statamic\Sites\Site;
+use Statamic\Taxonomies\Taxonomy;
 
 class ServiceProviderTest extends TestCase
 {
@@ -58,10 +59,10 @@ class ServiceProviderTest extends TestCase
             $mock->shouldReceive('save')->andReturnSelf();
         });
         CollectionFacade::shouldReceive('make')->with('structured_data_templates')->andReturn($newCollection);
-        $site = $this->mock(\Statamic\Sites\Site::class, function ($mock): void {
+        $site = $this->mock(Site::class, function ($mock): void {
             $mock->shouldReceive('handle')->andReturn('default');
         });
-        Site::shouldReceive('all')->andReturn(collect([
+        SiteFacade::shouldReceive('all')->andReturn(collect([
             'default' => $site,
         ]));
 
@@ -92,10 +93,10 @@ class ServiceProviderTest extends TestCase
         $appMock = $this->mock(Application::class, function ($mock): void {
             $mock->shouldReceive('runningInConsole')->andReturn(false);
         });
-        /** @var TaxonomyModel $existingTaxonomy */
-        $existingTaxonomy = Taxonomy::make('structured_data_objects');
+        /** @var Taxonomy $existingTaxonomy */
+        $existingTaxonomy = TaxonomyFacade::make('structured_data_objects');
         $existingTaxonomy->save();
-        Taxonomy::shouldReceive('find')->with('structured_data_objects')->andReturn($existingTaxonomy);
+        TaxonomyFacade::shouldReceive('find')->with('structured_data_objects')->andReturn($existingTaxonomy);
 
         /** @var Application $appMock */
         $provider = new ServiceProvider($appMock);
@@ -110,17 +111,17 @@ class ServiceProviderTest extends TestCase
         $appMock = $this->mock(Application::class, function ($mock): void {
             $mock->shouldReceive('runningInConsole')->andReturn(false);
         });
-        Taxonomy::shouldReceive('find')->with('structured_data_objects')->andReturn(null);
-        $newTaxonomy = $this->mock(TaxonomyModel::class, function ($mock): void {
+        TaxonomyFacade::shouldReceive('find')->with('structured_data_objects')->andReturn(null);
+        $newTaxonomy = $this->mock(Taxonomy::class, function ($mock): void {
             $mock->shouldReceive('title')->andReturnSelf();
             $mock->shouldReceive('sites')->andReturnSelf();
             $mock->shouldReceive('save')->andReturnSelf();
         });
-        Taxonomy::shouldReceive('make')->with('structured_data_objects')->andReturn($newTaxonomy);
-        $site = $this->mock(\Statamic\Sites\Site::class, function ($mock): void {
+        TaxonomyFacade::shouldReceive('make')->with('structured_data_objects')->andReturn($newTaxonomy);
+        $site = $this->mock(Site::class, function ($mock): void {
             $mock->shouldReceive('handle')->andReturn('default');
         });
-        Site::shouldReceive('all')->andReturn(collect([
+        SiteFacade::shouldReceive('all')->andReturn(collect([
             'default' => $site,
         ]));
 

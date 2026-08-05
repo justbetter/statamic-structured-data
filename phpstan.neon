@@ -9,3 +9,10 @@ parameters:
     level: 9
     scanFiles:
         - stubs/runway.php
+    universalObjectCratesClasses:
+        - Statamic\Entries\Entry
+        - Statamic\Taxonomies\LocalizedTerm
+        - Statamic\Taxonomies\Term
+        - Statamic\Contracts\Entries\Entry
+        - Statamic\Contracts\Taxonomies\Term
+

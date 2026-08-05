@@ -46,6 +46,7 @@ class EntryCreatedListenerTest extends TestCase
             $mock->shouldReceive('whereStatus')->with('published')->andReturnSelf();
             $mock->shouldReceive('where')->with('blueprint_type', 'collection')->andReturnSelf();
             $mock->shouldReceive('where')->with('use_for_collection', 'blog')->andReturnSelf();
+            $mock->shouldReceive('where')->with('apply_automatically', true)->andReturnSelf();
             $mock->shouldReceive('get')->andReturn(collect([]));
         });
 
@@ -79,6 +80,7 @@ class EntryCreatedListenerTest extends TestCase
             ->id('template-123')
             ->set('blueprint_type', 'collection')
             ->set('use_for_collection', 'blog')
+            ->set('apply_automatically', true)
             ->published(true);
 
         $templateCollection = collect([$templateEntry]);
@@ -100,5 +102,33 @@ class EntryCreatedListenerTest extends TestCase
         /** @var Entry $entryMock */
         $this->assertNotNull($entryMock->get('structured_data_templates'));
         $this->assertNotEmpty($entryMock->get('structured_data_templates'));
+    }
+
+    #[Test]
+    public function it_skips_templates_without_apply_automatically(): void
+    {
+        Config::set('justbetter.structured-data.collections', ['blog']);
+
+        $blogCollection = CollectionFacade::make('blog');
+        $blogCollection->save();
+        $entry = (new Entry)->collection($blogCollection)->id('entry-123');
+
+        $query = $this->mock(EloquentQueryBuilder::class, function ($mock): void {
+            $mock->shouldReceive('where')->with('collection', 'structured_data_templates')->andReturnSelf();
+            $mock->shouldReceive('whereStatus')->with('published')->andReturnSelf();
+            $mock->shouldReceive('where')->with('blueprint_type', 'collection')->andReturnSelf();
+            $mock->shouldReceive('where')->with('use_for_collection', 'blog')->andReturnSelf();
+            $mock->shouldReceive('where')->with('apply_automatically', true)->andReturnSelf();
+            $mock->shouldReceive('get')->andReturn(collect([]));
+        });
+
+        EntryFacade::shouldReceive('query')->andReturn($query);
+
+        $event = new EntryCreated($entry);
+
+        $listener = new EntryCreatedListener;
+        $listener->handle($event);
+
+        $this->assertNull($entry->get('structured_data_templates'));
     }
 }
