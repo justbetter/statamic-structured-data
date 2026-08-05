@@ -2,10 +2,7 @@
 
 namespace StatamicRadPack\Runway;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Statamic\Facades\Blueprint as BlueprintFacade;
-use Statamic\Fields\Blueprint;
 
 class Runway
 {
@@ -46,56 +43,5 @@ class Runway
         }
 
         return self::allResources()->get($resourceHandle);
-    }
-}
-
-class Resource
-{
-    public string $resourceHandle = '';
-
-    public string $resourceName = '';
-
-    public ?Blueprint $resourceBlueprint = null;
-
-    public ?Model $resourceModel = null;
-
-    public static function reset(): void
-    {
-        // no static state beyond instances
-    }
-
-    public function handle(): string
-    {
-        return $this->resourceHandle;
-    }
-
-    public function name(): string
-    {
-        return $this->resourceName;
-    }
-
-    public function blueprint(): Blueprint
-    {
-        return $this->resourceBlueprint ?? BlueprintFacade::make();
-    }
-
-    public function model(): Model
-    {
-        return $this->resourceModel ?? new class extends Model {};
-    }
-}
-
-class ModelRepository
-{
-    public static mixed $findByUriResult = null;
-
-    public static function reset(): void
-    {
-        self::$findByUriResult = null;
-    }
-
-    public function findByUri(string $uri): mixed
-    {
-        return self::$findByUriResult;
     }
 }

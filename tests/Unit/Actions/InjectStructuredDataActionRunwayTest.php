@@ -2,11 +2,10 @@
 
 namespace Justbetter\StatamicStructuredData\Tests\Unit\Actions;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Config;
 use Justbetter\StatamicStructuredData\Actions\InjectStructuredDataAction;
 use Justbetter\StatamicStructuredData\Services\StructuredDataService;
 use Justbetter\StatamicStructuredData\Support\RunwaySupport;
+use Justbetter\StatamicStructuredData\Tests\Stubs\Product;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,12 +27,9 @@ class InjectStructuredDataActionRunwayTest extends TestCase
     #[Test]
     public function execute_for_item_handles_runway_model(): void
     {
-        Config::set('justbetter.structured-data.runway', ['product']);
+        config()->set('justbetter.structured-data.runway', ['product']);
 
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-        };
+        $model = new Product;
 
         $service = $this->mock(StructuredDataService::class, function (MockInterface $mock) use ($model): void {
             $mock->shouldReceive('getJsonLdScripts')
@@ -53,12 +49,9 @@ class InjectStructuredDataActionRunwayTest extends TestCase
     #[Test]
     public function execute_for_item_returns_null_when_resource_not_enabled(): void
     {
-        Config::set('justbetter.structured-data.runway', []);
+        config()->set('justbetter.structured-data.runway', []);
 
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-        };
+        $model = new Product;
 
         $service = $this->mock(StructuredDataService::class, function (MockInterface $mock): void {
             $mock->shouldNotReceive('getJsonLdScripts');
@@ -73,12 +66,9 @@ class InjectStructuredDataActionRunwayTest extends TestCase
     #[Test]
     public function execute_for_item_returns_null_when_scripts_empty(): void
     {
-        Config::set('justbetter.structured-data.runway', ['product']);
+        config()->set('justbetter.structured-data.runway', ['product']);
 
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-        };
+        $model = new Product;
 
         $service = $this->mock(StructuredDataService::class, function (MockInterface $mock) use ($model): void {
             $mock->shouldReceive('getJsonLdScripts')
@@ -96,7 +86,7 @@ class InjectStructuredDataActionRunwayTest extends TestCase
     #[Test]
     public function execute_for_item_handles_entry(): void
     {
-        Config::set('justbetter.structured-data.collections', ['blog']);
+        config()->set('justbetter.structured-data.collections', ['blog']);
 
         $collection = CollectionFacade::make('blog');
         $collection->save();
@@ -118,7 +108,7 @@ class InjectStructuredDataActionRunwayTest extends TestCase
     #[Test]
     public function execute_for_item_handles_term(): void
     {
-        Config::set('justbetter.structured-data.taxonomies', ['categories']);
+        config()->set('justbetter.structured-data.taxonomies', ['categories']);
 
         /** @var Taxonomy $taxonomy */
         $taxonomy = TaxonomyFacade::make('categories');
@@ -159,23 +149,13 @@ class InjectStructuredDataActionRunwayTest extends TestCase
     public function execute_handles_runway_model_from_uri(): void
     {
         RunwaySupport::fakeInstalled(true);
-        Config::set('justbetter.structured-data.runway', ['product']);
+        config()->set('justbetter.structured-data.runway', ['product']);
 
         $resource = new Resource;
         $resource->resourceHandle = 'product';
 
-        $model = new class extends Model
-        {
-            public Resource $resource;
-
-            protected $table = 'products';
-
-            public function runwayResource(): Resource
-            {
-                return $this->resource;
-            }
-        };
-        $model->resource = $resource;
+        $model = new Product;
+        $model->runwayResource = $resource;
 
         ModelRepository::$findByUriResult = $model;
 
@@ -205,12 +185,9 @@ class InjectStructuredDataActionRunwayTest extends TestCase
     public function execute_returns_null_when_runway_uri_model_not_enabled(): void
     {
         RunwaySupport::fakeInstalled(true);
-        Config::set('justbetter.structured-data.runway', []);
+        config()->set('justbetter.structured-data.runway', []);
 
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-        };
+        $model = new Product;
 
         ModelRepository::$findByUriResult = $model;
 

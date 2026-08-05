@@ -8,4 +8,6 @@ parameters:
         - tests
     level: 9
     scanFiles:
-        - stubs/runway.php
+        - stubs/runway/Runway.php
+        - stubs/runway/Resource.php
+        - stubs/runway/ModelRepository.php

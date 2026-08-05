@@ -2,10 +2,10 @@
 
 namespace Justbetter\StatamicStructuredData\Tests\Unit\Fieldtypes;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
 use Justbetter\StatamicStructuredData\Fieldtypes\AvailableVariablesFieldtype;
 use Justbetter\StatamicStructuredData\Support\RunwaySupport;
+use Justbetter\StatamicStructuredData\Tests\Stubs\Product;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use Mockery;
 use Mockery\MockInterface;
@@ -1447,17 +1447,11 @@ class AvailableVariablesFieldtypeTest extends TestCase
             ],
         ]);
 
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-
-            protected $fillable = ['sku', 'color'];
-
-            protected $attributes = [
-                'sku' => 'ABC',
-                'name' => 'Bike',
-            ];
-        };
+        $model = new Product([
+            'sku' => 'ABC',
+            'name' => 'Bike',
+        ]);
+        $model->fillable(['sku', 'color']);
 
         $resource = new Resource;
         $resource->resourceHandle = 'product';

@@ -2,9 +2,9 @@
 
 namespace Justbetter\StatamicStructuredData\Tests\Unit\Parser;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
+use Justbetter\StatamicStructuredData\Tests\Stubs\Product;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
@@ -622,14 +622,9 @@ class StructuredDataParserTest extends TestCase
     #[Test]
     public function resolve_absolute_url_uses_model_url_attribute(): void
     {
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-
-            protected $attributes = [
-                'url' => '/tenways-cgo800s',
-            ];
-        };
+        $model = new Product([
+            'url' => '/tenways-cgo800s',
+        ]);
 
         $parser = new StructuredDataParser;
         $method = (new \ReflectionClass($parser))->getMethod('resolveAbsoluteUrl');
@@ -644,14 +639,9 @@ class StructuredDataParserTest extends TestCase
     #[Test]
     public function resolve_absolute_url_keeps_absolute_model_urls(): void
     {
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-
-            protected $attributes = [
-                'url' => 'https://example.com/bike',
-            ];
-        };
+        $model = new Product([
+            'url' => 'https://example.com/bike',
+        ]);
 
         $parser = new StructuredDataParser;
         $method = (new \ReflectionClass($parser))->getMethod('resolveAbsoluteUrl');
@@ -663,10 +653,7 @@ class StructuredDataParserTest extends TestCase
     #[Test]
     public function resolve_absolute_url_returns_empty_string_for_model_without_url(): void
     {
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-        };
+        $model = new Product;
 
         $parser = new StructuredDataParser;
         $method = (new \ReflectionClass($parser))->getMethod('resolveAbsoluteUrl');
@@ -688,15 +675,10 @@ class StructuredDataParserTest extends TestCase
         SiteFacade::shouldReceive('default')->andReturn($site)->byDefault();
         SiteFacade::shouldReceive('all')->andReturn(collect([$site]))->byDefault();
 
-        $model = new class extends Model
-        {
-            protected $table = 'products';
-
-            protected $attributes = [
-                'name' => 'Test Bike',
-                'sku' => 'BIKE-1',
-            ];
-        };
+        $model = new Product([
+            'name' => 'Test Bike',
+            'sku' => 'BIKE-1',
+        ]);
 
         $parser = new StructuredDataParser;
         $method = (new \ReflectionClass($parser))->getMethod('getParseContext');
