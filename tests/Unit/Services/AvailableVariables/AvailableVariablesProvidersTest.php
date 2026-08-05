@@ -7,8 +7,8 @@ use Justbetter\StatamicStructuredData\Services\AvailableVariables\AvailableVaria
 use Justbetter\StatamicStructuredData\Services\AvailableVariables\BlueprintVariableMapper;
 use Justbetter\StatamicStructuredData\Services\AvailableVariables\Providers\EntryVariableProvider;
 use Justbetter\StatamicStructuredData\Services\AvailableVariables\Providers\TermVariableProvider;
-use Justbetter\StatamicStructuredData\Services\AvailableVariables\SeoProVariables;
 use Justbetter\StatamicStructuredData\Support\RunwaySupport;
+use Justbetter\StatamicStructuredData\Tests\Stubs\InstalledSeoProVariables;
 use Justbetter\StatamicStructuredData\Tests\Stubs\Product;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use Mockery;
@@ -143,13 +143,7 @@ class AvailableVariablesProvidersTest extends TestCase
     #[Test]
     public function get_entry_fields_appends_seo_pro_variables_when_seo_pro_is_available(): void
     {
-        $seoProVariables = new class extends SeoProVariables
-        {
-            public function isInstalled(): bool
-            {
-                return true;
-            }
-        };
+        $seoProVariables = new InstalledSeoProVariables;
 
         $provider = new EntryVariableProvider(new BlueprintVariableMapper, $seoProVariables);
 
@@ -196,13 +190,7 @@ class AvailableVariablesProvidersTest extends TestCase
     #[Test]
     public function get_entry_fields_omits_seo_pro_variables_when_seo_is_disabled_for_collection(): void
     {
-        $seoProVariables = new class extends SeoProVariables
-        {
-            public function isInstalled(): bool
-            {
-                return true;
-            }
-        };
+        $seoProVariables = new InstalledSeoProVariables;
 
         $provider = new EntryVariableProvider(new BlueprintVariableMapper, $seoProVariables);
 
@@ -367,13 +355,7 @@ class AvailableVariablesProvidersTest extends TestCase
     #[Test]
     public function get_term_fields_appends_seo_pro_variables_when_seo_pro_is_available(): void
     {
-        $seoProVariables = new class extends SeoProVariables
-        {
-            public function isInstalled(): bool
-            {
-                return true;
-            }
-        };
+        $seoProVariables = new InstalledSeoProVariables;
 
         $provider = new TermVariableProvider(new BlueprintVariableMapper, $seoProVariables);
 
@@ -415,13 +397,7 @@ class AvailableVariablesProvidersTest extends TestCase
     #[Test]
     public function get_term_fields_omits_seo_pro_variables_when_seo_is_disabled_for_taxonomy(): void
     {
-        $seoProVariables = new class extends SeoProVariables
-        {
-            public function isInstalled(): bool
-            {
-                return true;
-            }
-        };
+        $seoProVariables = new InstalledSeoProVariables;
 
         $provider = new TermVariableProvider(new BlueprintVariableMapper, $seoProVariables);
 
