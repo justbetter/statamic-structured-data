@@ -107,6 +107,27 @@ class ReportDataTest extends TestCase
             'scopes' => 'still-invalid',
         ]);
         $this->assertSame([], $nonArrayScopes->toArray()['scopes']);
+
+        $mixedScopes = Report::make([
+            'id' => 'report-mixed-scopes',
+            'site' => 'default',
+            'status' => ReportStatus::Completed->value,
+            'scopes' => [
+                'not-an-array',
+                [
+                    'handle' => 'blog',
+                    0 => 'ignored-numeric-key',
+                    'type' => 'collection',
+                ],
+            ],
+        ]);
+
+        $this->assertSame([
+            [
+                'handle' => 'blog',
+                'type' => 'collection',
+            ],
+        ], $mixedScopes->toArray()['scopes']);
     }
 
     #[Test]

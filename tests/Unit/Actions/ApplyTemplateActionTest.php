@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
+use Statamic\Fields\LabeledValue;
 use Statamic\Query\EloquentQueryBuilder;
 use Statamic\Sites\Site;
 use Statamic\Taxonomies\LocalizedTerm;
@@ -149,6 +150,35 @@ class ApplyTemplateActionTest extends TestCase
         $result = $action->applyTemplates($template);
 
         $this->assertEquals(0, $result);
+    }
+
+    #[Test]
+    public function apply_templates_unwraps_labeled_value_blueprint_type(): void
+    {
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+
+        $template = new class extends Entry
+        {
+            public mixed $blueprint_type;
+        };
+        $template->collection($templatesCollection)->id('template-labeled');
+        $template->blueprint_type = new LabeledValue('collection', 'Collection');
+
+        $action = new class extends ApplyTemplateAction
+        {
+            public int $collectionCalls = 0;
+
+            public function applyTemplateToCollection(Entry $template, string $templateId): int
+            {
+                $this->collectionCalls++;
+
+                return 1;
+            }
+        };
+
+        $this->assertSame(1, $action->applyTemplates($template));
+        $this->assertSame(1, $action->collectionCalls);
     }
 
     #[Test]
