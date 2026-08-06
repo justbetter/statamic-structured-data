@@ -23,7 +23,7 @@
                 </div>
             </Card>
 
-            <Card v-else-if="!localReports.length">
+            <Card v-else-if="!reports.length">
                 <div class="py-6 text-center">
                     <Description :text="__('No reports yet. Generate one to see coverage, completeness, and issues.')" />
                 </div>
@@ -43,7 +43,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="report in localReports" :key="report.id">
+                        <tr v-for="report in reports" :key="report.id">
                             <td>
                                 <Text :text="formatDate(report.created_at)" />
                             </td>
@@ -96,7 +96,6 @@ const { site, reports, generateUrl, showUrlTemplate } = defineProps({
     showUrlTemplate: { type: String, required: true },
 });
 
-const localReports = ref(reports);
 const generating = ref(false);
 
 function showUrl(id) {
@@ -139,8 +138,40 @@ function statusColor(status) {
     return 'default';
 }
 
+function sleep(ms) {
+    return new Promise(resolve => {
+        setTimeout(resolve, ms);
+    });
+}
+
+function reloadReports() {
+    return new Promise(resolve => {
+        router.reload({
+            only: ['reports'],
+            onFinish: resolve,
+        });
+    });
+}
+
+async function pollUntilReportSettled(knownIds) {
+    const maxAttempts = 90;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        await sleep(2000);
+        await reloadReports();
+
+        const newReports = reports.filter(report => !knownIds.has(report.id));
+        const stillRunning = reports.some(report => report.status === 'running');
+
+        if (newReports.length > 0 && !stillRunning) {
+            return;
+        }
+    }
+}
+
 async function generateReport() {
     generating.value = true;
+    const knownIds = new Set(reports.map(report => report.id));
 
     try {
         const csrfToken =
@@ -168,16 +199,18 @@ async function generateReport() {
 
         if (payload.queued) {
             Statamic.$toast.success(payload.message || __('Report generation has been queued.'));
-            router.reload({ only: ['reports'] });
+            await pollUntilReportSettled(knownIds);
+
             return;
         }
 
         if (payload.showUrl) {
             router.visit(payload.showUrl);
+
             return;
         }
 
-        router.reload({ only: ['reports'] });
+        await reloadReports();
     } catch (error) {
         Statamic.$toast.error(error.message || __('Failed to generate report'));
     } finally {

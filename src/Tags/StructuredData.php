@@ -2,8 +2,12 @@
 
 namespace Justbetter\StatamicStructuredData\Tags;
 
+use Illuminate\Database\Eloquent\Model;
 use Justbetter\StatamicStructuredData\Actions\InjectStructuredDataAction;
+use Statamic\Entries\Entry;
+use Statamic\Structures\Page;
 use Statamic\Tags\Tags;
+use Statamic\Taxonomies\LocalizedTerm;
 
 class StructuredData extends Tags
 {
@@ -26,7 +30,11 @@ class StructuredData extends Tags
     {
         $item = $this->params->get('item');
 
-        if ($item === null) {
+        if (! $item instanceof Entry
+            && ! $item instanceof Page
+            && ! $item instanceof LocalizedTerm
+            && ! $item instanceof Model
+        ) {
             return null;
         }
 
