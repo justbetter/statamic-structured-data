@@ -14,16 +14,18 @@
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-4">
                 <Card class="lg:col-span-1 flex flex-col items-center justify-center gap-3 py-6">
                     <div class="relative" style="width: 144px; height: 144px;">
-                        <Doughnut :data="chartData" :options="chartOptions" />
-                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
                             <div class="text-center">
                                 <Text as="div" variant="strong" size="lg" :text="formatPercent(report.clean_percent)" />
-                                <Description :text="__('Clean')" />
+                                <Badge size="sm" :color="gradeColor" :text="gradeLabel" />
                             </div>
+                        </div>
+                        <div class="relative z-10 h-full w-full">
+                            <Doughnut :data="chartData" :options="chartOptions" />
                         </div>
                     </div>
                     <div class="flex gap-3">
-                        <Badge color="green" size="sm" :text="__('Clean')" />
+                        <Badge color="green" size="sm" :text="__('OK')" />
                         <Badge color="red" size="sm" :text="__('Errors')" />
                     </div>
                 </Card>
@@ -148,7 +150,7 @@
                     <Description :text="__('No issues match the current filters.')" />
                 </div>
 
-                <div v-else class="overflow-hidden -mx-4 sm:mx-0">
+                <div v-else class="overflow-x-auto -mx-4 sm:mx-0">
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -192,16 +194,14 @@
                                 </td>
                                 <td class="space-x-2 whitespace-nowrap">
                                     <Button
-                                        v-if="item.item_url"
                                         size="sm"
-                                        :text="__('Rich Results')"
-                                        :href="richResultsUrl(item)"
-                                        target="_blank"
-                                        as="a"
+                                        :text="schemaCopiedItemId === item.id ? __('Copied!') : __('Schema Validator')"
+                                        :title="__('Copies JSON-LD and opens the Schema Markup Validator. Paste the code into the Code tab.')"
+                                        @click="openSchemaValidator(item)"
                                     />
                                     <Button
                                         size="sm"
-                                        :text="__('Copy JSON-LD')"
+                                        :text="jsonLdCopiedItemId === item.id ? __('Copied!') : __('Copy JSON-LD')"
                                         @click="copyJsonLd(item)"
                                     />
                                 </td>
@@ -238,20 +238,24 @@ const {
     report,
     items,
     filters,
-    richResultsBaseUrl,
+    schemaValidatorUrl,
     indexUrl,
     jsonLdUrlTemplate,
 } = defineProps({
     report: { type: Object, required: true },
     items: { type: Array, required: true },
     filters: { type: Object, required: true },
-    richResultsBaseUrl: { type: String, required: true },
+    schemaValidatorUrl: { type: String, required: true },
     indexUrl: { type: String, required: true },
     jsonLdUrlTemplate: { type: String, required: true },
 });
 
 const activeSeverity = ref(filters.severity || 'error');
 const activeScope = ref(filters.scope || '');
+const schemaCopiedItemId = ref(null);
+const jsonLdCopiedItemId = ref(null);
+const schemaCopiedTimeoutRef = { current: null };
+const jsonLdCopiedTimeoutRef = { current: null };
 
 const scopes = computed(() => report.scopes || []);
 
@@ -259,12 +263,50 @@ const cleanPercent = computed(() => {
     return Math.min(100, Math.max(0, Number(report.clean_percent ?? 100)));
 });
 
+const grade = computed(() => {
+    const percent = cleanPercent.value;
+
+    if (percent >= 80) {
+        return 'good';
+    }
+
+    if (percent >= 50) {
+        return 'fair';
+    }
+
+    return 'bad';
+});
+
+const gradeLabel = computed(() => {
+    if (grade.value === 'good') {
+        return __('Good');
+    }
+
+    if (grade.value === 'fair') {
+        return __('Fair');
+    }
+
+    return __('Bad');
+});
+
+const gradeColor = computed(() => {
+    if (grade.value === 'good') {
+        return 'green';
+    }
+
+    if (grade.value === 'fair') {
+        return 'amber';
+    }
+
+    return 'red';
+});
+
 const chartData = computed(() => {
     const clean = cleanPercent.value;
     const errors = Math.max(0, Number((100 - clean).toFixed(1)));
 
     return {
-        labels: [__('Clean'), __('Errors')],
+        labels: [__('OK'), __('Errors')],
         datasets: [
             {
                 data: errors > 0 ? [clean, errors] : [100],
@@ -347,31 +389,71 @@ function selectScope(scope) {
     applyFilters();
 }
 
-function richResultsUrl(item) {
-    if (!item.item_url) {
-        return richResultsBaseUrl;
+function flashCopied(itemId, targetRef, timeoutRef) {
+    targetRef.value = itemId;
+
+    if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
     }
 
-    return `${richResultsBaseUrl}?url=${encodeURIComponent(item.item_url)}`;
+    timeoutRef.current = setTimeout(() => {
+        if (targetRef.value === itemId) {
+            targetRef.value = null;
+        }
+
+        timeoutRef.current = null;
+    }, 2000);
+}
+
+async function fetchJsonLdText(item) {
+    const url = jsonLdUrlTemplate.replace('__ITEM_ID__', item.id);
+    const response = await fetch(url, {
+        headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+        throw new Error(payload.message || 'Unable to load JSON-LD');
+    }
+
+    return (payload.scripts || []).join('\n\n');
+}
+
+async function openSchemaValidator(item) {
+    try {
+        const text = await fetchJsonLdText(item);
+        const scripts = (text || '')
+            .split('\n\n')
+            .map(chunk => chunk.trim())
+            .filter(Boolean)
+            .map(chunk => {
+                if (chunk.startsWith('<script')) {
+                    return chunk;
+                }
+
+                return `<script type="application/ld+json">${chunk}<\/script>`;
+            })
+            .join('\n\n');
+
+        await navigator.clipboard.writeText(scripts);
+        flashCopied(item.id, schemaCopiedItemId, schemaCopiedTimeoutRef);
+        Statamic.$toast.success(
+            __('JSON-LD copied to clipboard. Paste it into the Code tab on the Schema Markup Validator.'),
+        );
+        window.open(schemaValidatorUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+        Statamic.$toast.error(error.message || __('Failed to copy JSON-LD'));
+    }
 }
 
 async function copyJsonLd(item) {
     try {
-        const url = jsonLdUrlTemplate.replace('__ITEM_ID__', item.id);
-        const response = await fetch(url, {
-            headers: {
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        });
-        const payload = await response.json();
-
-        if (!response.ok) {
-            throw new Error(payload.message || 'Unable to load JSON-LD');
-        }
-
-        const text = (payload.scripts || []).join('\n\n');
+        const text = await fetchJsonLdText(item);
         await navigator.clipboard.writeText(text || '');
+        flashCopied(item.id, jsonLdCopiedItemId, jsonLdCopiedTimeoutRef);
         Statamic.$toast.success(__('JSON-LD copied to clipboard'));
     } catch (error) {
         Statamic.$toast.error(error.message || __('Failed to copy JSON-LD'));

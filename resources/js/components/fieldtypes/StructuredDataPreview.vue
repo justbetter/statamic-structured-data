@@ -14,6 +14,13 @@
                 >
                     {{ isPrettyPrint ? __('Raw') : __('Pretty') }}
                 </Button>
+                <Button
+                    v-if="showPreview && hasPreviewData"
+                    :text="schemaCopied ? __('Copied!') : __('Schema Validator')"
+                    :title="__('Copies JSON-LD and opens the Schema Markup Validator. Paste the code into the Code tab.')"
+                    :disabled="openingSchemaValidator"
+                    @click="openSchemaValidator"
+                />
             </div>
         </div>
 
@@ -65,7 +72,7 @@ import { Fieldtype } from '@statamic/cms';
 import { Button, injectPublishContext } from '@statamic/cms/ui';
 
 const fieldtypeProps = defineProps(Fieldtype.props);
-const { value, meta, config } = fieldtypeProps;
+const { meta } = fieldtypeProps;
 
 const emit = defineEmits(Fieldtype.emits);
 const { expose } = Fieldtype.use(emit, fieldtypeProps);
@@ -82,6 +89,9 @@ const showPreview = ref(true);
 const isPrettyPrint = ref(true);
 const loading = ref(false);
 const error = ref(null);
+const openingSchemaValidator = ref(false);
+const schemaCopied = ref(false);
+let schemaCopiedTimeout = null;
 
 const templateIds = computed(() => {
     const publishValues = values.value || {};
@@ -99,6 +109,14 @@ const hasTemplates = computed(() => {
     return templateIds.value && templateIds.value.length > 0;
 });
 
+const hasPreviewData = computed(() => {
+    return !loading.value && !error.value && selectedTemplates.value.length > 0;
+});
+
+const schemaValidatorUrl = computed(() => {
+    return meta?.schema_validator_url || 'https://validator.schema.org/';
+});
+
 const togglePreview = () => {
     showPreview.value = !showPreview.value;
 };
@@ -109,6 +127,68 @@ const togglePrettyPrint = () => {
 
 const toggleTemplateCollapse = template => {
     template.isCollapsed = !template.isCollapsed;
+};
+
+const buildJsonLdScripts = () => {
+    const scripts = [];
+
+    for (const template of selectedTemplates.value) {
+        const schemas = Array.isArray(template.structuredData)
+            ? template.structuredData
+            : [template.structuredData];
+
+        for (const schema of schemas) {
+            if (!schema || typeof schema !== 'object') {
+                continue;
+            }
+
+            scripts.push(
+                `<script type="application/ld+json">${JSON.stringify(schema)}<\/script>`,
+            );
+        }
+    }
+
+    return scripts.join('\n\n');
+};
+
+const flashSchemaCopied = () => {
+    schemaCopied.value = true;
+
+    if (schemaCopiedTimeout) {
+        clearTimeout(schemaCopiedTimeout);
+    }
+
+    schemaCopiedTimeout = setTimeout(() => {
+        schemaCopied.value = false;
+        schemaCopiedTimeout = null;
+    }, 2000);
+};
+
+const openSchemaValidator = async () => {
+    const text = buildJsonLdScripts();
+
+    if (!text) {
+        Statamic.$toast.error(__('Failed to copy JSON-LD'));
+
+        return;
+    }
+
+    openingSchemaValidator.value = true;
+
+    try {
+        await navigator.clipboard.writeText(text);
+        flashSchemaCopied();
+        Statamic.$toast.success(
+            __('JSON-LD copied to clipboard. Paste it into the Code tab on the Schema Markup Validator.'),
+        );
+        window.open(schemaValidatorUrl.value, '_blank', 'noopener,noreferrer');
+    } catch (copyError) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to copy JSON-LD for Schema Markup Validator:', copyError);
+        Statamic.$toast.error(__('Failed to copy JSON-LD'));
+    } finally {
+        openingSchemaValidator.value = false;
+    }
 };
 
 const fetchTemplateData = async templateIdsToFetch => {

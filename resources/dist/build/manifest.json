@@ -1,6 +1,6 @@
 {
   "resources/js/components/StructuredDataFieldEditor.vue": {
-    "file": "assets/StructuredDataFieldEditor-DkjiFUjY.js",
+    "file": "assets/StructuredDataFieldEditor-BYDUpzzF.js",
     "name": "StructuredDataFieldEditor",
     "src": "resources/js/components/StructuredDataFieldEditor.vue",
     "isDynamicEntry": true,
@@ -9,7 +9,7 @@
     ]
   },
   "resources/js/statamic-structured-data.js": {
-    "file": "assets/statamic-structured-data-qlhUDqrg.js",
+    "file": "assets/statamic-structured-data-B3qvDoFY.js",
     "name": "statamic-structured-data",
     "src": "resources/js/statamic-structured-data.js",
     "isEntry": true,

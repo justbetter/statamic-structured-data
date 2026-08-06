@@ -85,7 +85,7 @@ class ReportController extends Controller
                 'severity' => $severity,
                 'scope' => $scope,
             ],
-            'richResultsBaseUrl' => 'https://search.google.com/test/rich-results',
+            'schemaValidatorUrl' => 'https://validator.schema.org/',
             'indexUrl' => cp_route('justbetter.structured-data.reports.index'),
             'jsonLdUrlTemplate' => cp_route('justbetter.structured-data.reports.json-ld', [
                 'report' => $stored->id,

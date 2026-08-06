@@ -85,7 +85,7 @@ The addon can generate coverage and completeness reports so you can see:
 
 Open **Tools → JustBetter → Structured Data Reports** (requires the `view structured data reports` permission).
 
-From there you can generate a report for the selected site, browse previous runs, inspect scores/charts, filter errors vs warnings, open edit links, and use the manual Google Rich Results helpers (open test URL / copy JSON-LD).
+From there you can generate a report for the selected site, browse previous runs, inspect scores/charts, filter errors vs warnings, open edit links, and use the Schema Markup Validator helpers (copy JSON-LD / open validator).
 
 ### CLI
 
