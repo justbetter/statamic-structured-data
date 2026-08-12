@@ -2,97 +2,54 @@
 
 namespace Justbetter\StatamicStructuredData\Actions;
 
+use Illuminate\Database\Eloquent\Model;
+use Justbetter\StatamicStructuredData\Resolvers\EntryResolver;
+use Justbetter\StatamicStructuredData\Resolvers\ResourceResolver;
+use Justbetter\StatamicStructuredData\Resolvers\RunwayResolver;
+use Justbetter\StatamicStructuredData\Resolvers\TaxonomyResolver;
 use Justbetter\StatamicStructuredData\Services\StructuredDataService;
 use Statamic\Contracts\Entries\Entry as EntryContract;
-use Statamic\Entries\Entry;
-use Statamic\Facades\Entry as EntryFacade;
-use Statamic\Facades\Site as SiteFacade;
-use Statamic\Facades\Term;
-use Statamic\Facades\URL;
-use Statamic\Sites\Site;
 use Statamic\Structures\Page;
 use Statamic\Taxonomies\LocalizedTerm;
 
 class InjectStructuredDataAction
 {
-    public function __construct(protected StructuredDataService $structuredDataService) {}
+    /** @var array<int, ResourceResolver> */
+    protected array $resolvers;
+
+    public function __construct(protected StructuredDataService $structuredDataService)
+    {
+        $this->resolvers = [
+            new EntryResolver($structuredDataService),
+            new TaxonomyResolver($structuredDataService),
+            new RunwayResolver($structuredDataService),
+        ];
+    }
 
     public function execute(): ?string
     {
-        $entry = $this->getCurrentEntry();
+        foreach ($this->resolvers as $resolver) {
+            $item = $resolver->resolveCurrent();
 
-        if ($entry) {
-            return $this->handleEntry($entry);
-        }
-
-        $term = $this->getCurrentTerm();
-
-        if ($term) {
-            return $this->handleTaxonomy($term);
+            if ($item) {
+                return $resolver->handle($item);
+            }
         }
 
         return null;
     }
 
-    protected function handleEntry(Entry|Page $entry): ?string
+    /**
+     * @param  EntryContract|Page|LocalizedTerm|Model  $item
+     */
+    public function executeForItem($item, ?string $resourceHandle = null): ?string
     {
-        if ($entry instanceof Page) {
-            /** @var Entry $entry */
-            $entry = $entry->entry();
+        foreach ($this->resolvers as $resolver) {
+            if ($resolver->supports($item)) {
+                return $resolver->handle($item, $resourceHandle);
+            }
         }
 
-        $enabledCollections = config()->array('justbetter.structured-data.collections', []);
-
-        if (! in_array($entry->collection()->handle(), $enabledCollections)) {
-            return null;
-        }
-
-        return $this->handleScripts($entry);
-    }
-
-    protected function handleTaxonomy(LocalizedTerm $term): ?string
-    {
-        $enabledTaxonomies = config()->array('justbetter.structured-data.taxonomies', []);
-
-        if (! in_array($term->taxonomy()->handle(), $enabledTaxonomies)) {
-            return null;
-        }
-
-        return $this->handleScripts($term);
-    }
-
-    protected function handleScripts(EntryContract|Page|LocalizedTerm $item): ?string
-    {
-        $scripts = $this->structuredDataService->getJsonLdScripts($item);
-
-        if (! $scripts) {
-            return null;
-        }
-
-        return implode("\n", $scripts);
-    }
-
-    protected function getCurrentEntry(): Entry|Page|null
-    {
-        $url = URL::getCurrent();
-
-        /** @var Site $site */
-        $site = SiteFacade::current();
-
-        $entry = EntryFacade::findByUri($url, $site->handle());
-
-        return $entry instanceof Entry ? $entry : ($entry instanceof Page ? $entry : null);
-    }
-
-    protected function getCurrentTerm(): ?LocalizedTerm
-    {
-        $url = URL::getCurrent();
-
-        /** @var Site $site */
-        $site = SiteFacade::current();
-
-        $term = Term::findByUri($url, $site->handle());
-
-        return $term instanceof LocalizedTerm ? $term : null;
+        return null;
     }
 }

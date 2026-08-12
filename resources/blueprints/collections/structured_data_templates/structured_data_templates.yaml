@@ -42,6 +42,9 @@ tabs:
                 -
                   key: taxonomy
                   value: Taxonomy
+                -
+                  key: runway
+                  value: Runway
               default: collection
               type: select
               display: 'Blueprint type'
@@ -71,6 +74,19 @@ tabs:
               if:
                 blueprint_type: 'equals taxonomy'
           -
+            handle: use_for_runway
+            field:
+              type: structured_data_runway_resources
+              display: 'Use for Runway resource'
+              instructions: 'Templates targeting a Runway resource apply to all models of that resource.'
+              clearable: true
+              localizable: true
+              validate:
+                - sometimes
+                - required
+              if:
+                blueprint_type: 'equals runway'
+          -
             handle: apply_automatically
             field:
               type: toggle
@@ -78,6 +94,8 @@ tabs:
               instructions: 'Apply the structured data template automatically to new entries of the selected collection or taxonomy.'
               localizable: true
               default: false
+              unless:
+                blueprint_type: 'equals runway'
           -
             handle: structured_data_available_variables
             field:

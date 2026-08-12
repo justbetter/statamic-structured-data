@@ -4,6 +4,7 @@ namespace Justbetter\StatamicStructuredData\Tests\Unit\Parser;
 
 use Illuminate\Support\Collection as SupportCollection;
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
+use Justbetter\StatamicStructuredData\Tests\Stubs\Product;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
@@ -616,5 +617,76 @@ class StructuredDataParserTest extends TestCase
         ]);
 
         $this->assertSame('<p>Value text</p>', $result);
+    }
+
+    #[Test]
+    public function resolve_absolute_url_uses_model_url_attribute(): void
+    {
+        $model = new Product([
+            'url' => '/tenways-cgo800s',
+        ]);
+
+        $parser = new StructuredDataParser;
+        $method = (new \ReflectionClass($parser))->getMethod('resolveAbsoluteUrl');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($parser, $model);
+
+        $this->assertIsString($result);
+        $this->assertStringContainsString('/tenways-cgo800s', $result);
+    }
+
+    #[Test]
+    public function resolve_absolute_url_keeps_absolute_model_urls(): void
+    {
+        $model = new Product([
+            'url' => 'https://example.com/bike',
+        ]);
+
+        $parser = new StructuredDataParser;
+        $method = (new \ReflectionClass($parser))->getMethod('resolveAbsoluteUrl');
+        $method->setAccessible(true);
+
+        $this->assertSame('https://example.com/bike', $method->invoke($parser, $model));
+    }
+
+    #[Test]
+    public function resolve_absolute_url_returns_empty_string_for_model_without_url(): void
+    {
+        $model = new Product;
+
+        $parser = new StructuredDataParser;
+        $method = (new \ReflectionClass($parser))->getMethod('resolveAbsoluteUrl');
+        $method->setAccessible(true);
+
+        $this->assertSame('', $method->invoke($parser, $model));
+    }
+
+    #[Test]
+    public function parse_context_merges_model_attributes(): void
+    {
+        $site = $this->mock(Site::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('toAugmentedArray')->andReturn(['handle' => 'default'])->byDefault();
+            $mock->shouldReceive('handle')->andReturn('default')->byDefault();
+        });
+        SiteFacade::shouldReceive('current')->andReturn($site)->byDefault();
+        SiteFacade::shouldReceive('multiEnabled')->andReturn(false)->byDefault();
+        SiteFacade::shouldReceive('hasMultiple')->andReturn(false)->byDefault();
+        SiteFacade::shouldReceive('default')->andReturn($site)->byDefault();
+        SiteFacade::shouldReceive('all')->andReturn(collect([$site]))->byDefault();
+
+        $model = new Product([
+            'name' => 'Test Bike',
+            'sku' => 'BIKE-1',
+        ]);
+
+        $parser = new StructuredDataParser;
+        $method = (new \ReflectionClass($parser))->getMethod('getParseContext');
+        $method->setAccessible(true);
+        $result = $method->invoke($parser, $model);
+
+        $this->assertIsArray($result);
+        $this->assertSame('Test Bike', $result['name']);
+        $this->assertSame('BIKE-1', $result['sku']);
     }
 }

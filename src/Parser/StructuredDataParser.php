@@ -2,6 +2,7 @@
 
 namespace Justbetter\StatamicStructuredData\Parser;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Justbetter\StatamicStructuredData\Services\StructuredDataService;
 use Statamic\Contracts\Data\Augmentable;
@@ -29,7 +30,7 @@ class StructuredDataParser
     /**
      * @param  mixed  $data
      */
-    public function parse($data, EntryContract|TermContract $item): mixed
+    public function parse($data, EntryContract|TermContract|Model $item): mixed
     {
         return $this->parseAntlersInData($data, $item);
     }
@@ -37,7 +38,7 @@ class StructuredDataParser
     /**
      * @param  mixed  $data
      */
-    protected function parseAntlersInData($data, EntryContract|TermContract $item): mixed
+    protected function parseAntlersInData($data, EntryContract|TermContract|Model $item): mixed
     {
         if (is_string($data)) {
             if (str_contains($data, '{{')) {
@@ -65,7 +66,7 @@ class StructuredDataParser
         return $data;
     }
 
-    protected function normalizeParsedData(mixed $parsed, EntryContract|TermContract $item, ?string $sourceTemplate = null): mixed
+    protected function normalizeParsedData(mixed $parsed, EntryContract|TermContract|Model $item, ?string $sourceTemplate = null): mixed
     {
         if ($parsed instanceof AntlersString) {
             $parsedString = (string) $parsed;
@@ -79,7 +80,7 @@ class StructuredDataParser
         return $this->normalizeResolvedValue($parsed, $item);
     }
 
-    protected function resolveSourceTemplateValue(?string $sourceTemplate, EntryContract|TermContract $item): mixed
+    protected function resolveSourceTemplateValue(?string $sourceTemplate, EntryContract|TermContract|Model $item): mixed
     {
         if (! is_string($sourceTemplate)) {
             return null;
@@ -96,7 +97,7 @@ class StructuredDataParser
         return $this->normalizeResolvedValue($value, $item);
     }
 
-    protected function normalizeResolvedValue(mixed $value, EntryContract|TermContract $item): mixed
+    protected function normalizeResolvedValue(mixed $value, EntryContract|TermContract|Model $item): mixed
     {
         if (is_string($value)) {
             return $value;
@@ -227,19 +228,40 @@ class StructuredDataParser
     /**
      * @return array<string, mixed>
      */
-    protected function getParseContext(EntryContract|TermContract $item): array
+    protected function getParseContext(EntryContract|TermContract|Model $item): array
     {
         /** @var Site $site */
         $site = SiteFacade::current();
         $siteAugmented = $site->toAugmentedArray();
         $itemAugmented = ($item instanceof Augmentable) ? $item->toAugmentedArray() : [];
+        $modelAttributes = $item instanceof Model ? $item->toArray() : [];
 
         return array_merge(
             ['config' => config()->all()],
             ['site' => $siteAugmented],
-            ['absolute_url' => method_exists($item, 'absoluteUrl') ? $item->absoluteUrl() : ''],
-            $itemAugmented
+            ['absolute_url' => $this->resolveAbsoluteUrl($item)],
+            $itemAugmented,
+            $modelAttributes
         );
+    }
+
+    protected function resolveAbsoluteUrl(EntryContract|TermContract|Model $item): string
+    {
+        if (method_exists($item, 'absoluteUrl')) {
+            $url = $item->absoluteUrl();
+
+            return is_string($url) ? $url : '';
+        }
+
+        if ($item instanceof Model) {
+            $url = $item->getAttribute('url') ?? $item->url ?? null;
+
+            if (is_string($url) && $url !== '') {
+                return str_starts_with($url, 'http') ? $url : url($url);
+            }
+        }
+
+        return '';
     }
 
     /**

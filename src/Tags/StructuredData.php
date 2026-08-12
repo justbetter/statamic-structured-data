@@ -21,4 +21,18 @@ class StructuredData extends Tags
     {
         return $this->action->execute();
     }
+
+    public function for(): ?string
+    {
+        $item = $this->params->get('item');
+
+        if ($item === null) {
+            return null;
+        }
+
+        $resource = $this->params->get('resource');
+        $resourceHandle = is_string($resource) && $resource !== '' ? $resource : null;
+
+        return $this->action->executeForItem($item, $resourceHandle);
+    }
 }

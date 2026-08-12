@@ -7,7 +7,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Justbetter\\StatamicStructuredData\\Tests\\": "tests"
+            "Justbetter\\StatamicStructuredData\\Tests\\": "tests",
+            "StatamicRadPack\\Runway\\": "stubs/runway"
         }
     },
     "require": {
@@ -23,6 +24,9 @@
         "pestphp/pest": "^3.7",
         "phpstan/phpstan-mockery": "^2.0",
         "phpunit/phpunit": "^11.5"
+    },
+    "suggest": {
+        "statamic-rad-pack/runway": "Required to attach structured data templates to Runway resources."
     },
     "config": {
         "allow-plugins": {

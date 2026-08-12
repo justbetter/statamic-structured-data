@@ -3,10 +3,12 @@
 namespace Justbetter\StatamicStructuredData\Services;
 
 use Illuminate\Support\Collection as SupportCollection;
+use Justbetter\StatamicStructuredData\Support\RunwaySupport;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Entries\Collection;
 use Statamic\Entries\Entry;
 use Statamic\Fields\Blueprint;
+use Statamic\Fields\LabeledValue;
 use Statamic\Taxonomies\Taxonomy;
 
 class ReplicatorFieldService
@@ -18,6 +20,8 @@ class ReplicatorFieldService
         $collection = null;
         /** @var ?Taxonomy $taxonomy */
         $taxonomy = null;
+        /** @var ?Blueprint $runwayBlueprint */
+        $runwayBlueprint = null;
 
         if ($dataTemplate instanceof Collection) {
             $collection = $dataTemplate;
@@ -27,13 +31,24 @@ class ReplicatorFieldService
             /** @var Entry $dataTemplate */
             $collection = $dataTemplate->use_for_collection ?? null;
             $taxonomy = $dataTemplate->use_for_taxonomy ?? null;
+            $runwayHandle = $dataTemplate->use_for_runway ?? null;
+            if ($runwayHandle instanceof LabeledValue) {
+                $runwayHandle = $runwayHandle->value();
+            }
+
+            if (is_string($runwayHandle) && $runwayHandle !== '') {
+                $resource = RunwaySupport::findResource($runwayHandle);
+                $runwayBlueprint = $resource?->blueprint();
+            }
         }
 
-        if (! $collection && ! $taxonomy) {
+        if (! $collection && ! $taxonomy && ! $runwayBlueprint) {
             return [];
         }
 
-        if ($collection) {
+        if ($runwayBlueprint) {
+            $blueprints = collect([$runwayBlueprint])->filter();
+        } elseif ($collection) {
             /** @var SupportCollection<int, Blueprint>|array<int, Blueprint>|null $entryBlueprints */
             $entryBlueprints = $collection->entryBlueprints();
             $blueprints = collect($entryBlueprints)->filter();

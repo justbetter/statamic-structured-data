@@ -8,12 +8,13 @@ This Statamic addon provides a powerful and flexible way to add structured data 
 
 ## Features
 
-- 🔄 Dynamic JSON-LD generation based on entry and term data
+- 🔄 Dynamic JSON-LD generation based on entry, term, and Runway model data
 - 📝 Template-based structured data configuration
 - 📦 Built-in schema presets (WebSite, WebPage, Organization, Article, LocalBusiness)
 - 🎯 Support for multiple schemas per page
 - 🛠 Antlers template parsing support
 - 🧩 Support for replicator-to-JSON-LD field mapping
+- ✈️ Optional [Runway](https://statamic.com/addons/rad-pack/runway) resource support
 - 💪 Flexible and extensible architecture
 
 ## Requirements
@@ -57,6 +58,7 @@ After publishing the config, you can configure:
 
 - which collections support structured data templates
 - which taxonomies support structured data objects
+- which Runway resource handles should use structured data templates
 - whether presets are enabled
 - which default presets are available
 - custom preset paths
@@ -71,11 +73,41 @@ Create templates in your Statamic control panel that define your structured data
 - Custom fields with various data types (strings, numeric, arrays, objects)
 - Dynamic values using Antlers templating syntax
 
-### 2. Assigning Templates to Entries
+### 2. Assigning Templates to Entries and Terms
 
 In your entry or term's content, you can assign one or more structured data templates using the `structured_data_templates` field. The addon will automatically process these templates and generate the appropriate JSON-LD scripts.
 
-### 3. Rendering Structured Data
+### 3. Runway resources (optional)
+
+Runway is soft-optional. When `statamic-rad-pack/runway` is installed, templates can target a Runway resource (`blueprint_type: runway` + `use_for_runway`). Those templates apply to **all** models of that resource at render time — there is no per-model template picker.
+
+Enable resources in config:
+
+```php
+'runway' => [
+    'product',
+    'category',
+],
+```
+
+For projects that use Runway frontend routing, `structured-data:head` resolves the current model via Runway URI lookup.
+
+For Magento/Rapidez-style routes (or any custom routing), pass the current model explicitly:
+
+**Blade**:
+
+```blade
+@isset($product)
+    {!! Statamic::tag('structured-data:for')->param('item', $product)->param('resource', 'product')->fetch() !!}
+@endisset
+{!! Statamic::tag('structured-data:head')->fetch() !!}
+```
+
+The optional `resource` param forces the Runway handle when the storefront model class differs from the Runway model class.
+
+Available variables for Runway templates include blueprint fields plus model attributes/appends.
+
+### 4. Rendering Structured Data
 
 Render the generated JSON-LD where you need it in your layout:
 
