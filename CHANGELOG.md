@@ -1,17 +1,11 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.3.0...2.3.0)
-## Unreleased
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.4.0...2.4.0)
+## [2.4.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.4.0) - 2026-08-12
 
 ### Added
-- Added optional Runway resource support (templates apply to all models of a resource)
-- Added `structured-data:for` tag for explicit item/model rendering
-- Added structured data coverage & completeness reports (CP + CLI)
-- Added file/eloquent report storage drivers
-- Wired `apply_automatically` so only toggled templates auto-assign on create
-
-### Fixed
-- Registered missing listeners/actions/routes on the service provider
+- Added Runway support (#34)
+- Added template reports (#35)
 
 ## [2.3.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.3.0) - 2026-07-28
 
