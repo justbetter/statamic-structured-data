@@ -24,7 +24,7 @@ class TermVariableProvider implements VariableProvider
         }
 
         /** @var ?Taxonomy $taxonomy */
-        $taxonomy = $parent->use_for_taxonomy; /** @phpstan-ignore-line */
+        $taxonomy = $parent->use_for_taxonomy;
         if (! $taxonomy instanceof Taxonomy) {
             return [];
         }

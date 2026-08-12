@@ -84,4 +84,21 @@ class StructuredDataTest extends TestCase
 
         $this->assertNull($tag->for());
     }
+
+    #[Test]
+    public function for_method_returns_null_when_item_type_is_invalid(): void
+    {
+        $action = $this->mock(InjectStructuredDataAction::class, function (MockInterface $mock): void {
+            $mock->shouldNotReceive('executeForItem');
+        });
+
+        /** @var InjectStructuredDataAction $action */
+        $tag = new StructuredData($action);
+        $tag->setContext([]);
+        $tag->setParameters([
+            'item' => 'not-a-valid-item',
+        ]);
+
+        $this->assertNull($tag->for());
+    }
 }

@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
+use Statamic\Fields\LabeledValue;
 use Statamic\Query\EloquentQueryBuilder;
 use Statamic\Sites\Site;
 use Statamic\Taxonomies\LocalizedTerm;
@@ -152,6 +153,35 @@ class ApplyTemplateActionTest extends TestCase
     }
 
     #[Test]
+    public function apply_templates_unwraps_labeled_value_blueprint_type(): void
+    {
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+
+        $template = new class extends Entry
+        {
+            public mixed $blueprint_type;
+        };
+        $template->collection($templatesCollection)->id('template-labeled');
+        $template->blueprint_type = new LabeledValue('collection', 'Collection');
+
+        $action = new class extends ApplyTemplateAction
+        {
+            public int $collectionCalls = 0;
+
+            public function applyTemplateToCollection(Entry $template, string $templateId): int
+            {
+                $this->collectionCalls++;
+
+                return 1;
+            }
+        };
+
+        $this->assertSame(1, $action->applyTemplates($template));
+        $this->assertSame(1, $action->collectionCalls);
+    }
+
+    #[Test]
     public function apply_template_to_collection_returns_zero_when_no_collection_value(): void
     {
         $collection = CollectionFacade::make('structured_data_templates');
@@ -204,14 +234,10 @@ class ApplyTemplateActionTest extends TestCase
     #[Test]
     public function apply_template_to_taxonomy_returns_zero_when_taxonomy_not_found(): void
     {
-        $collection = CollectionFacade::make('structured_data_templates');
-        $collection->save();
-        $template = (new Entry)
-            ->collection($collection)
-            ->id('template-123')
-            ->set('blueprint_type', 'taxonomy');
-
-        $template->use_for_taxonomy = 'nonexistent';
+        $template = Mockery::mock(Entry::class);
+        $template->shouldReceive('augmentedValue')->with('use_for_taxonomy')->andReturn('nonexistent');
+        $template->shouldReceive('value')->with('use_for_taxonomy')->andReturn('nonexistent');
+        $template->shouldReceive('get')->with('use_for_taxonomy')->andReturn('nonexistent');
 
         $action = new ApplyTemplateAction;
         $result = $action->applyTemplateToTaxonomy($template, 'template-123');
@@ -283,7 +309,7 @@ class ApplyTemplateActionTest extends TestCase
         /** @var Entry $template */
         $template = $this->mock(Entry::class, function ($mock) use ($taxonomyMock, $site): void {
             $mock->shouldReceive('site')->andReturn($site);
-            $mock->shouldReceive('get')->with('use_for_taxonomy')->andReturn($taxonomyMock);
+            $mock->shouldReceive('augmentedValue')->with('use_for_taxonomy')->andReturn($taxonomyMock);
         });
 
         $action = new ApplyTemplateAction;

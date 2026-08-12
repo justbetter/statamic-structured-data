@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 use Statamic\Entries\Entry as EntryModel;
 use Statamic\Facades\Entry as EntryFacade;
 use Statamic\Facades\Term as TermFacade;
@@ -45,13 +46,21 @@ class ApplyTemplateToItemJob implements ShouldQueue
 
     protected function applyTemplateToItem(EntryModel|LocalizedTerm $item): void
     {
-        $structuredDataTemplates = $item->get('structured_data_templates') ?? [];
+        $structuredDataTemplates = $item->structured_data_templates;
+
+        if ($structuredDataTemplates instanceof Collection) {
+            $structuredDataTemplates = $structuredDataTemplates->all();
+        }
+
+        if (! is_array($structuredDataTemplates)) {
+            $structuredDataTemplates = [];
+        }
 
         $templateIds = [];
         foreach ($structuredDataTemplates as $existingTemplate) {
             if (is_string($existingTemplate) || is_int($existingTemplate)) {
                 $templateIds[] = (string) $existingTemplate;
-            } elseif (is_object($existingTemplate) && method_exists($existingTemplate, 'id')) {
+            } elseif ($existingTemplate instanceof EntryModel || $existingTemplate instanceof LocalizedTerm) {
                 $templateIds[] = (string) $existingTemplate->id();
             }
         }
@@ -59,7 +68,11 @@ class ApplyTemplateToItemJob implements ShouldQueue
         if (! in_array($this->templateId, $templateIds, true)) {
             $templateIds[] = $this->templateId;
             /** @var non-empty-list<string> $templateIds */
-            $item->set('structured_data_templates', $templateIds);
+            if ($item instanceof EntryModel) {
+                $item->structured_data_templates = $templateIds;
+            } else {
+                $item->set('structured_data_templates', $templateIds);
+            }
             $item->saveQuietly();
         }
     }

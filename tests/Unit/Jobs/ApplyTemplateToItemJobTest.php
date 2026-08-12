@@ -63,6 +63,8 @@ class ApplyTemplateToItemJobTest extends TestCase
         $taxonomy = TaxonomyFacade::make('categories');
         $taxonomy->save();
         $term = $this->mock(LocalizedTerm::class, function ($mock): void {
+            $mock->shouldReceive('augmentedValue')->with('structured_data_templates')->andReturn([]);
+            $mock->shouldReceive('value')->with('structured_data_templates')->andReturn([]);
             $mock->shouldReceive('get')->with('structured_data_templates')->andReturn([]);
             $mock->shouldReceive('set')->with('structured_data_templates', Mockery::any())->once();
             $mock->shouldReceive('saveQuietly')->once();
@@ -251,5 +253,34 @@ class ApplyTemplateToItemJobTest extends TestCase
         $templates = $entryMock->get('structured_data_templates');
         $this->assertIsArray($templates);
         $this->assertContains('template-456', $templates);
+    }
+
+    #[Test]
+    public function apply_template_to_item_handles_collection_of_templates(): void
+    {
+        $collection = CollectionFacade::make('blog');
+        $collection->save();
+        $templateEntry = (new Entry)->collection($collection)->id('template-123');
+
+        $entry = Mockery::mock(Entry::class);
+        $entry->shouldReceive('augmentedValue')
+            ->with('structured_data_templates')
+            ->andReturn(collect([$templateEntry]));
+        $entry->shouldReceive('value')
+            ->with('structured_data_templates')
+            ->andReturn(collect([$templateEntry]));
+        $entry->shouldReceive('get')
+            ->with('structured_data_templates')
+            ->andReturn(collect([$templateEntry]));
+        $entry->shouldReceive('set')->with('structured_data_templates', Mockery::any())->once();
+        $entry->shouldReceive('offsetSet')->zeroOrMoreTimes();
+        $entry->shouldReceive('saveQuietly')->once();
+
+        $job = new ApplyTemplateToItemJob('entry-123', 'entry', 'template-456');
+
+        $reflection = new \ReflectionClass($job);
+        $method = $reflection->getMethod('applyTemplateToItem');
+        $method->setAccessible(true);
+        $method->invoke($job, $entry);
     }
 }

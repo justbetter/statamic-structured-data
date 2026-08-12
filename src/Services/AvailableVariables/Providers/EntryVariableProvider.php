@@ -24,7 +24,7 @@ class EntryVariableProvider implements VariableProvider
         }
 
         /** @var ?Collection $collection */
-        $collection = $parent->use_for_collection; /** @phpstan-ignore-line */
+        $collection = $parent->use_for_collection;
         if (! $collection instanceof Collection) {
             return [];
         }

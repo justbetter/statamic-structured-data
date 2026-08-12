@@ -15,6 +15,7 @@ This Statamic addon provides a powerful and flexible way to add structured data 
 - 🛠 Antlers template parsing support
 - 🧩 Support for replicator-to-JSON-LD field mapping
 - ✈️ Optional [Runway](https://statamic.com/addons/rad-pack/runway) resource support
+- 📊 Coverage & completeness reports in the Control Panel and via CLI
 - 💪 Flexible and extensible architecture
 
 ## Requirements
@@ -62,6 +63,58 @@ After publishing the config, you can configure:
 - whether presets are enabled
 - which default presets are available
 - custom preset paths
+- report storage driver (`file` by default, or `eloquent`), path, retention, and queue
+
+For Eloquent report storage, run migrations after switching the driver:
+
+```bash
+php artisan migrate
+```
+
+## Reports
+
+The addon can generate coverage and completeness reports so you can see:
+
+- **Coverage** — which published entries/terms are missing an expected `apply_automatically` template (error)
+- **Completeness** — which assigned templates (automatic or manual) resolve empty fields after Antlers parsing (error)
+- **Warnings** — published items in a scoped collection/taxonomy that has templates, but the item has none assigned
+- **Runway** — incompleteness for resources that have a template (no missing/warning for Runway)
+- Summary scores: clean %, coverage %, completeness %, plus per-scope cards
+
+### Control Panel
+
+Open **Tools → JustBetter → Structured Data Reports** (requires the `view structured data reports` permission).
+
+From there you can generate a report for the selected site, browse previous runs, inspect scores/charts, filter errors vs warnings, open edit links, and use the Schema Markup Validator helpers (copy JSON-LD / open validator).
+
+### CLI
+
+```bash
+# Generate a report for the default/selected site
+php artisan structured-data:report
+
+# Limit to one site / template
+php artisan structured-data:report --site=default --template=TEMPLATE_ID
+
+# JSON output (useful for CI)
+php artisan structured-data:report --json --fail-on-issues
+
+# Also fail when warnings are present
+php artisan structured-data:report --fail-on-warnings
+
+# Dispatch to the queue (runs sync when QUEUE_CONNECTION=sync)
+php artisan structured-data:report --queue
+```
+
+Schedule it when needed:
+
+```php
+Schedule::command('structured-data:report --site=default')->daily();
+```
+
+### Apply automatically
+
+Templates have an **Apply automatically** toggle. When enabled, new entries/terms in the targeted collection/taxonomy receive that template on create. The report treats only those templates as expected for coverage. Use the existing **Apply Template** action to attach templates to existing content.
 
 ## Usage
 

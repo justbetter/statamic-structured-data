@@ -9,6 +9,7 @@ use Statamic\Entries\Collection;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
+use Statamic\Fields\LabeledValue;
 use Statamic\Sites\Site;
 use Statamic\Taxonomies\LocalizedTerm;
 use Statamic\Taxonomies\Taxonomy;
@@ -54,12 +55,18 @@ class ApplyTemplateAction extends Action
 
     public function applyTemplates(Entry $template): int
     {
-        $blueprintType = $template->get('blueprint_type');
+        $blueprintType = $template->blueprint_type;
+        if ($blueprintType instanceof LabeledValue) {
+            $blueprintType = $blueprintType->value();
+        }
+        $blueprintType = is_string($blueprintType) ? $blueprintType : '';
         $templateId = (string) $template->id();
 
         if ($blueprintType === 'collection') {
             return $this->applyTemplateToCollection($template, $templateId);
-        } elseif ($blueprintType === 'taxonomy') {
+        }
+
+        if ($blueprintType === 'taxonomy') {
             return $this->applyTemplateToTaxonomy($template, $templateId);
         }
 
@@ -68,8 +75,7 @@ class ApplyTemplateAction extends Action
 
     public function applyTemplateToCollection(Entry $template, string $templateId): int
     {
-        /** @var mixed $collectionValue */
-        $collectionValue = $template->use_for_collection; /** @phpstan-ignore-line */
+        $collectionValue = $template->use_for_collection;
         if (! $collectionValue) {
             return 0;
         }
@@ -104,12 +110,7 @@ class ApplyTemplateAction extends Action
 
     public function applyTemplateToTaxonomy(Entry $template, string $templateId): int
     {
-        /** @var mixed $taxonomyValue */
-        $taxonomyValue = $template->get('use_for_taxonomy');
-
-        if (! $taxonomyValue) {
-            $taxonomyValue = $template->use_for_taxonomy; /** @phpstan-ignore-line */
-        }
+        $taxonomyValue = $template->use_for_taxonomy;
 
         if (! $taxonomyValue) {
             return 0;

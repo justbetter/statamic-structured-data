@@ -52,6 +52,7 @@ class TermCreatedListenerTest extends TestCase
             $mock->shouldReceive('whereStatus')->with('published')->andReturnSelf();
             $mock->shouldReceive('where')->with('blueprint_type', 'taxonomy')->andReturnSelf();
             $mock->shouldReceive('where')->with('use_for_taxonomy', 'categories')->andReturnSelf();
+            $mock->shouldReceive('where')->with('apply_automatically', true)->andReturnSelf();
             $mock->shouldReceive('get')->andReturn(collect([]));
         });
 
@@ -85,6 +86,7 @@ class TermCreatedListenerTest extends TestCase
             ->id('template-123')
             ->set('blueprint_type', 'taxonomy')
             ->set('use_for_taxonomy', 'categories')
+            ->set('apply_automatically', true)
             ->published(true);
 
         $query = $this->mock(EloquentQueryBuilder::class, function ($mock) use ($templateEntry): void {
@@ -92,6 +94,7 @@ class TermCreatedListenerTest extends TestCase
             $mock->shouldReceive('whereStatus')->with('published')->andReturnSelf();
             $mock->shouldReceive('where')->with('blueprint_type', 'taxonomy')->andReturnSelf();
             $mock->shouldReceive('where')->with('use_for_taxonomy', 'categories')->andReturnSelf();
+            $mock->shouldReceive('where')->with('apply_automatically', true)->andReturnSelf();
             $mock->shouldReceive('get')->andReturn(collect([$templateEntry]));
         });
 
@@ -103,5 +106,34 @@ class TermCreatedListenerTest extends TestCase
         $listener->handle($event);
 
         $this->assertEquals(['template-123'], $term->get('structured_data_templates'));
+    }
+
+    #[Test]
+    public function it_skips_templates_without_apply_automatically(): void
+    {
+        Config::set('justbetter.structured-data.taxonomies', ['categories']);
+
+        /** @var Taxonomy $taxonomy */
+        $taxonomy = TaxonomyFacade::make('categories');
+        $taxonomy->save();
+        $term = (new Term)->taxonomy($taxonomy)->slug('term-123');
+
+        $query = $this->mock(EloquentQueryBuilder::class, function ($mock): void {
+            $mock->shouldReceive('where')->with('collection', 'structured_data_templates')->andReturnSelf();
+            $mock->shouldReceive('whereStatus')->with('published')->andReturnSelf();
+            $mock->shouldReceive('where')->with('blueprint_type', 'taxonomy')->andReturnSelf();
+            $mock->shouldReceive('where')->with('use_for_taxonomy', 'categories')->andReturnSelf();
+            $mock->shouldReceive('where')->with('apply_automatically', true)->andReturnSelf();
+            $mock->shouldReceive('get')->andReturn(collect([]));
+        });
+
+        EntryFacade::shouldReceive('query')->andReturn($query);
+
+        $event = new TermCreated($term);
+
+        $listener = new TermCreatedListener;
+        $listener->handle($event);
+
+        $this->assertNull($term->get('structured_data_templates'));
     }
 }
