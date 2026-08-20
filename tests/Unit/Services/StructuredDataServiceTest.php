@@ -2,6 +2,7 @@
 
 namespace Justbetter\StatamicStructuredData\Tests\Unit\Services;
 
+use Illuminate\Support\Collection;
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
 use Justbetter\StatamicStructuredData\Services\StructuredDataService;
 use Justbetter\StatamicStructuredData\Services\Transformers\FieldTransformerFactory;
@@ -30,10 +31,25 @@ class StructuredDataServiceTest extends TestCase
             ->id('entry-123');
 
         if ($templates) {
-            $blogEntry->set('structured_data_templates', $templates);
+            $blogEntry->set('structured_data_templates', $this->templatesCollection($templates));
         }
 
         return $blogEntry;
+    }
+
+    /**
+     * @param  array<int, string>  $ids
+     * @return Collection<int, Entry>
+     */
+    protected function templatesCollection(array $ids): Collection
+    {
+        $collection = CollectionFacade::find('structured_data_templates')
+            ?? CollectionFacade::make('structured_data_templates');
+        $collection->save();
+
+        return collect($ids)->map(
+            fn (string $id): Entry => (new Entry)->collection($collection)->id($id)
+        );
     }
 
     /** @param array<string, mixed> $schemaData */
@@ -75,7 +91,7 @@ class StructuredDataServiceTest extends TestCase
         $blogEntry = (new Entry)
             ->collection($blogCollection)
             ->id('entry-123')
-            ->set('structured_data_templates', ['template-123']);
+            ->set('structured_data_templates', $this->templatesCollection(['template-123']));
 
         EntryFacade::shouldReceive('find')->with('template-123')->andReturn(null);
 
@@ -99,7 +115,7 @@ class StructuredDataServiceTest extends TestCase
         $blogEntry = (new Entry)
             ->collection($blogCollection)
             ->id('entry-123')
-            ->set('structured_data_templates', ['template-123']);
+            ->set('structured_data_templates', $this->templatesCollection(['template-123']));
 
         $templateEntry = (new Entry)
             ->collection($templatesCollection)
@@ -127,7 +143,7 @@ class StructuredDataServiceTest extends TestCase
         $entry = (new Entry)
             ->collection($collection)
             ->id('entry-123')
-            ->set('structured_data_templates', ['template-123']);
+            ->set('structured_data_templates', $this->templatesCollection(['template-123']));
 
         $template = (new Entry)
             ->collection($templatesCollection)
@@ -170,7 +186,7 @@ class StructuredDataServiceTest extends TestCase
         $entry = (new Entry)
             ->collection($collection)
             ->id('entry-123')
-            ->set('structured_data_templates', ['template-123']);
+            ->set('structured_data_templates', $this->templatesCollection(['template-123']));
 
         $template = (new Entry)
             ->collection($templatesCollection)
@@ -214,7 +230,7 @@ class StructuredDataServiceTest extends TestCase
         $taxonomy = TaxonomyFacade::make('categories');
         $taxonomy->save();
         $term = $this->mock(LocalizedTerm::class, function (MockInterface $mock): void {
-            $mock->shouldReceive('get')->with('structured_data_templates')->andReturn([]);
+            $mock->shouldReceive('augmentedValue')->with('structured_data_templates')->andReturn([]);
         });
 
         $parser = $this->mock(StructuredDataParser::class);
@@ -238,7 +254,7 @@ class StructuredDataServiceTest extends TestCase
         $entry = (new Entry)
             ->collection($collection)
             ->id('entry-123')
-            ->set('structured_data_templates', ['template-123']);
+            ->set('structured_data_templates', $this->templatesCollection(['template-123']));
 
         $template = (new Entry)
             ->collection($templatesCollection)
@@ -275,7 +291,7 @@ class StructuredDataServiceTest extends TestCase
         $entry = (new Entry)
             ->collection($collection)
             ->id('entry-123')
-            ->set('structured_data_templates', ['template-123']);
+            ->set('structured_data_templates', $this->templatesCollection(['template-123']));
 
         $template = (new Entry)
             ->collection($templatesCollection)
@@ -615,7 +631,7 @@ class StructuredDataServiceTest extends TestCase
         $entry = (new Entry)
             ->collection($collection)
             ->id('entry-123')
-            ->set('structured_data_templates', ['template-123', 'template-456']);
+            ->set('structured_data_templates', $this->templatesCollection(['template-123', 'template-456']));
 
         $parser = $this->mock(StructuredDataParser::class);
         /** @var StructuredDataParser $parser */
@@ -640,7 +656,7 @@ class StructuredDataServiceTest extends TestCase
         $entry = (new Entry)
             ->collection($collection)
             ->id('entry-123')
-            ->set('structured_data_templates', ['template-123']);
+            ->set('structured_data_templates', $this->templatesCollection(['template-123']));
 
         $page = $this->mock(Page::class, function (MockInterface $mock) use ($entry): void {
             $mock->shouldReceive('entry')->andReturn($entry);
@@ -666,7 +682,9 @@ class StructuredDataServiceTest extends TestCase
         $taxonomy = TaxonomyFacade::make('categories');
         $taxonomy->save();
         $term = $this->mock(LocalizedTerm::class, function (MockInterface $mock): void {
-            $mock->shouldReceive('get')->with('structured_data_templates')->andReturn(['template-123']);
+            $mock->shouldReceive('augmentedValue')->with('structured_data_templates')->andReturn(
+                $this->templatesCollection(['template-123'])
+            );
         });
 
         $parser = $this->mock(StructuredDataParser::class);
@@ -725,7 +743,7 @@ class StructuredDataServiceTest extends TestCase
         $entry = (new Entry)
             ->collection($collection)
             ->id('entry-123')
-            ->set('structured_data_templates', ['template-123']);
+            ->set('structured_data_templates', $this->templatesCollection(['template-123']));
 
         $template = (new Entry)
             ->collection($templatesCollection)

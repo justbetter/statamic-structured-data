@@ -111,9 +111,9 @@ class StructuredDataBuilder extends Fieldtype
         return $terms->map(function ($term) {
             /** @var LocalizedTerm $term */
             return [
-                'title' => $term->get('title'),
+                'title' => $term->title,
                 'slug' => $term->slug(),
-                'object_data' => $term->get('object_data'),
+                'object_data' => $term->object_data,
             ];
         });
     }

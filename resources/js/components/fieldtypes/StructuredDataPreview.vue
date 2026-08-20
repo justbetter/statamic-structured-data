@@ -79,7 +79,7 @@ const { expose } = Fieldtype.use(emit, fieldtypeProps);
 
 defineExpose(expose);
 
-const { values } = injectPublishContext();
+const { values, site } = injectPublishContext();
 const { proxy } = getCurrentInstance();
 
 const axiosInstance = proxy?.$axios ?? window?.axios ?? window?.Statamic?.$axios;
@@ -104,6 +104,8 @@ const currentEntryId = computed(() => {
 
     return publishValues.id;
 });
+
+const currentSite = computed(() => site?.value ?? null);
 
 const hasTemplates = computed(() => {
     return templateIds.value && templateIds.value.length > 0;
@@ -209,6 +211,7 @@ const fetchTemplateData = async templateIdsToFetch => {
             params: {
                 ids: templateIdsToFetch,
                 entry_id: currentEntryId.value,
+                site: currentSite.value,
             },
         });
 

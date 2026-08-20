@@ -3,6 +3,7 @@
 namespace Justbetter\StatamicStructuredData\Services;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
 use Justbetter\StatamicStructuredData\Services\Transformers\FieldTransformerFactory;
 use Justbetter\StatamicStructuredData\Support\RunwaySupport;
@@ -47,7 +48,7 @@ class StructuredDataService
             }
 
             /** @var array<int, array<string, mixed>>|null $schemas */
-            $schemas = $template->get('schema_data');
+            $schemas = $template->schema_data;
             $schemas = $schemas ?? [];
 
             if (empty($schemas)) {
@@ -227,7 +228,7 @@ class StructuredDataService
     }
 
     /**
-     * @return array<int|string, mixed>
+     * @return array<int, string>
      */
     public function getTemplates(EntryContract|Page|LocalizedTerm|TermContract|Model $item, ?string $resourceHandle = null): array
     {
@@ -237,17 +238,11 @@ class StructuredDataService
         }
 
         if ($item instanceof Entry) {
-            /** @var array<int|string, mixed>|null $templates */
-            $templates = $item->get('structured_data_templates');
-
-            return is_array($templates) ? $templates : [];
+            return $this->extractTemplateIds($item->structured_data_templates);
         }
 
         if ($item instanceof LocalizedTerm) {
-            /** @var array<int|string, mixed>|null $templates */
-            $templates = $item->get('structured_data_templates');
-
-            return is_array($templates) ? $templates : [];
+            return $this->extractTemplateIds($item->structured_data_templates);
         }
 
         if ($item instanceof Model) {
@@ -261,6 +256,21 @@ class StructuredDataService
         }
 
         return [];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function extractTemplateIds(mixed $templates): array
+    {
+        if (! $templates instanceof Collection) {
+            return [];
+        }
+
+        /** @var array<int, string> $ids */
+        $ids = $templates->pluck('id')->toArray();
+
+        return $ids;
     }
 
     /**

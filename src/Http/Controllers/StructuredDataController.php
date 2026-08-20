@@ -54,10 +54,25 @@ class StructuredDataController extends CpController
     {
         /** @var array<int|string>|null $templateIds */
         $templateIds = $request->input('ids', []);
+        $siteHandle = $request->input('site');
+
+        if (is_string($siteHandle) && $siteHandle !== '') {
+            Site::setCurrent($siteHandle);
+        }
+
         $contentEntry = Entry::find($request->input('entry_id'));
 
         if (! $contentEntry) {
             $contentEntry = Term::find($request->input('entry_id'));
+
+            if (
+                $contentEntry instanceof TermContract
+                && is_string($siteHandle)
+                && $siteHandle !== ''
+                && method_exists($contentEntry, 'in')
+            ) {
+                $contentEntry = $contentEntry->in($siteHandle);
+            }
         }
 
         if (! $contentEntry instanceof EntryContract && ! $contentEntry instanceof TermContract) {
@@ -73,7 +88,7 @@ class StructuredDataController extends CpController
                     return null;
                 }
 
-                $structuredData = $entry->get('schema_data');
+                $structuredData = $entry->schema_data;
 
                 if ($structuredData === null) {
                     return null;
@@ -84,7 +99,7 @@ class StructuredDataController extends CpController
 
                 return [
                     'id' => $entry->id(),
-                    'title' => $entry->get('title'),
+                    'title' => $entry->title,
                     'structuredData' => $transformedData,
                 ];
             })
