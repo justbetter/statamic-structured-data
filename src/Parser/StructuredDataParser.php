@@ -8,12 +8,15 @@ use Justbetter\StatamicStructuredData\Services\StructuredDataService;
 use Statamic\Contracts\Data\Augmentable;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Contracts\Taxonomies\Term as TermContract;
+use Statamic\Facades\GlobalSet as GlobalSetFacade;
 use Statamic\Facades\Site as SiteFacade;
 use Statamic\Facades\Term;
 use Statamic\Fields\Value;
 use Statamic\Fields\Values;
 use Statamic\Fieldtypes\Bard;
 use Statamic\Fieldtypes\Bard\Augmentor as BardAugmentor;
+use Statamic\Globals\GlobalSet;
+use Statamic\Globals\Variables;
 use Statamic\Sites\Site;
 use Statamic\View\Antlers\Antlers;
 use Statamic\View\Antlers\AntlersString;
@@ -235,11 +238,34 @@ class StructuredDataParser
         $siteAugmented = $site->toAugmentedArray();
         $itemAugmented = ($item instanceof Augmentable) ? $item->toAugmentedArray() : [];
         $modelAttributes = $item instanceof Model ? $item->toArray() : [];
+        /** @var Collection<int|string, GlobalSet> $globalSets */
+        $globalSets = GlobalSetFacade::all();
+        /** @var array<string, mixed> $globals */
+        $globals = $globalSets
+            ->reduce(function (array $carry, GlobalSet $globalSet) use ($site): array {
+                $handle = $globalSet->handle();
+                /** @var Variables|null $variables */
+                $variables = $globalSet->in($site->handle());
+                $values = $variables?->toAugmentedArray() ?? [];
+
+                if ($values === []) {
+                    return $carry;
+                }
+
+                $carry[$handle] = $values;
+
+                foreach ($values as $key => $value) {
+                    $carry[$handle.':'.$key] = $value;
+                }
+
+                return $carry;
+            }, []);
 
         return array_merge(
             ['config' => config()->all()],
             ['site' => $siteAugmented],
             ['absolute_url' => $this->resolveAbsoluteUrl($item)],
+            $globals,
             $itemAugmented,
             $modelAttributes
         );
