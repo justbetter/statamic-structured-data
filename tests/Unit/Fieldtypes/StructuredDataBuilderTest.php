@@ -8,17 +8,17 @@ use Justbetter\StatamicStructuredData\Fieldtypes\StructuredDataBuilder;
 use Justbetter\StatamicStructuredData\Services\PresetService;
 use Justbetter\StatamicStructuredData\Services\ReplicatorFieldService;
 use Justbetter\StatamicStructuredData\Tests\TestCase;
-use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\Site;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
+use Statamic\Facades\Term as TermFacade;
 use Statamic\Fields\Field;
-use Statamic\Query\EloquentQueryBuilder;
-use Statamic\Taxonomies\LocalizedTerm;
+use Statamic\Sites\Site as SiteInstance;
 use Statamic\Taxonomies\Taxonomy;
+use Statamic\Taxonomies\Term;
 
 class StructuredDataBuilderTest extends TestCase
 {
@@ -232,28 +232,23 @@ class StructuredDataBuilderTest extends TestCase
         $presetService = $this->mock(PresetService::class);
         $replicatorFieldService = $this->mock(ReplicatorFieldService::class);
 
+        /** @var SiteInstance $site */
+        $site = Site::selected() ?? Site::default();
+        $siteHandle = $site->handle();
+
         /** @var Taxonomy $taxonomy */
         $taxonomy = TaxonomyFacade::make('structured_data_objects');
-        $taxonomy->save();
-        $site = $this->mock(\Statamic\Sites\Site::class, function ($mock): void {
-            $mock->shouldReceive('handle')->andReturn('default');
-        });
-        $term = $this->mock(LocalizedTerm::class, function ($mock): void {
-            $mock->shouldReceive('get')->with('title')->andReturn('Test Object');
-            $mock->shouldReceive('slug')->andReturn('test-object');
-            $mock->shouldReceive('get')->with('object_data')->andReturn(['test' => 'data']);
-        });
+        $taxonomy->sites([$siteHandle])->save();
 
-        $queryBuilder = $this->mock(EloquentQueryBuilder::class, function ($mock) use ($term): void {
-            $mock->shouldReceive('where')->with('site', 'default')->andReturnSelf();
-            $mock->shouldReceive('get')->andReturn(collect([$term]));
-        });
-
-        $taxonomyMock = Mockery::mock($taxonomy)->makePartial();
-        $taxonomyMock->shouldReceive('queryTerms')->andReturn($queryBuilder);
-
-        TaxonomyFacade::shouldReceive('findByHandle')->with('structured_data_objects')->andReturn($taxonomyMock);
-        Site::shouldReceive('selected')->andReturn($site);
+        /** @var Term $term */
+        $term = TermFacade::make('test-object');
+        $term
+            ->taxonomy($taxonomy)
+            ->dataForLocale($siteHandle, [
+                'title' => 'Test Object',
+                'object_data' => ['test' => 'data'],
+            ]);
+        $term->in($siteHandle)->published(true)->save();
 
         /** @var PresetService $presetService */
         /** @var ReplicatorFieldService $replicatorFieldService */
@@ -269,9 +264,9 @@ class StructuredDataBuilderTest extends TestCase
         $this->assertNotEmpty($result);
         /** @var array<string, mixed> $firstItem */
         $firstItem = $result->first();
-        $this->assertArrayHasKey('title', $firstItem);
-        $this->assertArrayHasKey('slug', $firstItem);
-        $this->assertArrayHasKey('object_data', $firstItem);
+        $this->assertSame('Test Object', $firstItem['title']);
+        $this->assertSame('test-object', $firstItem['slug']);
+        $this->assertSame(['test' => 'data'], $firstItem['object_data']);
     }
 
     #[Test]

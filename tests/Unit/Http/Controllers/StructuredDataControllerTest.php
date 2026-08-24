@@ -167,6 +167,7 @@ class StructuredDataControllerTest extends TestCase
         $taxonomy->save();
         $contentTerm = $this->mock(LocalizedTerm::class, function ($mock) use ($taxonomy): void {
             $mock->shouldReceive('taxonomy')->andReturn($taxonomy);
+            $mock->shouldReceive('in')->with('nl')->andReturnSelf();
         });
 
         $templateCollection = CollectionFacade::make('structured_data_templates');
@@ -180,6 +181,7 @@ class StructuredDataControllerTest extends TestCase
         $request = Request::create('/test', 'GET', [
             'ids' => ['template-123'],
             'entry_id' => 'test-term',
+            'site' => 'nl',
         ]);
 
         \Statamic\Facades\Entry::shouldReceive('find')->with('test-term')->andReturn(null);
