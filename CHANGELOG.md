@@ -1,6 +1,11 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.4.0...2.4.0)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/2.4.1...2.4.1)
+## [2.4.1](https://github.com/justbetter/statamic-structured-data/releases/tag/2.4.1) - 2026-08-24
+
+### Fixed
+- Fixed localization issues (#37)
+
 ## [2.4.0](https://github.com/justbetter/statamic-structured-data/releases/tag/2.4.0) - 2026-08-12
 
 ### Added
