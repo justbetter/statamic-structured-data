@@ -11,12 +11,16 @@ use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\View\Antlers\Parser as AntlersParserContract;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Collection as CollectionFacade;
+use Statamic\Facades\GlobalSet as GlobalSetFacade;
 use Statamic\Facades\Site as SiteFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
 use Statamic\Facades\Term as TermFacade;
 use Statamic\Fields\Value;
 use Statamic\Fields\Values;
 use Statamic\Fieldtypes\Bard;
+use Statamic\Globals\GlobalCollection;
+use Statamic\Globals\GlobalSet;
+use Statamic\Globals\Variables;
 use Statamic\Query\EloquentQueryBuilder;
 use Statamic\Sites\Site;
 use Statamic\Taxonomies\Taxonomy;
@@ -688,5 +692,56 @@ class StructuredDataParserTest extends TestCase
         $this->assertIsArray($result);
         $this->assertSame('Test Bike', $result['name']);
         $this->assertSame('BIKE-1', $result['sku']);
+    }
+
+    #[Test]
+    public function get_parse_context_includes_global_set_values(): void
+    {
+        $collection = CollectionFacade::make('blog')->save();
+        $entry = (new Entry)->collection($collection)->id('entry-123');
+
+        $site = $this->mock(Site::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('toAugmentedArray')->andReturn(['handle' => 'default'])->byDefault();
+            $mock->shouldReceive('handle')->andReturn('default')->byDefault();
+        });
+        SiteFacade::shouldReceive('current')->andReturn($site)->byDefault();
+        SiteFacade::shouldReceive('multiEnabled')->andReturn(false)->byDefault();
+        SiteFacade::shouldReceive('hasMultiple')->andReturn(false)->byDefault();
+        SiteFacade::shouldReceive('default')->andReturn($site)->byDefault();
+        SiteFacade::shouldReceive('all')->andReturn(collect([$site]))->byDefault();
+
+        $populatedVariables = $this->mock(Variables::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('toAugmentedArray')->andReturn([
+                'company_name' => 'Acme',
+                'phone' => '123',
+            ]);
+        });
+
+        $populatedGlobal = $this->mock(GlobalSet::class, function (MockInterface $mock) use ($populatedVariables): void {
+            $mock->shouldReceive('handle')->andReturn('company');
+            $mock->shouldReceive('in')->with('default')->andReturn($populatedVariables);
+        });
+
+        $emptyGlobal = $this->mock(GlobalSet::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('handle')->andReturn('empty');
+            $mock->shouldReceive('in')->with('default')->andReturn(null);
+        });
+
+        GlobalSetFacade::shouldReceive('all')->andReturn(new GlobalCollection([$populatedGlobal, $emptyGlobal]));
+
+        $parser = new StructuredDataParser;
+        $method = (new \ReflectionClass($parser))->getMethod('getParseContext');
+        $method->setAccessible(true);
+        $result = $method->invoke($parser, $entry);
+
+        $this->assertIsArray($result);
+        /** @var array<string, mixed> $result */
+        $this->assertSame([
+            'company_name' => 'Acme',
+            'phone' => '123',
+        ], $result['company']);
+        $this->assertSame('Acme', $result['company:company_name']);
+        $this->assertSame('123', $result['company:phone']);
+        $this->assertArrayNotHasKey('empty', $result);
     }
 }
