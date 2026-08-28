@@ -8,6 +8,7 @@ use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Entries\Collection;
 use Statamic\Entries\Entry;
 use Statamic\Fields\Blueprint;
+use Statamic\Fields\Field;
 use Statamic\Fields\LabeledValue;
 use Statamic\Taxonomies\Taxonomy;
 
@@ -74,13 +75,18 @@ class ReplicatorFieldService
     protected function extractFieldsFromBlueprints(SupportCollection $blueprints): array
     {
         return $blueprints->reduce(function (array $carry, Blueprint $blueprint): array {
-            $items = $blueprint->fields()->items();
+            foreach ($blueprint->fields()->all() as $field) {
+                if (! $field instanceof Field) {
+                    continue;
+                }
 
-            if ($items instanceof SupportCollection) {
-                $items = $items->all();
+                $carry[] = [
+                    'handle' => $field->handle(),
+                    'field' => $field->config(),
+                ];
             }
 
-            return array_merge($carry, is_array($items) ? $items : []);
+            return $carry;
         }, []);
     }
 
@@ -184,53 +190,26 @@ class ReplicatorFieldService
             }
 
             /** @var array<string, mixed> $setConfig */
-            $setDisplay = is_string($setConfig['display'] ?? null) ? $setConfig['display'] : $setHandle;
-            $setFields = is_array($setConfig['fields'] ?? null) ? $setConfig['fields'] : [];
             $nestedSets = is_array($setConfig['sets'] ?? null) ? $setConfig['sets'] : [];
 
-            $fieldOptions = $this->parseSetFields($setFields);
+            if ($nestedSets !== []) {
+                /** @var array<string, mixed> $nestedSets */
+                $setOptions = array_merge($setOptions, $this->parseSets($nestedSets));
 
-            if (! empty($nestedSets)) {
-                $nestedFields = $this->extractFieldsFromNestedSets($nestedSets);
-                $fieldOptions = array_merge($fieldOptions, $nestedFields);
+                continue;
             }
+
+            $setDisplay = is_string($setConfig['display'] ?? null) ? $setConfig['display'] : $setHandle;
+            $setFields = is_array($setConfig['fields'] ?? null) ? $setConfig['fields'] : [];
 
             $setOptions[] = [
                 'value' => $setHandle,
                 'label' => $setDisplay,
-                'fields' => $fieldOptions,
+                'fields' => $this->parseSetFields($setFields),
             ];
         }
 
         return $setOptions;
-    }
-
-    /**
-     * @param  array<string, mixed>  $nestedSets
-     * @return array<int, array<string, mixed>>
-     */
-    protected function extractFieldsFromNestedSets(array $nestedSets): array
-    {
-        $allFields = [];
-
-        foreach ($nestedSets as $nestedSetConfig) {
-            if (! is_array($nestedSetConfig)) {
-                continue;
-            }
-
-            /** @var array<string, mixed> $nestedSetConfig */
-            $nestedSetFields = is_array($nestedSetConfig['fields'] ?? null) ? $nestedSetConfig['fields'] : [];
-            $fields = $this->parseSetFields($nestedSetFields);
-            $allFields = array_merge($allFields, $fields);
-            $deeperNestedSets = is_array($nestedSetConfig['sets'] ?? null) ? $nestedSetConfig['sets'] : [];
-
-            if (! empty($deeperNestedSets)) {
-                $deeperFields = $this->extractFieldsFromNestedSets($deeperNestedSets);
-                $allFields = array_merge($allFields, $deeperFields);
-            }
-        }
-
-        return $allFields;
     }
 
     /**
@@ -334,6 +313,7 @@ class ReplicatorFieldService
             'users',
             'link',
             'url',
+            'select',
         ];
 
         return in_array($fieldType, $eligibleFieldTypes, true);

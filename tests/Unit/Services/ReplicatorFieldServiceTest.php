@@ -13,8 +13,10 @@ use Statamic\Entries\Collection;
 use Statamic\Entries\Entry;
 use Statamic\Facades\Blueprint as BlueprintFacade;
 use Statamic\Facades\Collection as CollectionFacade;
+use Statamic\Facades\Fieldset as FieldsetFacade;
 use Statamic\Facades\Taxonomy as TaxonomyFacade;
 use Statamic\Fields\Blueprint;
+use Statamic\Fields\Field;
 use Statamic\Fields\Fields;
 use Statamic\Fields\LabeledValue;
 use Statamic\Taxonomies\Taxonomy;
@@ -166,42 +168,27 @@ class ReplicatorFieldServiceTest extends TestCase
     }
 
     #[Test]
-    public function get_replicator_fields_handles_field_object_with_non_array_to_array(): void
+    public function get_replicator_fields_skips_non_field_values(): void
     {
-        $collection = CollectionFacade::make('blog');
-        $collection->save();
-        $templatesCollection = CollectionFacade::make('structured_data_templates');
-        $templatesCollection->save();
-
-        $fieldObject = new class
-        {
-            public function toArray(): null
-            {
-                return null;
-            }
-        };
-
         $blueprint = $this->mock(Blueprint::class);
-        $fieldsMock = $this->mock(Fields::class, function (MockInterface $mock) use ($fieldObject): void {
-            $mock->shouldReceive('items')->andReturn([$fieldObject]);
+        $fieldsMock = $this->mock(Fields::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('all')->andReturn(collect([
+                'invalid' => 'not-a-field',
+                'valid' => $this->mockField('valid', ['type' => 'text']),
+            ]));
         });
         $blueprint->shouldReceive('fields')->andReturn($fieldsMock);
 
-        $collectionMock = $this->mock(Collection::class, function ($mock) use ($blueprint): void {
-            $mock->shouldReceive('entryBlueprints')->andReturn(collect([$blueprint]));
-            $mock->shouldReceive('toArray')->andReturn([]);
-        });
-
-        $template = (new Entry)
-            ->collection($templatesCollection)
-            ->id('template-123');
-
-        $template->use_for_collection = $collectionMock;
-
         $service = new ReplicatorFieldService;
-        $result = $service->getReplicatorFields($template);
+        $reflection = new \ReflectionClass($service);
+        $method = $reflection->getMethod('extractFieldsFromBlueprints');
+        $method->setAccessible(true);
+        $result = $method->invoke($service, collect([$blueprint]));
 
-        $this->assertEmpty($result);
+        $this->assertIsArray($result);
+        /** @var array<int, array<string, mixed>> $result */
+        $this->assertCount(1, $result);
+        $this->assertSame('valid', $result[0]['handle']);
     }
 
     #[Test]
@@ -209,9 +196,9 @@ class ReplicatorFieldServiceTest extends TestCase
     {
         $blueprint = $this->mock(Blueprint::class);
         $fields = $this->mock(Fields::class, function (MockInterface $mock): void {
-            $mock->shouldReceive('items')->andReturn(collect([
-                ['handle' => 'field1'],
-                ['handle' => 'field2'],
+            $mock->shouldReceive('all')->andReturn(collect([
+                'field1' => $this->mockField('field1'),
+                'field2' => $this->mockField('field2'),
             ]));
         });
 
@@ -225,49 +212,9 @@ class ReplicatorFieldServiceTest extends TestCase
 
         $this->assertIsArray($result);
         $this->assertCount(2, $result);
-    }
-
-    #[Test]
-    public function extract_fields_from_blueprints_handles_array_items(): void
-    {
-        $blueprint = $this->mock(Blueprint::class);
-        $fields = $this->mock(Fields::class, function (MockInterface $mock): void {
-            $mock->shouldReceive('items')->andReturn([
-                ['handle' => 'field1'],
-                ['handle' => 'field2'],
-            ]);
-        });
-
-        $blueprint->shouldReceive('fields')->andReturn($fields);
-
-        $service = new ReplicatorFieldService;
-        $reflection = new \ReflectionClass($service);
-        $method = $reflection->getMethod('extractFieldsFromBlueprints');
-        $method->setAccessible(true);
-        $result = $method->invoke($service, collect([$blueprint]));
-
-        $this->assertIsArray($result);
-        $this->assertCount(2, $result);
-    }
-
-    #[Test]
-    public function extract_fields_from_blueprints_handles_non_array_items(): void
-    {
-        $blueprint = $this->mock(Blueprint::class);
-        $fields = $this->mock(Fields::class, function (MockInterface $mock): void {
-            $mock->shouldReceive('items')->andReturn('not-an-array');
-        });
-
-        $blueprint->shouldReceive('fields')->andReturn($fields);
-
-        $service = new ReplicatorFieldService;
-        $reflection = new \ReflectionClass($service);
-        $method = $reflection->getMethod('extractFieldsFromBlueprints');
-        $method->setAccessible(true);
-        $result = $method->invoke($service, collect([$blueprint]));
-
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
+        /** @var array<int, array<string, mixed>> $result */
+        $this->assertSame('field1', $result[0]['handle']);
+        $this->assertSame('field2', $result[1]['handle']);
     }
 
     #[Test]
@@ -275,7 +222,7 @@ class ReplicatorFieldServiceTest extends TestCase
     {
         $blueprint = $this->mock(Blueprint::class);
         $fields = $this->mock(Fields::class, function (MockInterface $mock): void {
-            $mock->shouldReceive('items')->andReturn(collect([]));
+            $mock->shouldReceive('all')->andReturn(collect([]));
         });
 
         $blueprint->shouldReceive('fields')->andReturn($fields);
@@ -488,7 +435,7 @@ class ReplicatorFieldServiceTest extends TestCase
     }
 
     #[Test]
-    public function parse_sets_handles_nested_sets(): void
+    public function parse_sets_uses_nested_set_handles_from_set_groups(): void
     {
         $service = new ReplicatorFieldService;
         $reflection = new \ReflectionClass($service);
@@ -496,21 +443,19 @@ class ReplicatorFieldServiceTest extends TestCase
         $method->setAccessible(true);
 
         $sets = [
-            'parent' => [
-                'display' => 'Parent',
-                'fields' => [
-                    'parent_field' => ['type' => 'text', 'display' => 'Parent Field'],
-                ],
+            'new_opening_time' => [
+                'display' => 'New opening time',
                 'sets' => [
-                    [
+                    'opening_time' => [
+                        'display' => 'Opening time',
                         'fields' => [
-                            'child_field' => ['type' => 'text', 'display' => 'Child Field'],
-                        ],
-                        'sets' => [
                             [
-                                'fields' => [
-                                    'grandchild_field' => ['type' => 'text', 'display' => 'Grandchild Field'],
-                                ],
+                                'handle' => 'day',
+                                'field' => ['type' => 'select', 'display' => 'Day'],
+                            ],
+                            [
+                                'handle' => 'opening_time',
+                                'field' => ['type' => 'time', 'display' => 'Opens'],
                             ],
                         ],
                     ],
@@ -521,11 +466,18 @@ class ReplicatorFieldServiceTest extends TestCase
         $result = $method->invoke($service, $sets);
 
         $this->assertIsArray($result);
-        $this->assertNotEmpty($result);
+        $this->assertCount(1, $result);
         /** @var array<int, array<string, mixed>> $result */
+        /** @var array<string, mixed> $firstResult */
+        $firstResult = $result[0];
+        $this->assertSame('opening_time', $firstResult['value']);
+        $this->assertSame('Opening time', $firstResult['label']);
         /** @var array<int, array<string, mixed>> $fields */
-        $fields = $result[0]['fields'];
-        $this->assertCount(3, $fields);
+        $fields = $firstResult['fields'];
+        $this->assertCount(2, $fields);
+        $this->assertSame('day', $fields[0]['value']);
+        $this->assertSame('select', $fields[0]['type']);
+        $this->assertSame('opening_time', $fields[1]['value']);
     }
 
     #[Test]
@@ -721,30 +673,6 @@ class ReplicatorFieldServiceTest extends TestCase
     }
 
     #[Test]
-    public function extract_fields_from_nested_sets_skips_non_array_configs(): void
-    {
-        $service = new ReplicatorFieldService;
-        $reflection = new \ReflectionClass($service);
-        $method = $reflection->getMethod('extractFieldsFromNestedSets');
-        $method->setAccessible(true);
-
-        $nestedSets = [
-            'invalid',
-            [
-                'fields' => [
-                    'field_one' => ['type' => 'text', 'display' => 'Field One'],
-                ],
-            ],
-        ];
-
-        /** @var array<int, array<string, mixed>> $result */
-        $result = $method->invoke($service, $nestedSets);
-
-        $this->assertCount(1, $result);
-        $this->assertSame('field_one', $result[0]['value']);
-    }
-
-    #[Test]
     public function parse_set_fields_skips_fields_with_non_string_handle(): void
     {
         $service = new ReplicatorFieldService;
@@ -778,6 +706,7 @@ class ReplicatorFieldServiceTest extends TestCase
         $this->assertTrue($method->invoke($service, 'text'));
         $this->assertTrue($method->invoke($service, 'textarea'));
         $this->assertTrue($method->invoke($service, 'date'));
+        $this->assertTrue($method->invoke($service, 'select'));
     }
 
     #[Test]
@@ -886,13 +815,13 @@ class ReplicatorFieldServiceTest extends TestCase
         $blueprint1 = $this->mock(Blueprint::class);
         $blueprint2 = $this->mock(Blueprint::class);
         $fields1 = $this->mock(Fields::class, function (MockInterface $mock): void {
-            $mock->shouldReceive('items')->andReturn(collect([
-                ['handle' => 'field1'],
+            $mock->shouldReceive('all')->andReturn(collect([
+                'field1' => $this->mockField('field1'),
             ]));
         });
         $fields2 = $this->mock(Fields::class, function (MockInterface $mock): void {
-            $mock->shouldReceive('items')->andReturn(collect([
-                ['handle' => 'field2'],
+            $mock->shouldReceive('all')->andReturn(collect([
+                'field2' => $this->mockField('field2'),
             ]));
         });
 
@@ -907,6 +836,8 @@ class ReplicatorFieldServiceTest extends TestCase
 
         /** @var array<int, array<string, mixed>> $result */
         $this->assertCount(2, $result);
+        $this->assertSame('field1', $result[0]['handle']);
+        $this->assertSame('field2', $result[1]['handle']);
     }
 
     #[Test]
@@ -1155,5 +1086,130 @@ class ReplicatorFieldServiceTest extends TestCase
         $result = $service->getReplicatorFields($template);
 
         $this->assertNotEmpty($result);
+    }
+
+    #[Test]
+    public function get_replicator_fields_resolves_imported_fieldset_replicators(): void
+    {
+        FieldsetFacade::make('opening_times')
+            ->setContents([
+                'fields' => [
+                    [
+                        'handle' => 'opening_times',
+                        'field' => [
+                            'type' => 'replicator',
+                            'display' => 'Opening hours',
+                            'sets' => [
+                                'new_opening_time' => [
+                                    'display' => 'New opening time',
+                                    'sets' => [
+                                        'opening_time' => [
+                                            'display' => 'Opening time',
+                                            'fields' => [
+                                                [
+                                                    'handle' => 'day',
+                                                    'field' => [
+                                                        'type' => 'select',
+                                                        'display' => 'Day',
+                                                    ],
+                                                ],
+                                                [
+                                                    'handle' => 'opening_time',
+                                                    'field' => [
+                                                        'type' => 'time',
+                                                        'display' => 'Opens',
+                                                    ],
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ])
+            ->save();
+
+        $collection = CollectionFacade::make('locations');
+        $collection->save();
+
+        BlueprintFacade::make('location')
+            ->setNamespace('collections.locations')
+            ->setContents([
+                'fields' => [
+                    [
+                        'handle' => 'sidebar_links',
+                        'field' => [
+                            'type' => 'replicator',
+                            'display' => 'Sidebar links',
+                            'sets' => [
+                                'link' => [
+                                    'display' => 'Link',
+                                    'fields' => [
+                                        [
+                                            'handle' => 'url',
+                                            'field' => [
+                                                'type' => 'text',
+                                                'display' => 'URL',
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                    [
+                        'import' => 'opening_times',
+                    ],
+                ],
+            ])
+            ->save();
+
+        $templatesCollection = CollectionFacade::make('structured_data_templates');
+        $templatesCollection->save();
+
+        $template = (new Entry)
+            ->collection($templatesCollection)
+            ->id('template-imported');
+
+        $template->use_for_collection = $collection;
+
+        $service = new ReplicatorFieldService;
+        $result = $service->getReplicatorFields($template);
+
+        $handles = array_column($result, 'handle');
+        $this->assertContains('sidebar_links', $handles);
+        $this->assertContains('opening_times', $handles);
+
+        /** @var array<string, mixed>|null $openingTimes */
+        $openingTimes = collect($result)->firstWhere('handle', 'opening_times');
+        $this->assertIsArray($openingTimes);
+        $this->assertSame('Opening hours', $openingTimes['display']);
+
+        /** @var array<int, array<string, mixed>> $sets */
+        $sets = $openingTimes['sets'];
+        $this->assertCount(1, $sets);
+        $this->assertSame('opening_time', $sets[0]['value']);
+
+        /** @var array<int, array<string, mixed>> $fields */
+        $fields = $sets[0]['fields'];
+        $fieldHandles = array_column($fields, 'value');
+        $this->assertContains('day', $fieldHandles);
+        $this->assertContains('opening_time', $fieldHandles);
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    private function mockField(string $handle, array $config = []): Field
+    {
+        /** @var Field&MockInterface $field */
+        $field = $this->mock(Field::class, function (MockInterface $mock) use ($handle, $config): void {
+            $mock->shouldReceive('handle')->andReturn($handle);
+            $mock->shouldReceive('config')->andReturn($config);
+        });
+
+        return $field;
     }
 }
