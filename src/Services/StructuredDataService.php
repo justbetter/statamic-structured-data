@@ -3,6 +3,7 @@
 namespace Justbetter\StatamicStructuredData\Services;
 
 use Justbetter\StatamicStructuredData\Parser\StructuredDataParser;
+use Justbetter\StatamicStructuredData\Services\Transformers\FieldTransformerFactory;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Contracts\Taxonomies\Term as TermContract;
 use Statamic\Entries\Entry as EntryModel;
@@ -14,9 +15,12 @@ class StructuredDataService
 {
     protected StructuredDataParser $parser;
 
+    protected FieldTransformerFactory $transformerFactory;
+
     public function __construct(StructuredDataParser $parser)
     {
         $this->parser = $parser;
+        $this->transformerFactory = new FieldTransformerFactory;
     }
 
     /**
