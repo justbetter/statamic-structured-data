@@ -1,6 +1,10 @@
 # Changelog 
 
-[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.7.0...1.7.0)
+[Unreleased changes](https://github.com/justbetter/statamic-structured-data/compare/1.7.0...1.x)
+
+### Fixed
+- Initialize `FieldTransformerFactory` on `StructuredDataService` and include missing `DefaultFieldTransformer` / `FieldTransformerInterface` classes (broken since the 1.6.0 replicator flatten release)
+
 ## [1.7.0](https://github.com/justbetter/statamic-structured-data/releases/tag/1.7.0) - 2026-07-31
 
 ### Added
